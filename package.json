@@ -1,0 +1,9 @@
+{
+  "name": "bgos-railway-root",
+  "private": true,
+  "scripts": {
+    "install": "npm ci --prefix BGOS",
+    "build": "npm run build --prefix BGOS",
+    "start": "npm run start --prefix BGOS -- -p $PORT"
+  }
+}
