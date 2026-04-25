@@ -34,7 +34,12 @@ function getScoreStyle(score: number) {
 
 export function HealthScore({ score, previousScore }: HealthScoreProps) {
   const [mounted, setMounted] = useState(false);
+  const [snapshotPreviousScore, setSnapshotPreviousScore] = useState<
+    number | null
+  >(null);
   const normalizedScore = clampScore(score);
+  const effectivePreviousScore =
+    typeof previousScore === "number" ? previousScore : snapshotPreviousScore;
   const radius = 80;
   const strokeWidth = 8;
   const circumference = 2 * Math.PI * radius;
@@ -43,18 +48,50 @@ export function HealthScore({ score, previousScore }: HealthScoreProps) {
     ? circumference - (normalizedScore / 100) * circumference
     : circumference;
   const delta = useMemo(() => {
-    if (typeof previousScore !== "number" || previousScore === score) {
+    if (
+      typeof effectivePreviousScore !== "number" ||
+      effectivePreviousScore === score
+    ) {
       return null;
     }
 
-    return score - previousScore;
-  }, [previousScore, score]);
+    return score - effectivePreviousScore;
+  }, [effectivePreviousScore, score]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setMounted(true));
 
     return () => cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    if (typeof previousScore === "number") return;
+
+    let cancelled = false;
+
+    async function loadPreviousScore() {
+      const response = await fetch("/api/analytics/health-trend", {
+        cache: "no-store",
+      });
+
+      if (!response.ok) return;
+
+      const payload = (await response.json()) as {
+        data?: Array<{ healthScore: number }>;
+      };
+      const previous = payload.data?.at(-2)?.healthScore;
+
+      if (!cancelled && typeof previous === "number") {
+        setSnapshotPreviousScore(previous);
+      }
+    }
+
+    void loadPreviousScore();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [previousScore]);
 
   return (
     <div className="flex flex-col items-center">
@@ -116,7 +153,9 @@ export function HealthScore({ score, previousScore }: HealthScoreProps) {
                   : "rgba(255,107,107,0.1)",
             }}
           >
-            {delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}
+            {delta > 0
+              ? `▲ +${delta} from yesterday`
+              : `▼ -${Math.abs(delta)} from yesterday`}
           </span>
         ) : null}
       </div>

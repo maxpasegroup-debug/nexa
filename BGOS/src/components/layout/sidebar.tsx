@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
@@ -12,6 +13,7 @@ import {
   GitBranch,
   LayoutDashboard,
   LogOut,
+  Mail,
   Phone,
   Settings,
   Target,
@@ -35,6 +37,7 @@ const roleLinks: Record<string, NavItem[]> = {
   BOSS: [
     { label: "Dashboard", href: "/boss", icon: LayoutDashboard },
     { label: "Leads", href: "/boss/leads", icon: TrendingUp },
+    { label: "Inbox", href: "/boss/inbox", icon: Mail },
     { label: "Team", href: "/boss/team", icon: Users },
     { label: "NEXA", href: "/boss/nexa", icon: Bot },
     { label: "Reports", href: "/boss/reports", icon: BarChart3 },
@@ -91,6 +94,24 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
   const links = roleLinks[role] ?? roleLinks.BDM;
   const displayBusinessName =
     businessName.length > 24 ? `${businessName.slice(0, 24)}...` : businessName;
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (role !== "BOSS" && role !== "ADMIN") return;
+
+    async function fetchUnread() {
+      const response = await fetch("/api/email/inbox?unreadOnly=true", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const data = (await response.json()) as { unreadCount?: number };
+      setUnreadCount(data.unreadCount ?? 0);
+    }
+
+    void fetchUnread();
+    const interval = window.setInterval(() => void fetchUnread(), 120_000);
+    return () => window.clearInterval(interval);
+  }, [role]);
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col border-r border-[rgba(255,255,255,0.07)] bg-[#0d0d11]">
@@ -108,6 +129,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
         {links.map((item) => {
           const Icon = item.icon;
           const active = isActive(pathname, item.href);
+          const isInbox = item.href === "/boss/inbox";
 
           return (
             <Link
@@ -120,7 +142,12 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
               }`}
             >
               <Icon className="h-4 w-4" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {isInbox && unreadCount > 0 ? (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#7C6FFF] px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
             </Link>
           );
         })}

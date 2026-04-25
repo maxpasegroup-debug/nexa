@@ -1,27 +1,59 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
-import {
-  getCurrentBusiness,
-  getDashboardMetrics,
-} from "@/lib/dashboard/server";
+import { getCurrentBusiness } from "@/lib/dashboard/server";
+import { buildNexaSystemPrompt } from "@/lib/nexa-context";
 import { prisma } from "@/lib/prisma";
 
-const CHAT_SYSTEM_PROMPT =
-  "You are NEXA, the AI CEO of this business. You have access to their live data. Answer questions about their business, suggest actions, and give sharp advice. Be direct, confident, and brief — like a senior consultant. Never say you cannot access data. Use the metrics provided as context.";
+function detectRequestedAction(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("send a reminder") ||
+    normalized.includes("set reminder") ||
+    normalized.includes("remind ")
+  ) {
+    return {
+      type: "set_reminder",
+      description: message,
+    };
+  }
+
+  if (
+    normalized.includes("reassign") ||
+    normalized.includes("assign this lead") ||
+    normalized.includes("assign lead")
+  ) {
+    return {
+      type: "reassign_lead",
+      description: message,
+    };
+  }
+
+  if (
+    normalized.includes("create a task") ||
+    normalized.includes("create task") ||
+    normalized.includes("add a task")
+  ) {
+    return {
+      type: "create_task",
+      description: message,
+    };
+  }
+
+  return null;
+}
 
 export async function GET() {
   try {
     const context = await getCurrentBusiness();
 
-    if (context.error) {
-      return context.error;
-    }
+    if (context.error) return context.error;
 
     const messages = await prisma.nexaMessage.findMany({
       where: { businessId: context.business.id },
       orderBy: { createdAt: "desc" },
-      take: 10,
+      take: 20,
     });
 
     return NextResponse.json({ messages: messages.reverse() });
@@ -37,9 +69,7 @@ export async function POST(request: Request) {
   try {
     const context = await getCurrentBusiness();
 
-    if (context.error) {
-      return context.error;
-    }
+    if (context.error) return context.error;
 
     const { message } = await request.json();
 
@@ -50,13 +80,53 @@ export async function POST(request: Request) {
       );
     }
 
-    const [messages, metrics] = await Promise.all([
+    const trimmedMessage = message.trim();
+    const requestedAction = detectRequestedAction(trimmedMessage);
+
+    if (requestedAction) {
+      const responseText = `Done — I've noted this action. ${requestedAction.description}`;
+
+      await prisma.$transaction([
+        prisma.nexaMessage.create({
+          data: {
+            businessId: context.business.id,
+            role: "user",
+            content: trimmedMessage,
+          },
+        }),
+        prisma.nexaAction.create({
+          data: {
+            businessId: context.business.id,
+            type: requestedAction.type,
+            description: requestedAction.description,
+            payload: { source: "chat", message: trimmedMessage },
+            status: "requested",
+            triggeredBy: context.user.id,
+          },
+        }),
+        prisma.nexaMessage.create({
+          data: {
+            businessId: context.business.id,
+            role: "nexa",
+            content: responseText,
+          },
+        }),
+      ]);
+
+      return NextResponse.json({ response: responseText });
+    }
+
+    const [messages, systemPrompt] = await Promise.all([
       prisma.nexaMessage.findMany({
         where: { businessId: context.business.id },
         orderBy: { createdAt: "desc" },
-        take: 10,
+        take: 20,
       }),
-      getDashboardMetrics(context.business.id, context.business.healthScore),
+      buildNexaSystemPrompt(
+        context.business.id,
+        context.user.role,
+        context.user.name,
+      ),
     ]);
     const contextMessages = messages.reverse().map((item) => ({
       role: item.role === "user" ? ("user" as const) : ("assistant" as const),
@@ -67,13 +137,13 @@ export async function POST(request: Request) {
     });
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 500,
-      system: CHAT_SYSTEM_PROMPT,
+      max_tokens: 600,
+      system: systemPrompt,
       messages: [
         ...contextMessages,
         {
           role: "user",
-          content: `Metrics: ${JSON.stringify(metrics)}\n\nQuestion: ${message}`,
+          content: trimmedMessage,
         },
       ],
     });
@@ -81,14 +151,14 @@ export async function POST(request: Request) {
     const responseText =
       textBlock?.type === "text"
         ? textBlock.text
-        : "Focus on your hottest leads and follow up today.";
+        : "Focus on your hottest leads today. Start by calling the top scored lead now.";
 
     await prisma.$transaction([
       prisma.nexaMessage.create({
         data: {
           businessId: context.business.id,
           role: "user",
-          content: message,
+          content: trimmedMessage,
         },
       }),
       prisma.nexaMessage.create({

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { ArrowUp, Bot } from "lucide-react";
+import { ArrowUp, Bot, Trash2 } from "lucide-react";
 
 import { NexaAvatar } from "@/components/nexa/nexa-avatar";
 
@@ -45,6 +45,12 @@ function TypingDots() {
     </div>
   );
 }
+
+const quickActions = [
+  "What should I focus on today?",
+  "Who are my hottest leads?",
+  "How is my team performing?",
+];
 
 export function NexaPanel({
   businessId,
@@ -107,12 +113,15 @@ export function NexaPanel({
 
   useEffect(() => {
     async function loadHistory() {
-      const response = await fetch("/api/dashboard/nexa-chat", {
+      const response = await fetch("/api/nexa/history", {
         cache: "no-store",
       });
 
       if (response.ok) {
-        const data = (await response.json()) as { messages: PanelMessage[] };
+        const data = (await response.json()) as {
+          messages: PanelMessage[];
+          actions?: unknown[];
+        };
         setMessages(data.messages);
       }
 
@@ -156,6 +165,11 @@ export function NexaPanel({
     await sendMessage(message);
   }
 
+  async function handleQuickAction(message: string) {
+    setInput("");
+    await sendMessage(message);
+  }
+
   const panel = (
     <aside className="flex h-full flex-col bg-[#0e0e13] text-white">
       <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-white/10 px-4">
@@ -174,6 +188,15 @@ export function NexaPanel({
             Online
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setMessages([])}
+          className="rounded-lg border border-white/10 p-2 text-zinc-500 transition hover:border-[#7C6FFF]/40 hover:text-white"
+          aria-label="Clear conversation"
+          title="Clear conversation"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
       </header>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
@@ -193,25 +216,40 @@ export function NexaPanel({
         <div ref={bottomRef} />
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex h-[60px] shrink-0 items-center gap-2 border-t border-white/10 px-3"
-      >
-        <input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder="Ask NEXA anything..."
-          className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#13131c] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#7C6FFF] focus:ring-2 focus:ring-[#7C6FFF]/20"
-        />
-        <button
-          type="submit"
-          disabled={isTyping || !input.trim()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#7C6FFF] text-white transition hover:bg-[#6b60e8] disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Send message"
+      <div className="shrink-0 border-t border-white/10 px-3 py-3">
+        <div className="mb-3 flex flex-wrap gap-2">
+          {quickActions.map((action) => (
+            <button
+              key={action}
+              type="button"
+              onClick={() => void handleQuickAction(action)}
+              disabled={isTyping}
+              className="rounded-full border border-white/10 bg-[#13131c] px-3 py-1.5 text-[11px] text-zinc-400 transition hover:border-[#7C6FFF]/40 hover:text-white disabled:opacity-50"
+            >
+              {action}
+            </button>
+          ))}
+        </div>
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-center gap-2"
         >
-          <ArrowUp className="h-4 w-4" />
-        </button>
-      </form>
+          <input
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            placeholder="Ask NEXA anything..."
+            className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#13131c] px-3 py-2 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-[#7C6FFF] focus:ring-2 focus:ring-[#7C6FFF]/20"
+          />
+          <button
+            type="submit"
+            disabled={isTyping || !input.trim()}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#7C6FFF] text-white transition hover:bg-[#6b60e8] disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Send message"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </button>
+        </form>
+      </div>
 
       <style jsx>{`
         .nexa-panel-dot {

@@ -179,7 +179,7 @@ export function LeadsPage({
         userName={currentUser.name}
         businessName={currentUser.businessName}
       />
-      <Navbar title="Leads" userName={currentUser.name} />
+      <Navbar title="Leads" userName={currentUser.name} role={currentUser.role} />
 
       <main className="pt-[60px]">
         <div className="space-y-6 p-8">

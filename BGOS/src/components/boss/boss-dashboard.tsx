@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { ActivityFeed, type Activity } from "@/components/boss/activity-feed";
+import { AnalyticsCharts } from "@/components/boss/analytics-charts";
 import { HealthScore } from "@/components/boss/health-score";
 import { InviteTeam } from "@/components/boss/invite-team";
 import { MetricCard } from "@/components/boss/metric-card";
@@ -194,7 +195,7 @@ export function BossDashboard({
         userName={user.name}
         businessName={business.name}
       />
-      <Navbar title={`Good morning, ${user.name}`} userName={user.name} />
+      <Navbar title={`Good morning, ${user.name}`} userName={user.name} role={user.role} />
 
       <main className="pt-[60px]">
         <div className="space-y-8 p-8">
@@ -272,6 +273,8 @@ export function BossDashboard({
             </div>
             <TeamPerformance />
           </section>
+
+          <AnalyticsCharts businessId={business.id} />
 
           <SystemHealth />
 

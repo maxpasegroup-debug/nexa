@@ -28,6 +28,7 @@ model User {
   dailyBriefs       DailyBrief[]
   callLogs          CallLog[]
   targets           Target[]
+  emailAccounts     EmailAccount[]
   bugsReported      Bug[]        @relation("BugReporter")
   bugsAssigned      Bug[]        @relation("BugAssignee")
   escalationsRaised Escalation[] @relation("EscalationRaiser")
@@ -58,6 +59,13 @@ model Business {
   bugs         Bug[]
   escalations  Escalation[]
   integrationHealth IntegrationHealth[]
+  nexaMemory       NexaMemory[]
+  nexaSchedules    NexaSchedule[]
+  snapshots        BusinessSnapshot[]
+  nexaActions      NexaAction[]
+  emailAccounts    EmailAccount[]
+  emails           Email[]
+  emailTemplates   EmailTemplate[]
 }
 
 model Lead {
@@ -84,6 +92,7 @@ model Lead {
   activities    LeadActivity[]
   reminders     Reminder[]
   callLogs      CallLog[]
+  emails        Email[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -129,6 +138,74 @@ model Reminder {
   dueAt       DateTime
   sent        Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+model EmailAccount {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id])
+  email        String
+  provider     String   @default("gmail")
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  tokenExpiry  DateTime
+  isActive     Boolean  @default(true)
+  lastSyncAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  emails       Email[]
+
+  @@unique([userId, email])
+}
+
+model Email {
+  id             String       @id @default(cuid())
+  accountId      String
+  account        EmailAccount @relation(fields: [accountId], references: [id])
+  businessId     String
+  business       Business     @relation(fields: [businessId], references: [id])
+  gmailId        String       @unique
+  threadId       String
+  from           String
+  fromName       String?
+  to             String
+  subject        String
+  snippet        String?
+  body           String       @db.Text
+  isRead         Boolean      @default(false)
+  isStarred      Boolean      @default(false)
+  label          EmailLabel   @default(UNCATEGORIZED)
+  leadId         String?
+  lead           Lead?        @relation(fields: [leadId], references: [id])
+  nexaSummary    String?
+  nexaReplyDraft String?      @db.Text
+  receivedAt     DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+enum EmailLabel {
+  LEAD
+  SUPPORT
+  SPAM
+  INTERNAL
+  IMPORTANT
+  UNCATEGORIZED
+}
+
+model EmailTemplate {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  name       String
+  subject    String
+  body       String   @db.Text
+  category   String
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Task {
@@ -368,4 +445,61 @@ model IntegrationHealth {
   responseTime Int?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model NexaMemory {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  key        String
+  value      Json
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([businessId, key])
+}
+
+model NexaSchedule {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+  type        String
+  cronExpr    String
+  lastRanAt   DateTime?
+  nextRunAt   DateTime
+  enabled     Boolean  @default(true)
+  meta        Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BusinessSnapshot {
+  id               String   @id @default(cuid())
+  businessId       String
+  business         Business @relation(fields: [businessId], references: [id])
+  date             DateTime @default(now())
+  healthScore      Int
+  totalLeads       Int
+  newLeads         Int
+  wonLeads         Int
+  lostLeads        Int
+  totalRevenue     Float
+  teamActivity     Int
+  openTasks        Int
+  openBugs         Int
+  nexaActionsCount Int
+  createdAt        DateTime @default(now())
+}
+
+model NexaAction {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+  type        String
+  description String
+  payload     Json     @default("{}")
+  status      String   @default("completed")
+  triggeredBy String   @default("nexa")
+  createdAt   DateTime @default(now())
 }

@@ -35,7 +35,7 @@ export default async function BossTeamPage() {
   return (
     <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
       <Sidebar role="BOSS" userName={user.name} businessName={user.business.name} />
-      <Navbar title="Team" userName={user.name} />
+      <Navbar title="Team" userName={user.name} role="BOSS" />
 
       <main className="pt-[60px]">
         <div className="space-y-6 p-8">

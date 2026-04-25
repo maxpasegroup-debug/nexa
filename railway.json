@@ -1,0 +1,39 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "cronJobs": [
+      {
+        "name": "morning-briefing",
+        "schedule": "0 8 * * *",
+        "command": "curl -H \"Authorization: Bearer $CRON_SECRET\" $RAILWAY_PUBLIC_DOMAIN/api/cron/morning-briefing"
+      },
+      {
+        "name": "health-check",
+        "schedule": "*/30 * * * *",
+        "command": "curl -H \"Authorization: Bearer $CRON_SECRET\" $RAILWAY_PUBLIC_DOMAIN/api/cron/health-check"
+      },
+      {
+        "name": "daily-snapshot",
+        "schedule": "0 23 * * *",
+        "command": "curl -H \"Authorization: Bearer $CRON_SECRET\" $RAILWAY_PUBLIC_DOMAIN/api/cron/daily-snapshot"
+      },
+      {
+        "name": "reminders",
+        "schedule": "*/15 * * * *",
+        "command": "curl -H \"Authorization: Bearer $CRON_SECRET\" $RAILWAY_PUBLIC_DOMAIN/api/cron/reminders"
+      },
+      {
+        "name": "stale-leads",
+        "schedule": "0 9 * * 1-5",
+        "command": "curl -H \"Authorization: Bearer $CRON_SECRET\" $RAILWAY_PUBLIC_DOMAIN/api/cron/stale-leads"
+      },
+      {
+        "name": "email-sync",
+        "schedule": "*/10 * * * *",
+        "command": "curl -H \"Authorization: Bearer $CRON_SECRET\" $RAILWAY_PUBLIC_DOMAIN/api/cron/email-sync"
+      }
+    ]
+  }
+}
