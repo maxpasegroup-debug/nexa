@@ -86,11 +86,11 @@ export function SdeDashboard({ user, initialMetrics, initialTasks, initialBugs, 
   }
 
   const metricCards = [
-    ["Open Tasks", metrics.openTasks, <ListTodo className="h-4 w-4" />],
-    ["In Progress", metrics.inProgressTasks, <GitPullRequest className="h-4 w-4" />],
-    ["Critical Bugs", metrics.criticalBugs, <Bug className="h-4 w-4" />],
-    ["Open Escalations", metrics.openEscalations, <AlertTriangle className="h-4 w-4" />],
-    ["Sprint Progress", `${metrics.activeSprintProgress}%`, <CheckCircle2 className="h-4 w-4" />],
+    { title: "Open Tasks", value: metrics.openTasks, icon: <ListTodo className="h-4 w-4" /> },
+    { title: "In Progress", value: metrics.inProgressTasks, icon: <GitPullRequest className="h-4 w-4" /> },
+    { title: "Critical Bugs", value: metrics.criticalBugs, icon: <Bug className="h-4 w-4" /> },
+    { title: "Open Escalations", value: metrics.openEscalations, icon: <AlertTriangle className="h-4 w-4" /> },
+    { title: "Sprint Progress", value: `${metrics.activeSprintProgress}%`, icon: <CheckCircle2 className="h-4 w-4" /> },
   ] as const;
 
   return (
@@ -100,7 +100,7 @@ export function SdeDashboard({ user, initialMetrics, initialTasks, initialBugs, 
       {(criticalCount + urgentCount) > 0 ? <button onClick={() => document.getElementById("sde-issues")?.scrollIntoView({ behavior: "smooth" })} className="fixed right-[344px] top-3 z-40 rounded-xl bg-[#FF6B6B] px-3 py-2 text-sm font-bold text-white animate-pulse">{criticalCount + urgentCount} urgent</button> : null}
       <main className="pt-[60px]"><div className="space-y-8 p-8">
         {brief ? <section className="rounded-2xl border border-white/10 bg-[#13131c] p-4"><button onClick={() => setBriefOpen((v) => !v)} className="text-sm font-bold text-[#7C6FFF]">{briefOpen ? "Hide today's brief" : "See today's brief"}</button>{briefOpen ? <div className="mt-4"><DailyBrief brief={brief} loading={false} /></div> : null}</section> : null}
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">{metricCards.map((card, index) => <MetricCard key={card[0]} title={card[0]} value={card[1]} icon={card[2]} loading={revealed <= index} />)}</section>
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">{metricCards.map((card, index) => <MetricCard key={card.title} title={card.title} value={card.value} icon={card.icon} loading={revealed <= index} />)}</section>
         <section className="rounded-2xl border border-white/10 bg-[#13131c] p-5"><h2 className="mb-4 font-heading text-lg font-bold">Task Board</h2><TaskBoard tasks={tasks} sprints={sprints} onTaskUpdate={upsertTask} onTaskCreate={upsertTask} onTaskClick={(task) => setSelectedTaskId(task.id)} /></section>
         <section id="sde-issues" className="grid gap-6 xl:grid-cols-[55fr_45fr]"><div><h2 className="mb-4 font-heading text-lg font-bold">Bug Tracker</h2><BugTracker bugs={bugs} teamMembers={teamMembers} onBugUpdate={upsertBug} onBugCreate={upsertBug} /></div><SprintPanel sprints={sprints} activeSprint={sprint} onSprintCreate={(next) => setSprints([next, ...sprints])} onSprintUpdate={(next) => { setSprint(next.status === "ACTIVE" ? next : null); setSprints(sprints.map((item) => item.id === next.id ? next : item)); }} /></section>
         <section className="grid gap-6 xl:grid-cols-2"><IntegrationHealth integrations={initialIntegrations} /><EscalationFeed escalations={escalations} currentUserId={user.id} onEscalationCreate={upsertEscalation} onEscalationResolve={upsertEscalation} /></section>
