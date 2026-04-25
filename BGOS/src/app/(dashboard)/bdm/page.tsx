@@ -1,0 +1,434 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { redirect } from "next/navigation";
+
+import { BdmDashboard } from "@/components/bdm/bdm-dashboard";
+import type { BdmMetrics } from "@/components/bdm/performance-card";
+import auth from "@/lib/auth";
+import { monthBounds, todayBounds } from "@/lib/bdm/server";
+import { prisma } from "@/lib/prisma";
+
+const BRIEF_SYSTEM_PROMPT =
+  "You are NEXA, the AI CEO. Generate a morning brief for this BDM. Return only a JSON object with these fields: greeting (string — a warm personalised good morning message using their name and one motivational line under 20 words), tasks (array of 5 objects each with: title string, priority 'high'/'medium'/'low', leadId string or null, type 'follow_up'/'new_lead'/'demo'/'proposal'/'admin'), insights (array of 3 strings — each a sharp one-line sales tip for today). No other text.";
+
+type BriefTask = {
+  title: string;
+  priority: "high" | "medium" | "low";
+  leadId: string | null;
+  leadName?: string | null;
+  type: "follow_up" | "new_lead" | "demo" | "proposal" | "admin";
+};
+
+type BriefData = {
+  greeting: string;
+  tasks: BriefTask[];
+  insights: string[];
+};
+
+const taskTypes = ["follow_up", "new_lead", "demo", "proposal", "admin"];
+const priorities = ["high", "medium", "low"];
+
+function sanitizeBrief(raw: unknown, userName: string): BriefData {
+  const object =
+    raw && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+  const tasks = Array.isArray(object.tasks) ? object.tasks : [];
+  const insights = Array.isArray(object.insights) ? object.insights : [];
+
+  return {
+    greeting:
+      typeof object.greeting === "string"
+        ? object.greeting
+        : `Good morning, ${userName}. Start with your hottest follow-up and keep momentum high.`,
+    tasks: tasks.slice(0, 5).map((task, index) => {
+      const item =
+        task && typeof task === "object" && !Array.isArray(task)
+          ? (task as Record<string, unknown>)
+          : {};
+      const priority = String(item.priority ?? "medium");
+      const type = String(item.type ?? "follow_up");
+
+      return {
+        title:
+          typeof item.title === "string"
+            ? item.title
+            : `Follow up with priority lead ${index + 1}`,
+        priority: priorities.includes(priority)
+          ? (priority as BriefTask["priority"])
+          : "medium",
+        leadId: typeof item.leadId === "string" ? item.leadId : null,
+        type: taskTypes.includes(type) ? (type as BriefTask["type"]) : "follow_up",
+      };
+    }),
+    insights: insights
+      .slice(0, 3)
+      .map((insight) => String(insight))
+      .filter(Boolean),
+  };
+}
+
+function fallbackBrief(userName: string, dueLeadId?: string | null): BriefData {
+  return {
+    greeting: `Good morning, ${userName}. Win the day by calling your warmest leads first.`,
+    tasks: [
+      {
+        title: "Call your hottest overdue follow-up",
+        priority: "high" as const,
+        leadId: dueLeadId ?? null,
+        type: "follow_up" as const,
+      },
+      {
+        title: "Move one contacted lead to demo",
+        priority: "medium" as const,
+        leadId: null,
+        type: "demo" as const,
+      },
+      {
+        title: "Log every sales call immediately",
+        priority: "medium" as const,
+        leadId: null,
+        type: "admin" as const,
+      },
+      {
+        title: "Review high-score new leads",
+        priority: "high" as const,
+        leadId: null,
+        type: "new_lead" as const,
+      },
+      {
+        title: "Send one proposal follow-up",
+        priority: "low" as const,
+        leadId: null,
+        type: "proposal" as const,
+      },
+    ],
+    insights: [
+      "Call before lunch while intent is fresh.",
+      "A fast callback beats a perfect pitch.",
+      "Move every good call to a clear next action.",
+    ],
+  };
+}
+
+async function getMetrics(userId: string, businessId: string): Promise<BdmMetrics> {
+  const now = new Date();
+  const month = monthBounds(now);
+  const today = todayBounds(now);
+
+  const [
+    myLeadsTotal,
+    myLeadsNew,
+    myLeadsHot,
+    followUpsDueToday,
+    followUpsOverdue,
+    wonThisMonth,
+    revenueAgg,
+    callsToday,
+    target,
+    teamUsers,
+    wonByBdm,
+    leadsForResponseTime,
+  ] = await Promise.all([
+    prisma.lead.count({ where: { assignedTo: userId } }),
+    prisma.lead.count({ where: { assignedTo: userId, status: "NEW" } }),
+    prisma.lead.count({ where: { assignedTo: userId, score: { gt: 70 } } }),
+    prisma.lead.count({
+      where: {
+        assignedTo: userId,
+        followUpDate: { gte: today.start, lt: today.end },
+        status: { notIn: ["WON", "LOST"] },
+      },
+    }),
+    prisma.lead.count({
+      where: {
+        assignedTo: userId,
+        followUpDate: { lt: today.start },
+        status: { notIn: ["WON", "LOST"] },
+      },
+    }),
+    prisma.lead.count({
+      where: {
+        assignedTo: userId,
+        status: "WON",
+        wonAt: { gte: month.start, lt: month.end },
+      },
+    }),
+    prisma.lead.aggregate({
+      where: {
+        assignedTo: userId,
+        status: "WON",
+        wonAt: { gte: month.start, lt: month.end },
+      },
+      _sum: { value: true },
+    }),
+    prisma.callLog.count({
+      where: { userId, createdAt: { gte: today.start, lt: today.end } },
+    }),
+    prisma.target.findUnique({
+      where: {
+        userId_month_year: {
+          userId,
+          month: month.month,
+          year: month.year,
+        },
+      },
+    }),
+    prisma.user.count({ where: { businessId, role: "BDM" } }),
+    prisma.lead.groupBy({
+      by: ["assignedTo"],
+      where: {
+        businessId,
+        status: "WON",
+        assignedTo: { not: null },
+        wonAt: { gte: month.start, lt: month.end },
+      },
+      _count: { _all: true },
+      orderBy: { _count: { assignedTo: "desc" } },
+    }),
+    prisma.lead.findMany({
+      where: { assignedTo: userId, lastContactAt: { not: null } },
+      select: { createdAt: true, lastContactAt: true },
+      take: 100,
+    }),
+  ]);
+
+  const responseTimes = leadsForResponseTime
+    .filter((lead) => lead.lastContactAt)
+    .map(
+      (lead) =>
+        (lead.lastContactAt!.getTime() - lead.createdAt.getTime()) /
+        (1000 * 60 * 60),
+    )
+    .filter((hours) => hours >= 0);
+  const avgResponseTime =
+    responseTimes.length > 0
+      ? Math.round(
+          (responseTimes.reduce((sum, hours) => sum + hours, 0) /
+            responseTimes.length) *
+            10,
+        ) / 10
+      : 0;
+  const revenueThisMonth = revenueAgg._sum.value ?? 0;
+  const wonTarget = target?.wonTarget ?? 0;
+  const revenueTarget = target?.revenueTarget ?? 0;
+  const rankIndex = wonByBdm.findIndex((item) => item.assignedTo === userId);
+
+  return {
+    myLeadsTotal,
+    myLeadsNew,
+    myLeadsHot,
+    followUpsDueToday,
+    followUpsOverdue,
+    wonThisMonth,
+    wonTarget,
+    wonProgress: wonTarget > 0 ? Math.round((wonThisMonth / wonTarget) * 100) : 0,
+    revenueThisMonth,
+    revenueTarget,
+    revenueProgress:
+      revenueTarget > 0 ? Math.round((revenueThisMonth / revenueTarget) * 100) : 0,
+    callsToday,
+    avgResponseTime,
+    conversionRate:
+      myLeadsTotal > 0 ? Math.round((wonThisMonth / myLeadsTotal) * 1000) / 10 : 0,
+    teamRank: rankIndex >= 0 ? rankIndex + 1 : Math.max(teamUsers, 1),
+    teamSize: Math.max(teamUsers, 1),
+  };
+}
+
+async function getOrCreateBrief(userId: string, userName: string) {
+  const today = todayBounds();
+  const existing = await prisma.dailyBrief.findFirst({
+    where: { userId, date: { gte: today.start, lt: today.end } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (existing) return existing;
+
+  const month = monthBounds();
+  const [statusCounts, dueLeads, staleLeads, wonThisMonth, target] =
+    await Promise.all([
+      prisma.lead.groupBy({
+        by: ["status"],
+        where: { assignedTo: userId },
+        _count: { _all: true },
+      }),
+      prisma.lead.findMany({
+        where: {
+          assignedTo: userId,
+          followUpDate: { lte: today.end },
+          status: { notIn: ["WON", "LOST"] },
+        },
+        select: { id: true, name: true, status: true, followUpDate: true, score: true },
+        take: 20,
+      }),
+      prisma.lead.findMany({
+        where: {
+          assignedTo: userId,
+          createdAt: { lte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+          lastContactAt: null,
+          status: { notIn: ["WON", "LOST"] },
+        },
+        select: { id: true, name: true, status: true, createdAt: true, score: true },
+        take: 20,
+      }),
+      prisma.lead.count({
+        where: {
+          assignedTo: userId,
+          status: "WON",
+          wonAt: { gte: month.start, lt: month.end },
+        },
+      }),
+      prisma.target.findUnique({
+        where: {
+          userId_month_year: { userId, month: month.month, year: month.year },
+        },
+      }),
+    ]);
+
+  let brief = fallbackBrief(userName, dueLeads[0]?.id);
+
+  try {
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 700,
+      system: BRIEF_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            name: userName,
+            statusCounts,
+            dueLeads,
+            staleLeads,
+            wonThisMonth,
+            wonTarget: target?.wonTarget ?? 0,
+          }),
+        },
+      ],
+    });
+    const textBlock = response.content.find((block) => block.type === "text");
+    if (textBlock?.type === "text") {
+      brief = sanitizeBrief(JSON.parse(textBlock.text), userName);
+    }
+  } catch {
+    brief = fallbackBrief(userName, dueLeads[0]?.id);
+  }
+
+  return prisma.dailyBrief.create({
+    data: {
+      userId,
+      greeting: brief.greeting,
+      tasks: brief.tasks,
+      insights: brief.insights,
+    },
+  });
+}
+
+export default async function BdmPage() {
+  const session = await auth();
+
+  if (!session?.user?.id) redirect("/login");
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      businessId: true,
+      business: { select: { name: true } },
+    },
+  });
+
+  if (!user?.businessId || !user.business) redirect("/onboarding");
+
+  const month = monthBounds();
+
+  const [brief, initialMetrics, leads, callLogs, target] = await Promise.all([
+    getOrCreateBrief(user.id, user.name),
+    getMetrics(user.id, user.businessId),
+    prisma.lead.findMany({
+      where: { assignedTo: user.id },
+      include: {
+        assignee: { select: { id: true, name: true, role: true } },
+        _count: { select: { activities: true } },
+        activities: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true },
+        },
+      },
+      orderBy: [{ score: "desc" }],
+      take: 20,
+    }),
+    prisma.callLog.findMany({
+      where: { userId: user.id },
+      include: { lead: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+    prisma.target.findUnique({
+      where: {
+        userId_month_year: {
+          userId: user.id,
+          month: month.month,
+          year: month.year,
+        },
+      },
+    }),
+  ]);
+
+  const tasks = sanitizeBrief(
+    { greeting: brief.greeting, tasks: brief.tasks, insights: brief.insights },
+    user.name,
+  );
+
+  return (
+    <BdmDashboard
+      user={{
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        businessId: user.businessId,
+        businessName: user.business.name,
+      }}
+      initialBrief={{
+        ...tasks,
+        createdAt: brief.createdAt.toISOString(),
+      }}
+      initialMetrics={initialMetrics}
+      initialLeads={leads.map((lead) => ({
+        id: lead.id,
+        name: lead.name,
+        phone: lead.phone,
+        email: lead.email,
+        company: lead.company,
+        source: lead.source,
+        status: lead.status,
+        score: lead.score,
+        scoreReason: lead.scoreReason,
+        value: lead.value,
+        notes: lead.notes,
+        assignedTo: lead.assignedTo,
+        assignee: lead.assignee,
+        createdAt: lead.createdAt.toISOString(),
+        updatedAt: lead.updatedAt.toISOString(),
+        followUpDate: lead.followUpDate?.toISOString() ?? null,
+        lastActivityDate: lead.activities[0]?.createdAt.toISOString() ?? null,
+        activitiesCount: lead._count.activities,
+      }))}
+      initialCallLogs={callLogs.map((call) => ({
+        ...call,
+        createdAt: call.createdAt.toISOString(),
+      }))}
+      initialTarget={{
+        leadsTarget: target?.leadsTarget ?? 0,
+        wonTarget: target?.wonTarget ?? 0,
+        revenueTarget: target?.revenueTarget ?? 0,
+      }}
+    />
+  );
+}

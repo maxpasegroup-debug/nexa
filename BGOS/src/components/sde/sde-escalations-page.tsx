@@ -1,0 +1,19 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
+import { NexaPanel } from "@/components/boss/nexa-panel";
+import { Navbar } from "@/components/layout/navbar";
+import { Sidebar } from "@/components/layout/sidebar";
+import { EscalationFeed } from "@/components/sde/escalation-feed";
+import type { EscalationStatus, EscalationType, SdeEscalation, SdeUser } from "@/components/sde/types";
+
+export function SdeEscalationsPage({ user, initialEscalations }: { user: SdeUser & { businessId: string; businessName: string }; initialEscalations: SdeEscalation[] }) {
+  const [items, setItems] = useState(initialEscalations);
+  const [view, setView] = useState<"table" | "feed">("table");
+  const [status, setStatus] = useState<EscalationStatus | "ALL">("ALL");
+  const [type, setType] = useState<EscalationType | "ALL">("ALL");
+  const filtered = useMemo(() => items.filter((item) => (status === "ALL" || item.status === status) && (type === "ALL" || item.type === type)), [items, status, type]);
+  const upsert = (item: SdeEscalation) => setItems((current) => current.some((existing) => existing.id === item.id) ? current.map((existing) => existing.id === item.id ? item : existing) : [item, ...current]);
+  return <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]"><Sidebar role="SDE" userName={user.name} businessName={user.businessName} /><Navbar title="Escalations" userName={user.name} /><main className="pt-[60px]"><div className="space-y-6 p-8"><div className="flex flex-wrap justify-between gap-3"><div className="flex gap-2"><select value={status} onChange={(e) => setStatus(e.target.value as EscalationStatus | "ALL")} className="rounded-lg border border-white/10 bg-[#13131c] px-3 py-2 text-sm"><option>ALL</option><option>OPEN</option><option>ACKNOWLEDGED</option><option>IN_PROGRESS</option><option>RESOLVED</option><option>CLOSED</option></select><select value={type} onChange={(e) => setType(e.target.value as EscalationType | "ALL")} className="rounded-lg border border-white/10 bg-[#13131c] px-3 py-2 text-sm"><option>ALL</option><option>BUG</option><option>INTEGRATION</option><option>FEATURE_REQUEST</option><option>SECURITY</option><option>PERFORMANCE</option><option>OTHER</option></select></div><button onClick={() => setView(view === "table" ? "feed" : "table")} className="rounded-lg bg-[#7C6FFF] px-3 py-2 text-sm font-bold">{view === "table" ? "Feed view" : "Table view"}</button></div>{view === "feed" ? <EscalationFeed escalations={filtered} currentUserId={user.id} onEscalationCreate={upsert} onEscalationResolve={upsert} /> : <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#13131c]"><table className="w-full min-w-[860px] text-left text-sm"><thead className="text-xs uppercase text-zinc-500"><tr><th className="px-4 py-3">Priority</th><th>Type</th><th>Title</th><th>Raised by</th><th>Status</th><th>Created</th><th>Resolved by</th><th>Actions</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} className="border-t border-white/10"><td className="px-4 py-3">{item.priority}</td><td>{item.type}</td><td className="font-semibold text-white">{item.title}</td><td>{item.raiser?.name ?? "-"}</td><td>{item.status}</td><td>{new Date(item.createdAt).toLocaleDateString("en-IN")}</td><td>{item.resolver?.name ?? "-"}</td><td><button onClick={() => void fetch(`/api/sde/escalations/${item.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "IN_PROGRESS" }) }).then(async (response) => { if (response.ok) upsert(((await response.json()) as { escalation: SdeEscalation }).escalation); })} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs">Take</button></td></tr>)}</tbody></table></div>}</div></main><NexaPanel businessId={user.businessId} initialMessage="sde_morning_context" /></div>;
+}

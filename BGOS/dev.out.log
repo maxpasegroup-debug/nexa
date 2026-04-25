@@ -1,0 +1,21 @@
+
+> bgos@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 3.7s
+ ✓ Compiled /src/middleware in 333ms (159 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 2.4s (537 modules)
+ GET /login 200 in 2741ms
+ ✓ Compiled in 455ms (278 modules)
+ GET /login 200 in 64ms
+ ✓ Compiled in 207ms (278 modules)
+ ✓ Compiled in 123ms (278 modules)
+ ✓ Compiled in 196ms (278 modules)
+ ✓ Compiled in 158ms (437 modules)
+[?25h

@@ -1,0 +1,158 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import {
+  BarChart3,
+  AlertTriangle,
+  Bot,
+  Bug,
+  CheckSquare,
+  GitBranch,
+  LayoutDashboard,
+  LogOut,
+  Phone,
+  Settings,
+  Target,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+
+type SidebarProps = {
+  role: string;
+  userName: string;
+  businessName: string;
+};
+
+type NavItem = {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const roleLinks: Record<string, NavItem[]> = {
+  BOSS: [
+    { label: "Dashboard", href: "/boss", icon: LayoutDashboard },
+    { label: "Leads", href: "/boss/leads", icon: TrendingUp },
+    { label: "Team", href: "/boss/team", icon: Users },
+    { label: "NEXA", href: "/boss/nexa", icon: Bot },
+    { label: "Reports", href: "/boss/reports", icon: BarChart3 },
+    { label: "Settings", href: "/boss/settings", icon: Settings },
+  ],
+  BDM: [
+    { label: "My Leads", href: "/bdm", icon: Target },
+    { label: "Tasks", href: "/bdm/tasks", icon: CheckSquare },
+    { label: "Performance", href: "/bdm/performance", icon: TrendingUp },
+    { label: "Call Log", href: "/bdm/calls", icon: Phone },
+    { label: "Settings", href: "/bdm/settings", icon: Settings },
+  ],
+  SDE: [
+    { label: "Tasks", href: "/sde", icon: CheckSquare },
+    { label: "Bugs", href: "/sde/bugs", icon: Bug },
+    { label: "Sprint", href: "/sde/sprint", icon: GitBranch },
+    { label: "Integrations", href: "/sde/integrations", icon: Bot },
+    { label: "Escalations", href: "/sde/escalations", icon: AlertTriangle },
+    { label: "Settings", href: "/sde/settings", icon: Settings },
+  ],
+};
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function roleBadgeClass(role: string) {
+  if (role === "BOSS") {
+    return "border-[#F5A623]/30 bg-[#F5A623]/10 text-[#F5A623]";
+  }
+
+  if (role === "SDE") {
+    return "border-[#22D9A0]/30 bg-[#22D9A0]/10 text-[#22D9A0]";
+  }
+
+  return "border-[#7C6FFF]/30 bg-[#7C6FFF]/10 text-[#b8b2ff]";
+}
+
+function isActive(pathname: string, href: string) {
+  if (href === "/boss" || href === "/bdm" || href === "/sde") {
+    return pathname === href;
+  }
+
+  return pathname.startsWith(href);
+}
+
+export function Sidebar({ role, userName, businessName }: SidebarProps) {
+  const pathname = usePathname();
+  const links = roleLinks[role] ?? roleLinks.BDM;
+  const displayBusinessName =
+    businessName.length > 24 ? `${businessName.slice(0, 24)}...` : businessName;
+
+  return (
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col border-r border-[rgba(255,255,255,0.07)] bg-[#0d0d11]">
+      <div className="border-b border-white/10 px-6 py-5">
+        <div className="font-heading text-xl font-bold tracking-normal">
+          <span className="text-white">BG</span>
+          <span className="text-[#7C6FFF]">OS</span>
+        </div>
+        <p className="mt-1 truncate text-[11px] text-zinc-500">
+          {displayBusinessName}
+        </p>
+      </div>
+
+      <nav className="flex-1 space-y-1 px-3 py-5">
+        {links.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(pathname, item.href);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                active
+                  ? "border-l-2 border-[#7C6FFF] bg-[rgba(124,111,255,0.12)] text-white"
+                  : "text-[#6B6878] hover:bg-[rgba(255,255,255,0.04)]"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="border-t border-white/10 p-4">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#7C6FFF] text-sm font-bold text-white">
+            {initials(userName)}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-[13px] font-semibold text-white">
+              {userName}
+            </p>
+            <span
+              className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${roleBadgeClass(
+                role,
+              )}`}
+            >
+              {role}
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => void signOut({ callbackUrl: "/login" })}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-zinc-400 transition hover:bg-[rgba(255,255,255,0.04)] hover:text-white"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </button>
+      </div>
+    </aside>
+  );
+}
