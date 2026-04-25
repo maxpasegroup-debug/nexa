@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.91.0",
     "@auth/prisma-adapter": "^2.11.2",
     "@prisma/client": "^6.19.3",
+    "@radix-ui/react-accordion": "^1.2.12",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
