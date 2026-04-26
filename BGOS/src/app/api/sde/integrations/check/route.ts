@@ -1,13 +1,13 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 import { getSdeContext } from "@/lib/sde/server";
 
 const defaultIntegrations = [
   { name: "Email", type: "smtp" },
   { name: "Database", type: "postgresql" },
-  { name: "Claude API", type: "ai" },
+  { name: "OpenAI API", type: "ai" },
   { name: "App Server", type: "server" },
 ];
 
@@ -35,10 +35,9 @@ async function checkIntegration(type: string) {
     if (type === "postgresql") {
       await prisma.$queryRaw`SELECT 1`;
     } else if (type === "ai") {
-      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-      await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1,
+      await createChatCompletionText({
+        maxTokens: 1,
+        system: "Reply with pong.",
         messages: [{ role: "user", content: "ping" }],
       });
     } else if (type === "smtp") {

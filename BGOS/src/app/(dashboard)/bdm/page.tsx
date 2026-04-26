@@ -1,10 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { redirect } from "next/navigation";
 
 import { BdmDashboard } from "@/components/bdm/bdm-dashboard";
 import type { BdmMetrics } from "@/components/bdm/performance-card";
 import auth from "@/lib/auth";
 import { monthBounds, todayBounds } from "@/lib/bdm/server";
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 const BRIEF_SYSTEM_PROMPT =
@@ -288,10 +288,8 @@ async function getOrCreateBrief(userId: string, userName: string) {
   let brief = fallbackBrief(userName, dueLeads[0]?.id);
 
   try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 700,
+    const text = await createChatCompletionText({
+      maxTokens: 700,
       system: BRIEF_SYSTEM_PROMPT,
       messages: [
         {
@@ -307,9 +305,8 @@ async function getOrCreateBrief(userId: string, userName: string) {
         },
       ],
     });
-    const textBlock = response.content.find((block) => block.type === "text");
-    if (textBlock?.type === "text") {
-      brief = sanitizeBrief(JSON.parse(textBlock.text), userName);
+    if (text) {
+      brief = sanitizeBrief(JSON.parse(text), userName);
     }
   } catch {
     brief = fallbackBrief(userName, dueLeads[0]?.id);

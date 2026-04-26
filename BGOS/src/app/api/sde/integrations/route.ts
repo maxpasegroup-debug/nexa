@@ -6,7 +6,7 @@ import { getSdeContext } from "@/lib/sde/server";
 const defaultIntegrations = [
   { name: "Email", type: "smtp" },
   { name: "Database", type: "postgresql" },
-  { name: "Claude API", type: "ai" },
+  { name: "OpenAI API", type: "ai" },
   { name: "App Server", type: "server" },
 ];
 

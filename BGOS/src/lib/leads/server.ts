@@ -1,8 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { LeadSource, LeadStatus, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import auth from "@/lib/auth";
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 const LEAD_SCORE_SYSTEM_PROMPT =
@@ -106,12 +106,8 @@ export async function scoreLead(leadId: string) {
     throw new Error("Lead not found");
   }
 
-  const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 220,
+  const text = await createChatCompletionText({
+    maxTokens: 220,
     system: LEAD_SCORE_SYSTEM_PROMPT,
     messages: [
       {
@@ -120,14 +116,12 @@ export async function scoreLead(leadId: string) {
       },
     ],
   });
-  const textBlock = response.content.find((block) => block.type === "text");
-  const result =
-    textBlock?.type === "text"
-      ? parseScoreResponse(textBlock.text)
-      : {
-          score: 0,
-          reason: "NEXA could not score this lead from the available data.",
-        };
+  const result = text
+    ? parseScoreResponse(text)
+    : {
+        score: 0,
+        reason: "NEXA could not score this lead from the available data.",
+      };
 
   await prisma.lead.update({
     where: { id: leadId },

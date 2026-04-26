@@ -1,7 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentBusiness } from "@/lib/dashboard/server";
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
@@ -21,10 +21,8 @@ export async function POST(
       return NextResponse.json({ error: "Email not found." }, { status: 404 });
     }
 
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 500,
+    const text = await createChatCompletionText({
+      maxTokens: 500,
       system:
         "You are NEXA, an AI email assistant for an Indian SME. Write a professional, warm, concise email reply. Sound human, not corporate. Under 150 words. Return only the email body text, no subject line, no greeting/sign-off.",
       messages: [
@@ -38,11 +36,9 @@ export async function POST(
         },
       ],
     });
-    const text = response.content.find((block) => block.type === "text");
-    const draft =
-      text?.type === "text"
-        ? text.text.trim()
-        : "Thanks for reaching out. We will review this and get back to you shortly.";
+    const draft = text
+      ? text.trim()
+      : "Thanks for reaching out. We will review this and get back to you shortly.";
 
     await prisma.email.update({
       where: { id: email.id },

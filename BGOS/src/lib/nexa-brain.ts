@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type {
   ActivityLog,
   Business,
@@ -9,6 +8,7 @@ import type {
 } from "@prisma/client";
 
 import { sendEmail } from "@/lib/mail";
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 type BusinessCore = Pick<
@@ -563,10 +563,8 @@ export async function generateNexaInsights(
   let insights = insightFallback(context);
 
   try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 700,
+    const text = await createChatCompletionText({
+      maxTokens: 700,
       system: INSIGHT_PROMPT,
       messages: [
         {
@@ -575,12 +573,11 @@ export async function generateNexaInsights(
         },
       ],
     });
-    const text = response.content.find((block) => block.type === "text");
-    if (text?.type === "text") {
-      insights = parseInsights(text.text, context);
+    if (text) {
+      insights = parseInsights(text, context);
     }
   } catch (error) {
-    nexaLog("generateNexaInsights:claude", error);
+    nexaLog("generateNexaInsights:openai", error);
     insights = insightFallback(context);
   }
 

@@ -1,7 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
 import { getBdmContext, monthBounds, todayBounds } from "@/lib/bdm/server";
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 const BRIEF_SYSTEM_PROMPT =
@@ -101,10 +101,8 @@ export async function GET() {
       }),
     ]);
 
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 700,
+    const text = await createChatCompletionText({
+      maxTokens: 700,
       system: BRIEF_SYSTEM_PROMPT,
       messages: [
         {
@@ -120,15 +118,13 @@ export async function GET() {
         },
       ],
     });
-    const textBlock = response.content.find((block) => block.type === "text");
-    const brief =
-      textBlock?.type === "text"
-        ? parseBrief(textBlock.text)
-        : {
-            greeting: `Good morning, ${context.user.name}. Focus on your hottest follow-ups today.`,
-            tasks: [],
-            insights: [],
-          };
+    const brief = text
+      ? parseBrief(text)
+      : {
+          greeting: `Good morning, ${context.user.name}. Focus on your hottest follow-ups today.`,
+          tasks: [],
+          insights: [],
+        };
 
     const savedBrief = await prisma.dailyBrief.create({
       data: {

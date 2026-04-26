@@ -1,9 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { EmailLabel } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentBusiness } from "@/lib/dashboard/server";
 import { getGmailClient } from "@/lib/gmail";
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 function isEmailLabel(value: unknown): value is EmailLabel {
@@ -15,10 +15,8 @@ function isEmailLabel(value: unknown): value is EmailLabel {
 
 async function summarizeEmail(subject: string, body: string) {
   try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 180,
+    const text = await createChatCompletionText({
+      maxTokens: 180,
       system:
         "Summarize this email in exactly 2 concise sentences for a business owner. Return only the summary.",
       messages: [
@@ -28,8 +26,7 @@ async function summarizeEmail(subject: string, body: string) {
         },
       ],
     });
-    const text = response.content.find((block) => block.type === "text");
-    return text?.type === "text" ? text.text.trim() : null;
+    return text ? text.trim() : null;
   } catch {
     return null;
   }

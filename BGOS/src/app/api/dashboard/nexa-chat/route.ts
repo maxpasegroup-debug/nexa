@@ -1,8 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
 import { getCurrentBusiness } from "@/lib/dashboard/server";
 import { buildNexaSystemPrompt } from "@/lib/nexa-context";
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 function detectRequestedAction(message: string) {
@@ -132,12 +132,8 @@ export async function POST(request: Request) {
       role: item.role === "user" ? ("user" as const) : ("assistant" as const),
       content: item.content,
     }));
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 600,
+    const text = await createChatCompletionText({
+      maxTokens: 600,
       system: systemPrompt,
       messages: [
         ...contextMessages,
@@ -147,11 +143,9 @@ export async function POST(request: Request) {
         },
       ],
     });
-    const textBlock = response.content.find((block) => block.type === "text");
     const responseText =
-      textBlock?.type === "text"
-        ? textBlock.text
-        : "Focus on your hottest leads today. Start by calling the top scored lead now.";
+      text ||
+      "Focus on your hottest leads today. Start by calling the top scored lead now.";
 
     await prisma.$transaction([
       prisma.nexaMessage.create({

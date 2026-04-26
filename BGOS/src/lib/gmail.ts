@@ -1,7 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { Email, EmailAccount, EmailLabel, Lead } from "@prisma/client";
 import { google } from "googleapis";
 
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 const GMAIL_SCOPES = [
@@ -272,10 +272,8 @@ export async function autoLabelEmail(
   };
 
   try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 600,
+    const text = await createChatCompletionText({
+      maxTokens: 600,
       system:
         "You are NEXA, an AI email classifier. Classify this email and return only a JSON object with: label ('LEAD'|'SUPPORT'|'SPAM'|'INTERNAL'|'IMPORTANT'|'UNCATEGORIZED'), confidence (0-100), reason (one sentence), isLead (boolean), suggestedReply (string — a professional 3-sentence reply draft, or null if not needed). No other text.",
       messages: [
@@ -290,10 +288,9 @@ export async function autoLabelEmail(
         },
       ],
     });
-    const text = response.content.find((block) => block.type === "text");
-    if (text?.type !== "text") return fallback;
+    if (!text) return fallback;
 
-    const parsed = JSON.parse(text.text) as Record<string, unknown>;
+    const parsed = JSON.parse(text) as Record<string, unknown>;
     return {
       label: safeEmailLabel(parsed.label),
       confidence: Math.max(0, Math.min(100, Number(parsed.confidence) || 0)),

@@ -1,1 +1,1 @@
-// Nexa library will contain Anthropic AI client helpers.
+// Nexa library will contain AI client helpers.

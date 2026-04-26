@@ -1,7 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
 import auth from "@/lib/auth";
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 const NEXA_SYSTEM_PROMPT =
@@ -74,20 +74,13 @@ export async function POST(request: Request) {
       },
     });
 
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 220,
+    const text = await createChatCompletionText({
+      maxTokens: 220,
       system: NEXA_SYSTEM_PROMPT,
       messages: buildMessages(updatedAnswers),
     });
-    const textBlock = response.content.find((block) => block.type === "text");
     const nextMessage =
-      textBlock?.type === "text"
-        ? textBlock.text
-        : "Your business HQ is ready. Let us move forward.";
+      text || "Your business HQ is ready. Let us move forward.";
 
     return NextResponse.json({
       nextMessage,

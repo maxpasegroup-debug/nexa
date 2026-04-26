@@ -1,6 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
+import { createChatCompletionText } from "@/lib/openai";
 import { getSdeContext } from "@/lib/sde/server";
 import { prisma } from "@/lib/prisma";
 
@@ -27,10 +27,8 @@ export async function GET() {
     ]);
     const sprintTasks = activeSprint?.tasks.length ?? 0;
     const sprintDone = activeSprint?.tasks.filter((task) => task.status === "DONE").length ?? 0;
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 700,
+    const text = await createChatCompletionText({
+      maxTokens: 700,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: JSON.stringify({
         openTasksCountByPriority: tasksByPriority,
@@ -40,8 +38,7 @@ export async function GET() {
         daysLeftInSprint: activeSprint ? Math.max(0, Math.ceil((activeSprint.endDate.getTime() - Date.now()) / 86400000)) : 0,
       }) }],
     });
-    const text = response.content.find((block) => block.type === "text");
-    const brief = text?.type === "text" ? JSON.parse(text.text) : null;
+    const brief = text ? JSON.parse(text) : null;
     return NextResponse.json({ brief });
   } catch {
     return NextResponse.json({

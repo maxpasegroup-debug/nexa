@@ -1,10 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
 import {
   getCurrentBusiness,
   getDashboardMetrics,
 } from "@/lib/dashboard/server";
+import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 const INSIGHTS_SYSTEM_PROMPT =
@@ -87,12 +87,8 @@ export async function POST() {
       context.business.id,
       context.business.healthScore,
     );
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 500,
+    const text = await createChatCompletionText({
+      maxTokens: 500,
       system: INSIGHTS_SYSTEM_PROMPT,
       messages: [
         {
@@ -105,9 +101,7 @@ export async function POST() {
         },
       ],
     });
-    const textBlock = response.content.find((block) => block.type === "text");
-    const insights =
-      textBlock?.type === "text" ? parseInsights(textBlock.text) : [];
+    const insights = text ? parseInsights(text) : [];
 
     if (insights.length !== 3) {
       return NextResponse.json(
