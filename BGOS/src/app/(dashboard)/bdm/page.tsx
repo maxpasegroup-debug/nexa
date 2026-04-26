@@ -337,6 +337,7 @@ export default async function BdmPage() {
       name: true,
       email: true,
       role: true,
+      defaultPassword: true,
       businessId: true,
       business: { select: { name: true } },
     },
@@ -392,6 +393,7 @@ export default async function BdmPage() {
         name: user.name,
         email: user.email,
         role: user.role,
+        defaultPassword: user.defaultPassword,
         businessId: user.businessId,
         businessName: user.business.name,
       }}

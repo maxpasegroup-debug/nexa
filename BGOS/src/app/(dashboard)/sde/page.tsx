@@ -29,7 +29,7 @@ async function getMetrics(userId: string, businessId: string) {
 export default async function SdePage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { id: true, name: true, email: true, role: true, businessId: true, business: { select: { name: true } } } });
+  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { id: true, name: true, email: true, role: true, defaultPassword: true, businessId: true, business: { select: { name: true } } } });
   if (!user?.businessId || !user.business) redirect("/onboarding");
   const [initialMetrics, tasks, bugs, activeSprint, sprints, escalations, integrations, teamMembers] = await Promise.all([
     getMetrics(user.id, user.businessId),
@@ -97,6 +97,7 @@ export default async function SdePage() {
         id: user.id,
         name: user.name,
         role: user.role,
+        defaultPassword: user.defaultPassword,
         email: user.email,
         businessId: user.businessId,
         businessName: user.business.name,

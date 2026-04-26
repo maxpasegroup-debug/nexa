@@ -1,136 +1,106 @@
-import { getToken } from "next-auth/jwt";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import {
+  BOSS_DOMAIN,
+  EMPLOYEE_DOMAIN,
+  getDomainType,
+  getRedirectForRole,
+  isBossRole,
+  isEmployeeRole,
+} from "@/lib/domain";
 
-const protectedRoutes = ["/boss", "/bdm", "/sde", "/onboarding"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/accept-invite",
+  "/api/auth",
+  "/api/register",
+  "/api/forgot-password",
+  "/api/reset-password",
+  "/api/onboarding",
+];
 
-type OnboardingStatus = {
-  completed: boolean;
-  step: number;
-  businessId: string | null;
-};
-
-function dashboardPathForRole(role?: string) {
-  if (role === "BOSS") {
-    return "/boss";
-  }
-
-  if (role === "BDM") {
-    return "/bdm";
-  }
-
-  if (role === "SDE") {
-    return "/sde";
-  }
-
-  return "/login";
-}
-
-function canAccessRoute(pathname: string, role?: string) {
-  if (pathname.startsWith("/onboarding")) {
-    return true;
-  }
-
-  if (pathname.startsWith("/boss")) {
-    return role === "BOSS";
-  }
-
-  if (pathname.startsWith("/bdm")) {
-    return role === "BDM" || role === "BOSS";
-  }
-
-  if (pathname.startsWith("/sde")) {
-    return role === "SDE" || role === "BOSS";
-  }
-
-  return true;
-}
-
-async function getOnboardingStatus(request: NextRequest) {
-  try {
-    const statusUrl = new URL("/api/onboarding/status", request.nextUrl);
-    const response = await fetch(statusUrl, {
-      headers: {
-        cookie: request.headers.get("cookie") ?? "",
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    return (await response.json()) as OnboardingStatus;
-  } catch {
-    return null;
-  }
-}
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+function isPublicRoute(pathname: string) {
+  return PUBLIC_ROUTES.some((route) => {
+    if (route === "/") return pathname === "/";
+    return pathname === route || pathname.startsWith(`${route}/`);
   });
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route),
-  );
+}
 
-  if (isProtectedRoute && !token) {
-    const loginUrl = new URL("/login", request.nextUrl);
-    loginUrl.searchParams.set("callbackUrl", request.nextUrl.href);
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+  const host = req.headers.get("host") || "";
+  const domainType = getDomainType(host);
+  const session = req.auth;
+  const isProd = process.env.NODE_ENV === "production";
 
-    return NextResponse.redirect(loginUrl);
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next();
   }
 
-  if (token) {
-    const role = token.role as string | undefined;
-    const dashboardPath = dashboardPathForRole(role);
-    const status =
-      pathname === "/login" || isProtectedRoute
-        ? await getOnboardingStatus(request)
-        : null;
+  if (pathname.startsWith("/api/")) return NextResponse.next();
+  if (pathname.startsWith("/_next/")) return NextResponse.next();
 
-    if (status && !status.completed && pathname !== "/onboarding") {
-      return NextResponse.redirect(new URL("/onboarding", request.nextUrl));
+  if (!session?.user) {
+    if (isProd) {
+      if (domainType === "employee") {
+        return NextResponse.redirect(
+          new URL("/login", `https://${EMPLOYEE_DOMAIN}`),
+        );
+      }
+
+      return NextResponse.redirect(new URL("/login", `https://${BOSS_DOMAIN}`));
     }
 
-    if (status?.completed) {
-      if (pathname === "/login" || pathname.startsWith("/onboarding")) {
-        return NextResponse.redirect(new URL(dashboardPath, request.nextUrl));
-      }
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
 
-      if (
-        isProtectedRoute &&
-        !canAccessRoute(pathname, role)
-      ) {
-        return NextResponse.redirect(new URL(dashboardPath, request.nextUrl));
-      }
+  const role = session.user.role as string;
+
+  if (isProd) {
+    if (domainType === "employee" && isBossRole(role)) {
+      const redirectPath = getRedirectForRole(role);
+      return NextResponse.redirect(
+        new URL(redirectPath, `https://${BOSS_DOMAIN}`),
+      );
     }
 
-    if (!status) {
-      if (pathname === "/login") {
-        return NextResponse.redirect(new URL(dashboardPath, request.nextUrl));
-      }
-
-      if (
-        isProtectedRoute &&
-        !canAccessRoute(pathname, role)
-      ) {
-        return NextResponse.redirect(new URL(dashboardPath, request.nextUrl));
-      }
+    if (domainType === "boss" && isEmployeeRole(role)) {
+      const redirectPath = getRedirectForRole(role);
+      return NextResponse.redirect(
+        new URL(redirectPath, `https://${EMPLOYEE_DOMAIN}`),
+      );
     }
+  }
+
+  if (role === "OWNER" && pathname.startsWith("/boss")) {
+    return NextResponse.redirect(new URL("/internal", req.url));
+  }
+
+  if (pathname.startsWith("/internal") && role !== "OWNER") {
+    return NextResponse.redirect(new URL(getRedirectForRole(role), req.url));
+  }
+
+  if (
+    isEmployeeRole(role) &&
+    (pathname.startsWith("/boss") || pathname.startsWith("/internal"))
+  ) {
+    return NextResponse.redirect(new URL(getRedirectForRole(role), req.url));
+  }
+
+  if (
+    isBossRole(role) &&
+    (pathname.startsWith("/bdm") || pathname.startsWith("/sde"))
+  ) {
+    return NextResponse.redirect(new URL(getRedirectForRole(role), req.url));
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
-  matcher: [
-    "/boss/:path*",
-    "/bdm/:path*",
-    "/sde/:path*",
-    "/onboarding",
-    "/onboarding/:path*",
-    "/login",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
 };

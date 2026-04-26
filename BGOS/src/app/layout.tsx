@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Syne } from "next/font/google";
 
 import { ToastProvider } from "@/components/ui/toast";
+import { SessionProvider } from "@/components/auth/session-provider";
 import "./globals.css";
 
 const syne = Syne({
@@ -50,7 +51,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${syne.variable} ${dmSans.variable}`}>
       <body className="min-h-screen bg-[#070709] font-sans text-white antialiased">
-        <ToastProvider>{children}</ToastProvider>
+        <SessionProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </SessionProvider>
       </body>
     </html>
   );

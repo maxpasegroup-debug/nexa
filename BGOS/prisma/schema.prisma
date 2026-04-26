@@ -13,6 +13,8 @@ model User {
   email             String    @unique
   password          String
   role              Role      @default(BDM)
+  defaultPassword   Boolean   @default(false)
+  employeeCode      String?   @unique @default(cuid())
   businessId        String?
   business          Business? @relation(fields: [businessId], references: [id])
   resetToken        String?
@@ -33,13 +35,26 @@ model User {
   bugsAssigned      Bug[]        @relation("BugAssignee")
   escalationsRaised Escalation[] @relation("EscalationRaiser")
   escalationsResolved Escalation[] @relation("EscalationResolver")
+  passwordResets    PasswordResetRequest[] @relation("UserPasswordResets")
+  resetRequestsMade PasswordResetRequest[] @relation("ResetRequester")
 }
 
 enum Role {
+  OWNER
   BOSS
   BDM
   SDE
   ADMIN
+}
+
+model PasswordResetRequest {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("UserPasswordResets", fields: [userId], references: [id])
+  requestedBy String
+  requester   User     @relation("ResetRequester", fields: [requestedBy], references: [id])
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 model Business {

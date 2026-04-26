@@ -5,7 +5,6 @@ import {
   Archive,
   ExternalLink,
   Forward,
-  Inbox,
   Loader2,
   MailOpen,
   Send,

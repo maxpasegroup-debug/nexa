@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AlertTriangle, Bug, CheckCircle2, GitPullRequest, ListTodo } from "lucide-react";
 
 import { DailyBrief } from "@/components/bdm/daily-brief";
@@ -30,7 +31,7 @@ type Metrics = {
 };
 
 type Props = {
-  user: SdeUser & { businessId: string; businessName: string };
+  user: SdeUser & { businessId: string; businessName: string; defaultPassword: boolean };
   initialMetrics: Metrics;
   initialTasks: SdeTask[];
   initialBugs: SdeBug[];
@@ -99,6 +100,7 @@ export function SdeDashboard({ user, initialMetrics, initialTasks, initialBugs, 
       <Navbar title="SDE Dashboard" userName={user.name} />
       {(criticalCount + urgentCount) > 0 ? <button onClick={() => document.getElementById("sde-issues")?.scrollIntoView({ behavior: "smooth" })} className="fixed right-[344px] top-3 z-40 rounded-xl bg-[#FF6B6B] px-3 py-2 text-sm font-bold text-white animate-pulse">{criticalCount + urgentCount} urgent</button> : null}
       <main className="pt-[60px]"><div className="space-y-8 p-8">
+        {user.defaultPassword ? <div className="rounded-2xl border border-[#F5A623]/30 bg-[#F5A623]/10 px-5 py-4 text-sm text-[#F5A623]">Your password is still the default. Please change it now for security. <Link href="/sde/settings" className="font-bold underline">Change password →</Link></div> : null}
         {brief ? <section className="rounded-2xl border border-white/10 bg-[#13131c] p-4"><button onClick={() => setBriefOpen((v) => !v)} className="text-sm font-bold text-[#7C6FFF]">{briefOpen ? "Hide today's brief" : "See today's brief"}</button>{briefOpen ? <div className="mt-4"><DailyBrief brief={brief} loading={false} /></div> : null}</section> : null}
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">{metricCards.map((card, index) => <MetricCard key={card.title} title={card.title} value={card.value} icon={card.icon} loading={revealed <= index} />)}</section>
         <section className="rounded-2xl border border-white/10 bg-[#13131c] p-5"><h2 className="mb-4 font-heading text-lg font-bold">Task Board</h2><TaskBoard tasks={tasks} sprints={sprints} onTaskUpdate={upsertTask} onTaskCreate={upsertTask} onTaskClick={(task) => setSelectedTaskId(task.id)} /></section>

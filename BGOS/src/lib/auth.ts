@@ -11,20 +11,23 @@ import { prisma } from "@/lib/prisma";
 declare module "next-auth" {
   interface User {
     role?: Role;
+    defaultPassword?: boolean;
   }
 
   interface Session {
     user: {
       id: string;
       role: Role;
+      defaultPassword: boolean;
     } & DefaultSession["user"];
   }
 }
 
-declare module "next-auth/jwt" {
+declare module "@auth/core/jwt" {
   interface JWT {
     id?: string;
     role?: Role;
+    defaultPassword?: boolean;
   }
 }
 
@@ -69,15 +72,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           email: user.email,
           role: user.role,
+          defaultPassword: user.defaultPassword,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.defaultPassword = user.defaultPassword ?? false;
+      }
+
+      if (trigger === "update" && session?.user) {
+        token.defaultPassword = Boolean(session.user.defaultPassword);
       }
 
       return token;
@@ -86,6 +95,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id ?? "";
         session.user.role = token.role ?? "BDM";
+        session.user.defaultPassword = token.defaultPassword ?? false;
       }
 
       return session;

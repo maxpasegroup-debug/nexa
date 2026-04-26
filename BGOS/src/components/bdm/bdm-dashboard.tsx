@@ -29,6 +29,7 @@ type BdmUser = {
   name: string;
   email: string;
   role: string;
+  defaultPassword: boolean;
   businessId: string;
   businessName: string;
 };
@@ -217,6 +218,16 @@ export function BdmDashboard({
 
       <main className="pt-[60px]">
         <div className="space-y-8 p-8">
+          {user.defaultPassword ? (
+            <div className="rounded-2xl border border-[#F5A623]/30 bg-[#F5A623]/10 px-5 py-4 text-sm text-[#F5A623]">
+              Your password is still the default. Please change it now for
+              security.{" "}
+              <Link href="/bdm/settings" className="font-bold underline">
+                Change password →
+              </Link>
+            </div>
+          ) : null}
+
           <DailyBrief
             brief={initialBrief}
             loading={false}
