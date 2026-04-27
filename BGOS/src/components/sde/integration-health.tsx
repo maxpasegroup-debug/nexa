@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import type { IntegrationHealthItem } from "@/components/sde/types";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type IntegrationHealthProps = {
   integrations: IntegrationHealthItem[];
@@ -51,8 +52,9 @@ export function IntegrationHealth({ integrations, compact = false }: Integration
         {!compact ? <button type="button" onClick={() => void runCheck()} className="rounded-lg bg-[#7C6FFF] px-3 py-2 text-xs font-bold text-white">{checking ? "Checking..." : "Run health check"}</button> : null}
       </div>
       {hasDown ? <div className="mb-4 rounded-xl border border-[#FF6B6B]/30 bg-[#FF6B6B]/10 p-3 text-sm text-[#FF6B6B]">Integration issue detected. Check the escalation feed.</div> : null}
-      <div className="grid gap-3 md:grid-cols-2">
-        {items.map((item) => (
+      {items.length > 0 ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          {items.map((item) => (
           <div key={item.id} className={`rounded-xl border border-white/10 bg-[#0e0e13] p-4 ${checking ? "animate-pulse" : ""}`}>
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-heading text-sm font-bold text-white">{item.name}</h3>
@@ -64,8 +66,14 @@ export function IntegrationHealth({ integrations, compact = false }: Integration
               <p>Checked {timeAgo(item.lastChecked)}</p>
             </div>
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="No integrations tracked yet"
+          description="Run a health check to initialize the default integrations."
+        />
+      )}
     </section>
   );
 }

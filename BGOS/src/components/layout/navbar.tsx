@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { Bell, Mail } from "lucide-react";
+import { Bell, Mail, Menu } from "lucide-react";
 
 type NavbarProps = {
   title: string;
@@ -63,13 +63,18 @@ function getNexaStatus(lastActionAt: string | null): NexaStatus {
 }
 
 export function Navbar({ title, userName, role }: NavbarProps) {
-  const [hasUnreadInsights, setHasUnreadInsights] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notifications, setNotifications] = useState<
+    Array<{ id: string; message: string; action?: string | null }>
+  >([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [lastNexaActionAt, setLastNexaActionAt] = useState<string | null>(null);
   const [unreadEmailCount, setUnreadEmailCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const nexaStatus = getNexaStatus(lastNexaActionAt);
   const isBoss = role === "BOSS" || role === "ADMIN";
+  const nexaHref = role === "SDE" ? "/sde" : role === "BDM" ? "/bdm" : "/boss/nexa";
 
   useEffect(() => {
     if (!isBoss) return;
@@ -90,7 +95,7 @@ export function Navbar({ title, userName, role }: NavbarProps) {
 
   useEffect(() => {
     async function loadUnreadInsights() {
-      const response = await fetch("/api/dashboard/nexa-insights", {
+      const response = await fetch("/api/notifications", {
         cache: "no-store",
       });
 
@@ -98,8 +103,12 @@ export function Navbar({ title, userName, role }: NavbarProps) {
         return;
       }
 
-      const data = (await response.json()) as { insights?: unknown[] };
-      setHasUnreadInsights(Boolean(data.insights?.length));
+      const data = (await response.json()) as {
+        count?: number;
+        insights?: Array<{ id: string; message: string; action?: string | null }>;
+      };
+      setNotificationCount(data.count ?? 0);
+      setNotifications(data.insights ?? []);
     }
 
     void loadUnreadInsights();
@@ -139,15 +148,30 @@ export function Navbar({ title, userName, role }: NavbarProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  function scrollToInsights() {
-    document
-      .getElementById("nexa-insights-panel")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  async function markRead(id: string) {
+    const response = await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!response.ok) return;
+    setNotifications((current) => current.filter((item) => item.id !== id));
+    setNotificationCount((current) => Math.max(0, current - 1));
   }
 
   return (
     <header className="fixed left-[240px] right-0 top-0 z-30 flex h-[60px] items-center justify-between border-b border-[rgba(255,255,255,0.07)] bg-[rgba(13,13,17,0.8)] px-8 backdrop-blur-[12px]">
-      <h1 className="font-heading text-base font-bold text-white">{title}</h1>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("bgos:toggle-sidebar"))}
+          className="rounded-xl border border-white/10 p-2 text-zinc-300 transition hover:text-white md:hidden"
+          aria-label="Open navigation"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <h1 className="font-heading text-base font-bold text-white">{title}</h1>
+      </div>
 
       <div className="flex items-center gap-4">
         {isBoss ? (
@@ -165,17 +189,51 @@ export function Navbar({ title, userName, role }: NavbarProps) {
           </Link>
         ) : null}
 
-        <button
-          type="button"
-          onClick={scrollToInsights}
-          className="relative rounded-xl border border-white/10 p-2 text-zinc-300 transition hover:border-[#7C6FFF]/50 hover:text-white"
-          aria-label="View NEXA insights"
-        >
-          <Bell className="h-5 w-5" />
-          {hasUnreadInsights ? (
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#FF6B6B]" />
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen((value) => !value)}
+            className="relative rounded-xl border border-white/10 p-2 text-zinc-300 transition hover:border-[#7C6FFF]/50 hover:text-white"
+            aria-label="View notifications"
+          >
+            <Bell className="h-5 w-5" />
+            {notificationCount > 0 ? (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#FF6B6B] px-1 text-[9px] font-bold text-white">
+                {notificationCount > 9 ? "9+" : notificationCount}
+              </span>
+            ) : null}
+          </button>
+          {notificationsOpen ? (
+            <div className="absolute right-0 mt-3 w-80 rounded-xl border border-white/10 bg-[#13131c] p-3 shadow-2xl shadow-black/40">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-bold text-white">Notifications</p>
+                <Link href={nexaHref} className="text-xs font-semibold text-[#7C6FFF]">
+                  View all
+                </Link>
+              </div>
+              {notifications.length > 0 ? (
+                <div className="space-y-2">
+                  {notifications.map((item) => (
+                    <div key={item.id} className="rounded-lg border border-white/10 bg-[#0e0e13] p-3">
+                      <p className="text-xs leading-5 text-zinc-300">{item.message}</p>
+                      <button
+                        type="button"
+                        onClick={() => void markRead(item.id)}
+                        className="mt-2 text-xs font-semibold text-[#22D9A0]"
+                      >
+                        Mark read
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-lg border border-white/10 bg-[#0e0e13] p-4 text-center text-xs text-zinc-500">
+                  No unread notifications.
+                </p>
+              )}
+            </div>
           ) : null}
-        </button>
+        </div>
 
         <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-bold sm:flex">
           <span className={`relative flex h-2 w-2 rounded-full ${nexaStatus.dotClass}`}>

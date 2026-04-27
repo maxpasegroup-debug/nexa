@@ -47,7 +47,6 @@ export default async function InternalTeamPage() {
     where: {
       businessId: business.id,
       role: { in: ["BDM", "SDE"] },
-      email: { endsWith: "@iceconnect.in", mode: "insensitive" },
     },
     orderBy: { createdAt: "desc" },
     select: {

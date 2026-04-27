@@ -1,3 +1,5 @@
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+
 export default function DashboardLayout({
   children,
 }: Readonly<{
@@ -5,7 +7,7 @@ export default function DashboardLayout({
 }>) {
   return (
     <div className="min-h-screen bg-[#070709] font-sans text-white">
-      {children}
+      <ErrorBoundary>{children}</ErrorBoundary>
     </div>
   );
 }

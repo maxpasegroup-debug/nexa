@@ -58,6 +58,14 @@ const roleLinks: Record<string, NavItem[]> = {
     { label: "Escalations", href: "/sde/escalations", icon: AlertTriangle },
     { label: "Settings", href: "/sde/settings", icon: Settings },
   ],
+  OWNER: [
+    { label: "Overview", href: "/internal", icon: LayoutDashboard },
+    { label: "Customers", href: "/internal/customers", icon: Users },
+    { label: "My Team", href: "/internal/team", icon: Users },
+    { label: "BGOS Leads", href: "/internal/leads", icon: Target },
+    { label: "NEXA", href: "/internal/nexa", icon: Bot },
+    { label: "Settings", href: "/internal/settings", icon: Settings },
+  ],
 };
 
 function initials(name: string) {
@@ -82,7 +90,7 @@ function roleBadgeClass(role: string) {
 }
 
 function isActive(pathname: string, href: string) {
-  if (href === "/boss" || href === "/bdm" || href === "/sde") {
+  if (href === "/boss" || href === "/bdm" || href === "/sde" || href === "/internal") {
     return pathname === href;
   }
 
@@ -95,6 +103,16 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
   const displayBusinessName =
     businessName.length > 24 ? `${businessName.slice(0, 24)}...` : businessName;
   const [unreadCount, setUnreadCount] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    function toggle() {
+      setMobileOpen((value) => !value);
+    }
+
+    window.addEventListener("bgos:toggle-sidebar", toggle);
+    return () => window.removeEventListener("bgos:toggle-sidebar", toggle);
+  }, []);
 
   useEffect(() => {
     if (role !== "BOSS" && role !== "ADMIN") return;
@@ -114,7 +132,20 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
   }, [role]);
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col border-r border-[rgba(255,255,255,0.07)] bg-[#0d0d11]">
+    <>
+    {mobileOpen ? (
+      <button
+        type="button"
+        aria-label="Close navigation overlay"
+        onClick={() => setMobileOpen(false)}
+        className="fixed inset-0 z-40 bg-black/70 md:hidden"
+      />
+    ) : null}
+    <aside
+      className={`fixed left-0 top-0 z-50 flex h-screen w-[240px] flex-col border-r border-[rgba(255,255,255,0.07)] bg-[#0d0d11] transition-transform md:z-40 md:translate-x-0 ${
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       <div className="border-b border-white/10 px-6 py-5">
         <div className="font-heading text-xl font-bold tracking-normal">
           <span className="text-white">BG</span>
@@ -135,6 +166,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
                 active
                   ? "border-l-2 border-[#7C6FFF] bg-[rgba(124,111,255,0.12)] text-white"
@@ -181,5 +213,6 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
         </button>
       </div>
     </aside>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { GripVertical, Plus } from "lucide-react";
 
 import type { Priority, SdeSprint, SdeTask, TaskStatus } from "@/components/sde/types";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type TaskBoardProps = {
   tasks: SdeTask[];
@@ -185,6 +186,13 @@ export function TaskBoard({
           ))}
         </select>
       </div>
+
+      {visibleTasks.length === 0 ? (
+        <EmptyState
+          title="No tasks yet"
+          description="Create a task to start organizing engineering work."
+        />
+      ) : null}
 
       <div className="flex gap-4 overflow-x-auto pb-2">
         {columns.map((column) => {

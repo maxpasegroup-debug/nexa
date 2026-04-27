@@ -1,4 +1,4 @@
-import { sendEmail } from "@/lib/mail";
+import { sendEmail } from "@/lib/email";
 
 type DevPriority = "urgent" | "high" | "normal";
 
@@ -27,10 +27,11 @@ export async function notifyDev(
     timeZone: "Asia/Kolkata",
   }).format(new Date());
 
-  return sendEmail(
+  return sendEmail({
     to,
+    toName: "BGOS Dev",
     subject,
-    `
+    html: `
       <div style="font-family: Arial, sans-serif; background:#070709; color:#f5f5f7; padding:28px;">
         <div style="max-width:640px; margin:0 auto; background:#13131c; border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:24px;">
           <div style="font-size:22px; font-weight:800; letter-spacing:0.02em;">
@@ -48,5 +49,5 @@ export async function notifyDev(
         </div>
       </div>
     `,
-  );
+  });
 }

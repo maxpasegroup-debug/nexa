@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import {
   BgosInternalDashboard,
   type InternalBusiness,
-  type InternalInsight,
   type InternalTeamMember,
 } from "@/components/internal/bgos-internal-dashboard";
 
@@ -127,7 +126,6 @@ export default async function InternalPage() {
       where: {
         businessId: internalBusiness.id,
         role: { in: ["BDM", "SDE"] },
-        email: { endsWith: "@iceconnect.in", mode: "insensitive" },
       },
       orderBy: { name: "asc" },
       select: {
@@ -214,20 +212,13 @@ export default async function InternalPage() {
     };
   });
 
-  const fallbackInsights: InternalInsight[] = [
-    {
-      id: "bgos-churn-risk",
-      type: "warning",
-      message: "2 customers haven't logged in for 7 days - churn risk.",
-      action: "Ask the BDM team to schedule check-ins today.",
-    },
-    {
-      id: "bgos-kochi-signup",
-      type: "opportunity",
-      message: "New customer signed up from Kochi today.",
-      action: "Review onboarding progress and offer setup help.",
-    },
-  ];
+  const validInsights = savedInsights.filter((insight) => {
+    const text = `${insight.message} ${insight.action ?? ""}`.toLowerCase();
+    if (totalCustomers === 0 && text.includes("customer")) return false;
+    if (totalLeads === 0 && text.includes("lead")) return false;
+    if (teamMembers.length === 0 && text.includes("team")) return false;
+    return true;
+  });
 
   return (
     <BgosInternalDashboard
@@ -250,14 +241,10 @@ export default async function InternalPage() {
       }}
       businesses={businesses}
       teamMembers={bgosTeam}
-      insights={
-        savedInsights.length > 0
-          ? savedInsights.map((insight) => ({
-              ...insight,
-              action: insight.action ?? null,
-            }))
-          : fallbackInsights
-      }
+      insights={validInsights.map((insight) => ({
+        ...insight,
+        action: insight.action ?? null,
+      }))}
     />
   );
 }

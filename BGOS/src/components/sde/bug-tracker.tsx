@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { BugDrawer } from "@/components/sde/bug-drawer";
 import type { BugStatus, SdeBug, SdeUser, Severity } from "@/components/sde/types";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type BugTrackerProps = {
   bugs: SdeBug[];
@@ -108,6 +109,12 @@ export function BugTracker({ bugs, teamMembers, onBugUpdate, onBugCreate }: BugT
           <thead className="border-b border-white/10 text-xs uppercase text-zinc-500"><tr><th className="px-4 py-3">Severity</th><th>Title</th><th>Status</th><th>Reported by</th><th>Assigned to</th><th>Created</th><th>Actions</th></tr></thead>
           <tbody>{filtered.map((bug) => <tr key={bug.id} onClick={() => setSelectedBugId(bug.id)} className="cursor-pointer border-b border-white/5 hover:bg-white/[0.03]"><td className="px-4 py-3"><span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${severityClass[bug.severity]}`}>{bug.severity}</span></td><td className="font-semibold text-white">{bug.title}</td><td className="text-zinc-400">{bug.status}</td><td className="text-zinc-400">{bug.reporter?.name ?? "-"}</td><td className="text-zinc-400">{bug.assignee?.name ?? "Unassigned"}</td><td className="text-zinc-500">{new Date(bug.createdAt).toLocaleDateString("en-IN")}</td><td><button className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300">Open</button></td></tr>)}</tbody>
         </table>
+        {filtered.length === 0 ? (
+          <EmptyState
+            title="No bugs found"
+            description="Reported bugs will appear here with severity, owner, and status."
+          />
+        ) : null}
       </div>
       <BugDrawer bugId={selectedBugId} onClose={() => setSelectedBugId(null)} bugs={bugs} onBugUpdate={onBugUpdate} />
     </section>

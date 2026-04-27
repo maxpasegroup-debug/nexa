@@ -3,7 +3,7 @@ import type { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import auth from "@/lib/auth";
-import { sendEmail } from "@/lib/mail";
+import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 function isInviteRole(value: unknown): value is "BDM" | "SDE" {
@@ -185,13 +185,14 @@ export async function POST(request: Request) {
     });
     const acceptLink = `${process.env.NEXT_PUBLIC_APP_URL}/accept-invite?token=${invite.token}`;
 
-    await sendEmail(
-      invite.email,
-      "You have been added to BGOS",
-      `<p>Hi ${invite.name},</p><p>${boss.name} has invited you to join their BGOS business HQ.</p><p><a href="${acceptLink}">Accept your invite</a></p>`,
-    );
+    const emailSent = await sendEmail({
+      to: invite.email,
+      toName: invite.name,
+      subject: "You have been added to BGOS",
+      html: `<p>Hi ${invite.name},</p><p>${boss.name} has invited you to join their BGOS business HQ.</p><p><a href="${acceptLink}">Accept your invite</a></p>`,
+    });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, emailSent });
   } catch {
     return NextResponse.json(
       { error: "Unable to process team invitation." },

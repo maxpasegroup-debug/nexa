@@ -75,3 +75,17 @@ body {
     opacity: 1;
   }
 }
+
+@media (max-width: 767px) {
+  [class*="pl-[240px]"] {
+    padding-left: 0 !important;
+  }
+
+  [class*="left-[240px]"] {
+    left: 0 !important;
+  }
+
+  [class*="right-[344px]"] {
+    right: 16px !important;
+  }
+}

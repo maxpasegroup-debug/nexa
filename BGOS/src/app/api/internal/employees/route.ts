@@ -94,7 +94,10 @@ export async function GET() {
   }
 
   const employees = await prisma.user.findMany({
-    where: { businessId: context.business.id },
+    where: {
+      businessId: context.business.id,
+      role: { in: ["BDM", "SDE"] },
+    },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,

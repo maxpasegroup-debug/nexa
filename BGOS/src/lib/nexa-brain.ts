@@ -41,6 +41,10 @@ type BusinessContext = {
     emailsUnread: number;
     emailsFromLeads: number;
     emailsNeedingReply: number;
+    totalCustomers: number;
+    totalPlatformUsers: number;
+    customerUsers: number;
+    internalUsers: number;
   };
   recentActivity: ActivityLog[];
   topLeads: Lead[];
@@ -57,7 +61,7 @@ type GeneratedInsight = {
 };
 
 const INSIGHT_PROMPT =
-  "You are NEXA, the AI CEO of a business. Analyse the business data provided and generate exactly 3 actionable insights. Each insight must be specific, data-driven, and tell the user exactly what to do. Return only a valid JSON array with no markdown, no code blocks. Each object has: type ('warning'|'opportunity'|'action'), message (string, max 20 words, specific to their data), action (string, max 10 words, one concrete next step), priority ('high'|'medium'|'low').";
+  "You are NEXA, the AI CEO of a business. Analyse the business data provided and generate exactly 3 actionable insights. Each insight must be specific, data-driven, and tell the user exactly what to do. Only reference data that actually has non-zero values. Never mention customers, leads, or team members that do not exist in the data provided. If a metric is 0 do not generate an insight about it. Return only a valid JSON array with no markdown, no code blocks. Each object has: type ('warning'|'opportunity'|'action'), message (string, max 20 words, specific to their data), action (string, max 10 words, one concrete next step), priority ('high'|'medium'|'low').";
 
 function nexaLog(fn: string, error: unknown) {
   console.error(`[NEXA Brain] ${fn} failed:`, error);
@@ -95,6 +99,10 @@ function fallbackContext(): BusinessContext {
       emailsUnread: 0,
       emailsFromLeads: 0,
       emailsNeedingReply: 0,
+      totalCustomers: 0,
+      totalPlatformUsers: 0,
+      customerUsers: 0,
+      internalUsers: 0,
     },
     recentActivity: [],
     topLeads: [],
@@ -122,26 +130,54 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function insightFallback(context: BusinessContext): GeneratedInsight[] {
-  return [
-    {
+  const insights: GeneratedInsight[] = [];
+
+  if (context.overdueFollowUps.length > 0) {
+    insights.push({
       type: "warning",
       message: `${context.overdueFollowUps.length} leads need follow-up today.`,
       action: "Call overdue leads",
       priority: "high",
-    },
-    {
+    });
+  }
+
+  if (context.metrics.hotLeads > 0) {
+    insights.push({
       type: "opportunity",
       message: `${context.metrics.hotLeads} hot leads are ready for conversion.`,
       action: "Prioritise hot leads",
       priority: "medium",
-    },
-    {
+    });
+  }
+
+  if (context.metrics.totalCustomers > 0) {
+    insights.push({
       type: "action",
-      message: `Business health is ${context.business.healthScore}. Review weak areas.`,
-      action: "Open dashboard",
+      message: `${context.metrics.totalCustomers} customer businesses are active on the platform.`,
+      action: "Review customers",
       priority: "medium",
-    },
-  ];
+    });
+  }
+
+  if (context.metrics.openBugs > 0) {
+    insights.push({
+      type: "warning",
+      message: `${context.metrics.openBugs} open bugs need engineering attention.`,
+      action: "Review bugs",
+      priority: context.metrics.criticalBugs > 0 ? "high" : "medium",
+    });
+  }
+
+  if (insights.length === 0) {
+    insights.push({
+      type: "action",
+      message: `Business health is ${context.business.healthScore}. Review setup progress.`,
+      action: "Open dashboard",
+      priority: "low",
+    });
+  }
+
+  return insights.slice(0, 3);
 }
 
 function parseInsights(text: string, context: BusinessContext): GeneratedInsight[] {
@@ -332,6 +368,7 @@ export async function getBusinessContext(
     const business = await prisma.business.findUniqueOrThrow({
       where: { id: businessId },
       select: {
+        id: true,
         name: true,
         type: true,
         teamSize: true,
@@ -339,6 +376,7 @@ export async function getBusinessContext(
         healthScore: true,
       },
     });
+    const isInternalBusiness = business.name.toLowerCase() === "bgos";
 
     const [
       totalLeads,
@@ -367,6 +405,10 @@ export async function getBusinessContext(
       emailsUnread,
       emailsFromLeads,
       emailsNeedingReply,
+      totalCustomers,
+      totalPlatformUsers,
+      customerUsers,
+      internalUsers,
     ] = await Promise.all([
       prisma.lead.count({ where: { businessId } }),
       prisma.lead.count({ where: { businessId, score: { gt: 70 } } }),
@@ -473,6 +515,16 @@ export async function getBusinessContext(
           receivedAt: { gte: daysAgo(2) },
         },
       }),
+      isInternalBusiness
+        ? prisma.business.count({ where: { id: { not: business.id } } })
+        : Promise.resolve(0),
+      isInternalBusiness ? prisma.user.count() : Promise.resolve(0),
+      isInternalBusiness
+        ? prisma.user.count({ where: { businessId: { not: business.id } } })
+        : Promise.resolve(0),
+      isInternalBusiness
+        ? prisma.user.count({ where: { businessId: business.id } })
+        : Promise.resolve(0),
     ]);
 
     const recentActiveBdmIds = new Set(
@@ -516,6 +568,10 @@ export async function getBusinessContext(
         emailsUnread,
         emailsFromLeads,
         emailsNeedingReply,
+        totalCustomers,
+        totalPlatformUsers,
+        customerUsers,
+        internalUsers,
       },
       recentActivity,
       topLeads,
