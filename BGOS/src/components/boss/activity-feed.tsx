@@ -1,5 +1,7 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/EmptyState";
+
 type Activity = {
   id: string;
   action: string;
@@ -58,9 +60,11 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
 
   if (activities.length === 0) {
     return (
-      <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-white/10 bg-[#0e0e13] px-6 text-center text-sm text-zinc-500">
-        No activity yet. Your team&apos;s actions will appear here.
-      </div>
+      <EmptyState
+        title="No recent activity yet"
+        description="Start by adding a lead or onboarding a client."
+        action={{ label: "Add a lead", href: "/boss/leads" }}
+      />
     );
   }
 

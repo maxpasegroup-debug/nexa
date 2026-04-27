@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import cuid from "cuid";
 
 import auth from "@/lib/auth";
-import { sendEmail } from "@/lib/mail";
+import { sendWelcomeEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 const DEFAULT_PASSWORD = "123456789";
@@ -24,6 +24,10 @@ function escapeHtml(value: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }
 
 async function getOwnerAndBusiness() {
@@ -80,6 +84,8 @@ function welcomeEmailHtml(name: string, email: string) {
     </div>
   `;
 }
+
+void welcomeEmailHtml;
 
 export async function GET() {
   const context = await getOwnerAndBusiness();
@@ -145,73 +151,174 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const context = await getOwnerAndBusiness();
-  if (!context) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  try {
+    console.log("[ADD-EMP] Starting...");
 
-  const body = (await request.json()) as {
-    name?: string;
-    email?: string;
-    role?: string;
-  };
-  const name = body.name?.trim();
-  const email = body.email?.trim().toLowerCase();
-  const role = body.role;
+    let context: Awaited<ReturnType<typeof getOwnerAndBusiness>>;
+    try {
+      context = await getOwnerAndBusiness();
+      console.log("[ADD-EMP] Auth:", context?.owner.id ?? null);
+    } catch (authError) {
+      console.error("[ADD-EMP] Auth lookup failed:", authError);
+      return NextResponse.json(
+        { error: `Failed to verify owner: ${errorMessage(authError)}` },
+        { status: 500 },
+      );
+    }
 
-  if (!name || !email || (role !== "BDM" && role !== "SDE")) {
-    return NextResponse.json({ error: "Invalid employee details." }, { status: 400 });
-  }
+    if (!context) {
+      console.warn("[ADD-EMP] Forbidden: owner context missing");
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return NextResponse.json({ error: "Email already exists." }, { status: 400 });
-  }
+    let body: { name?: string; email?: string; role?: string };
+    try {
+      body = (await request.json()) as {
+        name?: string;
+        email?: string;
+        role?: string;
+      };
+      console.log("[ADD-EMP] Body:", JSON.stringify(body));
+    } catch (bodyError) {
+      console.error("[ADD-EMP] Body parse failed:", bodyError);
+      return NextResponse.json(
+        { error: `Invalid JSON body: ${errorMessage(bodyError)}` },
+        { status: 400 },
+      );
+    }
 
-  const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 12);
-  const employee = await prisma.user.create({
-    data: {
-      name,
-      email,
-      role,
-      password: hashedPassword,
-      defaultPassword: true,
-      businessId: context.business.id,
-      employeeCode: cuid(),
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      defaultPassword: true,
-    },
-  });
+    const name = body.name?.trim();
+    const email = body.email?.trim().toLowerCase();
+    const role = body.role;
 
-  await Promise.all([
-    sendEmail(
-      employee.email,
-      "Welcome to BGOS — Your account is ready",
-      welcomeEmailHtml(employee.name, employee.email),
-    ),
-    prisma.activityLog.create({
-      data: {
-        businessId: context.business.id,
-        userId: context.owner.id,
-        action: "Employee account created",
-        entity: "User",
-        entityId: employee.id,
-        meta: { email: employee.email, role: employee.role },
-      },
-    }),
-  ]);
+    if (!name || !email || (role !== "BDM" && role !== "SDE")) {
+      console.warn("[ADD-EMP] Invalid employee details:", { name, email, role });
+      return NextResponse.json(
+        { error: "Invalid employee details." },
+        { status: 400 },
+      );
+    }
 
-  return NextResponse.json({
-    user: {
+    try {
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing) {
+        console.warn("[ADD-EMP] Email already exists:", email);
+        return NextResponse.json(
+          { error: "Email already exists." },
+          { status: 400 },
+        );
+      }
+    } catch (existingError) {
+      console.error("[ADD-EMP] Existing-user check failed:", existingError);
+      return NextResponse.json(
+        {
+          error: `Failed to check existing employee: ${errorMessage(
+            existingError,
+          )}`,
+        },
+        { status: 500 },
+      );
+    }
+
+    let employee: {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      createdAt: Date;
+      defaultPassword: boolean;
+    };
+
+    try {
+      const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+      employee = await prisma.user.create({
+        data: {
+          name,
+          email,
+          role,
+          password: hashedPassword,
+          defaultPassword: true,
+          businessId: context.business.id,
+          employeeCode: cuid(),
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          defaultPassword: true,
+        },
+      });
+      console.log("[ADD-EMP] User created:", employee.id);
+    } catch (userError) {
+      console.error("[ADD-EMP] User creation failed:", userError);
+      return NextResponse.json(
+        { error: `Failed to create user: ${errorMessage(userError)}` },
+        { status: 500 },
+      );
+    }
+
+    try {
+      await prisma.activityLog.create({
+        data: {
+          businessId: context.business.id,
+          userId: context.owner.id,
+          action: "Employee account created",
+          entity: "User",
+          entityId: employee.id,
+          meta: { email: employee.email, role: employee.role },
+        },
+      });
+      console.log("[ADD-EMP] Membership/activity created");
+    } catch (membershipError) {
+      console.error("[ADD-EMP] Membership failed:", membershipError);
+      return NextResponse.json(
+        {
+          error: `Failed to create membership: ${errorMessage(
+            membershipError,
+          )}`,
+        },
+        { status: 500 },
+      );
+    }
+
+    let emailSent = false;
+    try {
+      emailSent = await sendWelcomeEmail({
+        name: employee.name,
+        email: employee.email,
+        role: employee.role,
+        companyName: context.business.name,
+        password: DEFAULT_PASSWORD,
+      });
+      console.log("[ADD-EMP] Email sent:", emailSent);
+    } catch (emailError) {
+      console.error("[ADD-EMP] Email failed:", emailError);
+    }
+
+    const responseEmployee = {
       ...employee,
       createdAt: employee.createdAt.toISOString(),
       lastLoginAt: employee.createdAt.toISOString(),
-    },
-  });
+    };
+
+    console.log("[ADD-EMP] Complete success");
+    return NextResponse.json({
+      success: true,
+      user: responseEmployee,
+      employee: responseEmployee,
+      credentials: {
+        email: employee.email,
+        password: DEFAULT_PASSWORD,
+      },
+      emailSent,
+    });
+  } catch (error) {
+    console.error("[ADD-EMP] Fatal error:", error);
+    return NextResponse.json(
+      { error: `Internal server error: ${errorMessage(error)}` },
+      { status: 500 },
+    );
+  }
 }

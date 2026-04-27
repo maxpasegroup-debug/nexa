@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
 import auth from "@/lib/auth";
-import { sendEmail } from "@/lib/mail";
+import { sendPasswordResetEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 const DEFAULT_PASSWORD = "123456789";
@@ -60,11 +60,16 @@ export async function POST(
     }),
   ]);
 
-  await sendEmail(
-    employee.email,
-    "Your BGOS password has been reset",
-    `<p>Hi ${employee.name}, your BGOS account password has been reset by your manager. Your new temporary password is: <strong>${DEFAULT_PASSWORD}</strong>. Please log in at iceconnect.in and change your password immediately.</p>`,
-  );
+  const emailSent = await sendPasswordResetEmail({
+    name: employee.name,
+    email: employee.email,
+    newPassword: DEFAULT_PASSWORD,
+  });
 
-  return NextResponse.json({ message: "Password reset. Email sent." });
+  return NextResponse.json({
+    message: emailSent
+      ? "Password reset. Email sent."
+      : "Password reset. Email could not be sent.",
+    emailSent,
+  });
 }

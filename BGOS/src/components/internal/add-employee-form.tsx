@@ -21,12 +21,17 @@ export function AddEmployeeForm({ onSuccess, onClose }: AddEmployeeFormProps) {
   const [emailError, setEmailError] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [createdCredentials, setCreatedCredentials] = useState<{
+    email: string;
+    password: string;
+  } | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setEmailError("");
     setError("");
     setSuccess("");
+    setCreatedCredentials(null);
 
     if (!emailPattern.test(email)) {
       setEmailError("Enter a valid email address.");
@@ -34,39 +39,66 @@ export function AddEmployeeForm({ onSuccess, onClose }: AddEmployeeFormProps) {
     }
 
     setLoading(true);
-    const response = await fetch("/api/internal/employees", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, role }),
-    });
-    setLoading(false);
 
-    if (!response.ok) {
+    try {
+      const response = await fetch("/api/internal/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, role }),
+      });
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
+        emailSent?: boolean;
+        credentials?: { email: string; password: string };
       };
-      if (response.status === 400 && data.error?.toLowerCase().includes("email")) {
-        setEmailError("This email already has an account.");
+
+      if (!response.ok) {
+        if (
+          response.status === 400 &&
+          data.error?.toLowerCase().includes("email")
+        ) {
+          setEmailError("This email already has an account.");
+          return;
+        }
+
+        setError(data.error ?? "Failed to create employee. Please try again.");
         return;
       }
-      setError(data.error ?? "Could not create employee account.");
-      return;
-    }
 
-    setSuccess(`Account created. Welcome email sent to ${email}.`);
-    setName("");
-    setEmail("");
-    setRole("BDM");
-    onSuccess();
-    window.setTimeout(onClose, 900);
+      setCreatedCredentials(data.credentials ?? { email, password: "123456789" });
+      setSuccess(
+        data.emailSent
+          ? `Account created. Welcome email sent to ${email}.`
+          : "Account created. Welcome email could not be sent; share the credentials manually.",
+      );
+      setName("");
+      setEmail("");
+      setRole("BDM");
+      onSuccess();
+      window.setTimeout(onClose, 2500);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to create employee. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0e0e13] p-5">
       {success ? (
-        <p className="mb-4 rounded-xl border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-4 py-3 text-sm text-[#22D9A0]">
-          {success}
-        </p>
+        <div className="mb-4 rounded-xl border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-4 py-3 text-sm text-[#22D9A0]">
+          <p>{success}</p>
+          {createdCredentials ? (
+            <div className="mt-3 space-y-1 font-mono text-xs text-white">
+              <p>Email: {createdCredentials.email}</p>
+              <p>Password: {createdCredentials.password}</p>
+            </div>
+          ) : null}
+        </div>
       ) : null}
       {error ? (
         <p className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -144,7 +176,7 @@ export function AddEmployeeForm({ onSuccess, onClose }: AddEmployeeFormProps) {
           disabled={loading}
           className="w-full rounded-xl bg-[#7C6FFF] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#6b60e8] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Creating account..." : "Create account + send email →"}
+          {loading ? "Creating account..." : "Create account + send email"}
         </button>
       </form>
     </div>

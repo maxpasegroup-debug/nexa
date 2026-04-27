@@ -43,9 +43,9 @@ export async function GET() {
   } catch {
     return NextResponse.json({
       brief: {
-        greeting: "Good morning. Clear the riskiest issue first.",
+        greeting: "Nexa will brief you once your company has activity data.",
         tasks: [],
-        insights: ["Keep fixes small.", "Verify critical paths before deploy.", "Document blockers early."],
+        insights: [],
       },
     });
   }

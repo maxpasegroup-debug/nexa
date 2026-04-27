@@ -69,44 +69,18 @@ function sanitizeBrief(raw: unknown, userName: string): BriefData {
 
 function fallbackBrief(userName: string, dueLeadId?: string | null): BriefData {
   return {
-    greeting: `Good morning, ${userName}. Win the day by calling your warmest leads first.`,
-    tasks: [
-      {
-        title: "Call your hottest overdue follow-up",
-        priority: "high" as const,
-        leadId: dueLeadId ?? null,
-        type: "follow_up" as const,
-      },
-      {
-        title: "Move one contacted lead to demo",
-        priority: "medium" as const,
-        leadId: null,
-        type: "demo" as const,
-      },
-      {
-        title: "Log every sales call immediately",
-        priority: "medium" as const,
-        leadId: null,
-        type: "admin" as const,
-      },
-      {
-        title: "Review high-score new leads",
-        priority: "high" as const,
-        leadId: null,
-        type: "new_lead" as const,
-      },
-      {
-        title: "Send one proposal follow-up",
-        priority: "low" as const,
-        leadId: null,
-        type: "proposal" as const,
-      },
-    ],
-    insights: [
-      "Call before lunch while intent is fresh.",
-      "A fast callback beats a perfect pitch.",
-      "Move every good call to a clear next action.",
-    ],
+    greeting: `Good morning, ${userName}. Nexa will brief you once your company has activity data.`,
+    tasks: dueLeadId
+      ? [
+          {
+            title: "Follow up with your overdue lead",
+            priority: "high" as const,
+            leadId: dueLeadId,
+            type: "follow_up" as const,
+          },
+        ]
+      : [],
+    insights: [],
   };
 }
 

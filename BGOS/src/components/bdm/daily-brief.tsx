@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Bolt } from "lucide-react";
 
 import { NexaAvatar } from "@/components/nexa/nexa-avatar";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type BriefTask = {
   title: string;
@@ -103,7 +104,8 @@ export function DailyBrief({ brief, loading, animateLines = false }: DailyBriefP
             Your tasks today
           </h3>
           <div className="mt-3 space-y-2">
-            {brief.tasks.slice(0, 5).map((task, index) => (
+            {brief.tasks.length > 0 ? (
+              brief.tasks.slice(0, 5).map((task, index) => (
               <div
                 key={`${task.title}-${index}`}
                 className={`flex items-center gap-3 rounded-xl border border-white/10 bg-[#0e0e13] px-3 py-2.5 ${
@@ -156,7 +158,13 @@ export function DailyBrief({ brief, loading, animateLines = false }: DailyBriefP
                   className="h-4 w-4 accent-[#7C6FFF]"
                 />
               </div>
-            ))}
+              ))
+            ) : (
+              <EmptyState
+                title="No brief tasks yet"
+                description="Nexa will brief you once your company has activity data."
+              />
+            )}
           </div>
         </div>
 
@@ -165,7 +173,8 @@ export function DailyBrief({ brief, loading, animateLines = false }: DailyBriefP
             NEXA tips for today
           </h3>
           <div className="mt-3 space-y-2">
-            {brief.insights.slice(0, 3).map((insight) => (
+            {brief.insights.length > 0 ? (
+              brief.insights.slice(0, 3).map((insight) => (
               <div
                 key={insight}
                 className={`flex gap-2 text-[13px] text-zinc-400 ${
@@ -176,7 +185,12 @@ export function DailyBrief({ brief, loading, animateLines = false }: DailyBriefP
                 <Bolt className="mt-0.5 h-4 w-4 shrink-0 text-[#7C6FFF]" />
                 {insight}
               </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-zinc-500">
+                Nexa will brief you once your company has activity data.
+              </p>
+            )}
           </div>
         </div>
       </div>

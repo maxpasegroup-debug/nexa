@@ -2,6 +2,8 @@
 
 import { RefreshCw } from "lucide-react";
 
+import { EmptyState } from "@/components/ui/EmptyState";
+
 type NexaInsight = {
   id: string;
   type: string;
@@ -90,9 +92,10 @@ export function NexaInsightsPanel({
             );
           })
         ) : (
-          <p className="rounded-xl border border-white/10 bg-[#0e0e13] px-4 py-8 text-center text-sm text-zinc-500">
-            No insights yet. Refresh to ask NEXA for guidance.
-          </p>
+          <EmptyState
+            title="Nexa is analyzing your business data"
+            description="Check back tomorrow for insights."
+          />
         )}
       </div>
     </section>
