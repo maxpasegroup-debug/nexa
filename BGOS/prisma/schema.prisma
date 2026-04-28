@@ -22,6 +22,7 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   leads             Lead[]
+  createdLeads      Lead[]    @relation("LeadCreator")
   tasks             Task[]
   onboarding        OnboardingSession?
   activityLogs      ActivityLog[]
@@ -135,6 +136,8 @@ model Lead {
   business      Business    @relation(fields: [businessId], references: [id])
   assignedTo    String?
   assignee      User?       @relation(fields: [assignedTo], references: [id])
+  createdBy     String?
+  creator       User?       @relation("LeadCreator", fields: [createdBy], references: [id])
   followUpDate  DateTime?
   lastContactAt DateTime?
   wonAt         DateTime?

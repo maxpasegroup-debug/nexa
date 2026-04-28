@@ -8,6 +8,13 @@ import {
 } from "@/lib/leads/server";
 import { prisma } from "@/lib/prisma";
 
+function tomorrow() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  date.setHours(9, 0, 0, 0);
+  return date;
+}
+
 export async function GET(request: Request) {
   try {
     const context = await getCrmContext();
@@ -44,6 +51,7 @@ export async function GET(request: Request) {
         include: {
           assignee: {
             select: {
+              id: true,
               name: true,
               role: true,
             },
@@ -87,8 +95,13 @@ export async function POST(request: Request) {
         source: isLeadSource(body.source) ? body.source : "MANUAL",
         value: typeof body.value === "number" ? body.value : Number(body.value ?? 0) || 0,
         notes: typeof body.notes === "string" ? body.notes : undefined,
+        createdBy: context.user.id,
         assignedTo:
-          typeof body.assignedTo === "string" ? body.assignedTo : undefined,
+          context.user.role === "BDM"
+            ? context.user.id
+            : typeof body.assignedTo === "string"
+              ? body.assignedTo
+              : undefined,
         followUpDate:
           typeof body.followUpDate === "string"
             ? new Date(body.followUpDate)
@@ -98,6 +111,7 @@ export async function POST(request: Request) {
       include: {
         assignee: {
           select: {
+            id: true,
             name: true,
             role: true,
           },
@@ -116,12 +130,32 @@ export async function POST(request: Request) {
       },
     });
 
+    const shouldRunBdmAutomation = context.user.role === "BDM";
+
+    if (shouldRunBdmAutomation) {
+      void Promise.allSettled([
+        scoreLead(lead.id),
+        prisma.task.create({
+          data: {
+            title: `Follow up with ${lead.name} - new lead you added today`,
+            description: "Created automatically by NEXA after quick lead capture.",
+            priority: "HIGH",
+            dueDate: tomorrow(),
+            assignedTo: context.user.id,
+          },
+        }),
+      ]);
+
+      return NextResponse.json({ lead, score: null }, { status: 201 });
+    }
+
     const score = await scoreLead(lead.id);
     const scoredLead = await prisma.lead.findUnique({
       where: { id: lead.id },
       include: {
         assignee: {
           select: {
+            id: true,
             name: true,
             role: true,
           },

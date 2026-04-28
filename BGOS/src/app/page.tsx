@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getDomainType, getRedirectForRole } from "@/lib/domain";
 import LandingPage from "@/components/landing/landing-page";
-import EmployeeLoginPage from "@/components/employee/employee-login-page";
+import EmployeeLandingPage from "@/components/employee/employee-landing-page";
 
 export default async function Home() {
   const session = await auth();
@@ -16,7 +16,7 @@ export default async function Home() {
   }
 
   if (domainType === "employee") {
-    return <EmployeeLoginPage />;
+    return <EmployeeLandingPage />;
   }
 
   return <LandingPage />;

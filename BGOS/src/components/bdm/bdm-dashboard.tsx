@@ -6,6 +6,7 @@ import {
   Bell,
   CalendarCheck,
   PhoneCall,
+  Plus,
   Search,
   Target,
   Trophy,
@@ -14,6 +15,7 @@ import {
 import { CallLogHistory, type CallLog } from "@/components/bdm/call-log-history";
 import { DailyBrief } from "@/components/bdm/daily-brief";
 import { MyPipeline, type BdmLead } from "@/components/bdm/my-pipeline";
+import { NewLeadForm } from "@/components/bdm/new-lead-form";
 import { PerformanceCard, type BdmMetrics } from "@/components/bdm/performance-card";
 import { TargetProgress } from "@/components/bdm/target-progress";
 import { MetricCard } from "@/components/boss/metric-card";
@@ -82,6 +84,7 @@ export function BdmDashboard({
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [revealedCards, setRevealedCards] = useState(0);
+  const [newLeadOpen, setNewLeadOpen] = useState(false);
   const overdueRef = useRef<HTMLDivElement>(null);
   const teamMembers = useMemo<TeamMember[]>(
     () => [{ id: user.id, name: user.name, role: user.role }],
@@ -133,9 +136,11 @@ export function BdmDashboard({
     );
   }, [leads, search]);
 
-  function upsertLead(lead: CrmLead) {
+  function upsertLead(lead: CrmLead | BdmLead) {
     setLeads((current) =>
-      current.map((item) => (item.id === lead.id ? { ...item, ...lead } : item)),
+      current.some((item) => item.id === lead.id)
+        ? current.map((item) => (item.id === lead.id ? { ...item, ...lead } : item))
+        : [lead as BdmLead, ...current],
     );
   }
 
@@ -214,6 +219,15 @@ export function BdmDashboard({
             {metrics.followUpsOverdue} overdue
           </span>
         ) : null}
+      </button>
+
+      <button
+        type="button"
+        aria-label="Create new lead"
+        onClick={() => setNewLeadOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#2ECC8A] text-[#0A0F0D] shadow-[0_4px_20px_rgba(46,204,138,0.3)] transition hover:scale-105"
+      >
+        <Plus className="h-6 w-6" />
       </button>
 
       <main className="pt-[60px]">
@@ -303,6 +317,13 @@ export function BdmDashboard({
         allowReassign={false}
       />
       <NexaPanel businessId={user.businessId} initialMessage="bdm_morning_context" />
+      {newLeadOpen ? (
+        <NewLeadForm
+          currentUser={{ id: user.id, name: user.name }}
+          onSuccess={upsertLead}
+          onClose={() => setNewLeadOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

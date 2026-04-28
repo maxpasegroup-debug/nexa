@@ -18,19 +18,24 @@ export async function GET(request: Request) {
 
     const leads = await prisma.lead.findMany({
       where: {
-        assignedTo: context.user.id,
+        businessId: context.businessId,
+        AND: [
+          { OR: [{ assignedTo: context.user.id }, { createdBy: context.user.id }] },
+          ...(search
+            ? [
+                {
+                  OR: [
+                    { name: { contains: search, mode: "insensitive" as const } },
+                    { email: { contains: search, mode: "insensitive" as const } },
+                    { phone: { contains: search, mode: "insensitive" as const } },
+                    { company: { contains: search, mode: "insensitive" as const } },
+                  ],
+                },
+              ]
+            : []),
+        ],
         ...(isLeadStatus(status) ? { status } : {}),
         ...(overdue ? { followUpDate: { lt: today.start } } : {}),
-        ...(search
-          ? {
-              OR: [
-                { name: { contains: search, mode: "insensitive" } },
-                { email: { contains: search, mode: "insensitive" } },
-                { phone: { contains: search, mode: "insensitive" } },
-                { company: { contains: search, mode: "insensitive" } },
-              ],
-            }
-          : {}),
       },
       include: {
         _count: { select: { activities: true } },

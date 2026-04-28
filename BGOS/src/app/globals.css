@@ -76,6 +76,54 @@ body {
   }
 }
 
+.font-fraunces {
+  font-family: var(--font-fraunces, Fraunces), Georgia, serif;
+}
+
+.employee-login-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(46, 204, 138, 0.42), transparent 34%);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.animate-employee-fade-up {
+  animation: employeeFadeUp 700ms ease forwards;
+}
+
+.animate-scroll-line {
+  animation: employeeScrollLine 1.6s ease-in-out infinite;
+}
+
+@keyframes employeeFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes employeeScrollLine {
+  from {
+    transform: translateY(-100%);
+  }
+
+  to {
+    transform: translateY(220%);
+  }
+}
+
 @media (max-width: 767px) {
   [class*="pl-[240px]"] {
     padding-left: 0 !important;

@@ -23,7 +23,10 @@ export default async function BdmLeadsRoute() {
   if (!user?.businessId || !user.business) redirect("/onboarding");
 
   const leads = await prisma.lead.findMany({
-    where: { assignedTo: user.id },
+    where: {
+      businessId: user.businessId,
+      OR: [{ assignedTo: user.id }, { createdBy: user.id }],
+    },
     include: {
       assignee: { select: { id: true, name: true, role: true } },
       _count: { select: { activities: true } },

@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 import { MyPipeline, type BdmLead } from "@/components/bdm/my-pipeline";
+import { NewLeadForm } from "@/components/bdm/new-lead-form";
 import { NexaPanel } from "@/components/boss/nexa-panel";
 import { LeadDrawer } from "@/components/crm/lead-drawer";
 import type { CrmLead, LeadStatus, TeamMember } from "@/components/crm/types";
@@ -27,6 +28,7 @@ export function BdmLeadsPage({ user, initialLeads }: BdmLeadsPageProps) {
   const [leads, setLeads] = useState(initialLeads);
   const [search, setSearch] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [newLeadOpen, setNewLeadOpen] = useState(false);
   const teamMembers = useMemo<TeamMember[]>(
     () => [{ id: user.id, name: user.name, role: user.role }],
     [user.id, user.name, user.role],
@@ -43,9 +45,11 @@ export function BdmLeadsPage({ user, initialLeads }: BdmLeadsPageProps) {
     );
   }, [leads, search]);
 
-  function upsertLead(lead: CrmLead) {
+  function upsertLead(lead: CrmLead | BdmLead) {
     setLeads((current) =>
-      current.map((item) => (item.id === lead.id ? { ...item, ...lead } : item)),
+      current.some((item) => item.id === lead.id)
+        ? current.map((item) => (item.id === lead.id ? { ...item, ...lead } : item))
+        : [lead as BdmLead, ...current],
     );
   }
 
@@ -88,14 +92,24 @@ export function BdmLeadsPage({ user, initialLeads }: BdmLeadsPageProps) {
                 Work the leads assigned to you and keep every follow-up moving.
               </p>
             </div>
-            <div className="relative w-full md:max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search assigned leads..."
-                className="w-full rounded-xl border border-white/10 bg-[#13131c] py-2.5 pl-10 pr-3 text-sm text-white outline-none focus:border-[#7C6FFF]"
-              />
+            <div className="flex w-full flex-col gap-3 md:max-w-xl md:flex-row md:items-center md:justify-end">
+              <div className="relative w-full md:max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search assigned leads..."
+                  className="w-full rounded-xl border border-white/10 bg-[#13131c] py-2.5 pl-10 pr-3 text-sm text-white outline-none focus:border-[#7C6FFF]"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewLeadOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2ECC8A] px-4 py-2.5 text-sm font-bold text-[#0A0F0D] transition hover:bg-[#55ddb0]"
+              >
+                New lead
+                <Plus className="h-4 w-4" />
+              </button>
             </div>
           </section>
 
@@ -114,6 +128,13 @@ export function BdmLeadsPage({ user, initialLeads }: BdmLeadsPageProps) {
         onLeadUpdate={upsertLead}
         allowReassign={false}
       />
+      {newLeadOpen ? (
+        <NewLeadForm
+          currentUser={{ id: user.id, name: user.name }}
+          onSuccess={upsertLead}
+          onClose={() => setNewLeadOpen(false)}
+        />
+      ) : null}
       <NexaPanel businessId={user.businessId} initialMessage="bdm_morning_context" />
     </div>
   );

@@ -322,7 +322,10 @@ export default async function BdmPage() {
     getOrCreateBrief(user.id, user.name),
     getMetrics(user.id, user.businessId),
     prisma.lead.findMany({
-      where: { assignedTo: user.id },
+      where: {
+        businessId: user.businessId,
+        OR: [{ assignedTo: user.id }, { createdBy: user.id }],
+      },
       include: {
         assignee: { select: { id: true, name: true, role: true } },
         _count: { select: { activities: true } },

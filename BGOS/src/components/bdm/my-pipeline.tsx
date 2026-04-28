@@ -13,7 +13,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import type { CrmLead, LeadStatus } from "@/components/crm/types";
 
-type BdmLead = CrmLead & {
+export type BdmLead = CrmLead & {
   activitiesCount?: number;
   lastActivityDate?: string | Date | null;
 };
@@ -210,10 +210,9 @@ function LeadRow({
           <button
             type="button"
             onClick={() => setShowCallForm((value) => !value)}
-            className="rounded-lg border border-white/10 p-2 text-zinc-400 hover:border-[#7C6FFF]/40 hover:text-white"
-            title="Log call"
+            className="rounded-lg border border-[#2ECC8A]/30 px-3 py-2 text-xs font-bold text-[#2ECC8A] transition hover:bg-[#2ECC8A]/10"
           >
-            <Phone className="h-4 w-4" />
+            Log call
           </button>
           <button
             type="button"
@@ -402,5 +401,3 @@ export function MyPipeline({ leads, onLeadClick, onStatusChange }: MyPipelinePro
     </section>
   );
 }
-
-export type { BdmLead };
