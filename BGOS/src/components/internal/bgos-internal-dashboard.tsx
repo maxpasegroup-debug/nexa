@@ -49,6 +49,13 @@ type InternalMetrics = {
   newThisMonth: number;
 };
 
+type PlatformCommissionSummary = {
+  totalCommissionOwed: number;
+  firstSaleCommissions: number;
+  renewalCommissions: number;
+  slabBonuses: number;
+};
+
 export type InternalBusiness = {
   id: string;
   name: string;
@@ -70,6 +77,7 @@ type BgosInternalDashboardProps = {
   businesses: InternalBusiness[];
   teamMembers: InternalTeamMember[];
   insights: InternalInsight[];
+  commissionSummary: PlatformCommissionSummary;
 };
 
 const navItems = [
@@ -108,6 +116,10 @@ function healthClass(score: number) {
   if (score >= 75) return "text-[#22D9A0]";
   if (score >= 45) return "text-[#F5A623]";
   return "text-[#FF6B6B]";
+}
+
+function money(value: number) {
+  return `₹${Math.round(value).toLocaleString("en-IN")}`;
 }
 
 export function InternalSidebar({ user }: { user: InternalUser }) {
@@ -337,6 +349,7 @@ export function BgosInternalDashboard({
   businesses,
   teamMembers,
   insights: initialInsights,
+  commissionSummary,
 }: BgosInternalDashboardProps) {
   const [insights, setInsights] = useState(initialInsights);
   const [employees, setEmployees] = useState(teamMembers);
@@ -394,6 +407,43 @@ export function BgosInternalDashboard({
               subtitle="All customer pipelines"
               icon={<span className="text-base">🎯</span>}
             />
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
+            <div className="mb-5">
+              <h2 className="font-heading text-lg font-bold">
+                Platform Commission Summary
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Current month payout visibility across all businesses.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-4">
+              <MetricCard
+                title="Total Owed"
+                value={money(commissionSummary.totalCommissionOwed)}
+                subtitle="All BDE commissions"
+                icon={<span className="text-base">₹</span>}
+              />
+              <MetricCard
+                title="First Sale"
+                value={money(commissionSummary.firstSaleCommissions)}
+                subtitle="New deals closed"
+                icon={<span className="text-base">₹</span>}
+              />
+              <MetricCard
+                title="Renewals"
+                value={money(commissionSummary.renewalCommissions)}
+                subtitle="Recurring payouts"
+                icon={<span className="text-base">₹</span>}
+              />
+              <MetricCard
+                title="Slab Bonuses"
+                value={money(commissionSummary.slabBonuses)}
+                subtitle="Bonuses triggered"
+                icon={<span className="text-base">₹</span>}
+              />
+            </div>
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[3fr_2fr]">

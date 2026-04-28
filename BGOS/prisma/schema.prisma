@@ -38,6 +38,10 @@ model User {
   escalationsResolved Escalation[] @relation("EscalationResolver")
   passwordResets    PasswordResetRequest[] @relation("UserPasswordResets")
   resetRequestsMade PasswordResetRequest[] @relation("ResetRequester")
+  bdeCommissions    Commission[]       @relation("BDECommissions")
+  slabAchievements  SlabAchievement[]
+  customerPortfolio CustomerPortfolio[]
+  payoutHistory     PayoutHistory[]
   accounts          Account[]
   sessions          Session[]
 }
@@ -118,6 +122,7 @@ model Business {
   emailAccounts    EmailAccount[]
   emails           Email[]
   emailTemplates   EmailTemplate[]
+  commissions      Commission[]
 }
 
 model Lead {
@@ -147,8 +152,108 @@ model Lead {
   reminders     Reminder[]
   callLogs      CallLog[]
   emails        Email[]
+  commission    Commission?
+  customerPortfolio CustomerPortfolio? @relation("PortfolioLead")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+model Commission {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation("BDECommissions", fields: [userId], references: [id])
+  leadId          String?   @unique
+  lead            Lead?     @relation(fields: [leadId], references: [id])
+  businessId      String
+  business        Business  @relation(fields: [businessId], references: [id])
+  type            CommissionType
+  planType        String
+  dealValue       Float     @default(0)
+  commissionAmt   Float
+  status          CommissionStatus @default(PENDING)
+  month           Int
+  year            Int
+  paidAt          DateTime?
+  clawbackAt      DateTime?
+  clawbackReason  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum CommissionType {
+  FIRST_SALE
+  RENEWAL
+  SLAB_BRONZE
+  SLAB_SILVER
+  SLAB_GOLD
+  SLAB_DIAMOND
+  ANNUAL_BONUS
+}
+
+enum CommissionStatus {
+  PENDING
+  PAID
+  CLAWBACK
+  CANCELLED
+}
+
+model SlabAchievement {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  month       Int
+  year        Int
+  slabName    String
+  dealsCount  Int
+  bonusAmt    Float
+  achievedAt  DateTime @default(now())
+  paidAt      DateTime?
+  notified    Boolean  @default(false)
+
+  @@unique([userId, month, year])
+}
+
+model CustomerPortfolio {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  leadId        String   @unique
+  lead          Lead     @relation("PortfolioLead", fields: [leadId], references: [id])
+  planType      String
+  monthlyValue  Float
+  status        PortfolioStatus @default(TRIAL)
+  trialEndsAt   DateTime?
+  activeSince   DateTime?
+  lastRenewalAt DateTime?
+  nextRenewalAt DateTime?
+  totalEarned   Float    @default(0)
+  renewalCount  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum PortfolioStatus {
+  TRIAL
+  PAYING
+  OVERDUE
+  CHURNED
+  UPGRADED
+}
+
+model PayoutHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  month       Int
+  year        Int
+  firstSale   Float    @default(0)
+  renewal     Float    @default(0)
+  slabBonus   Float    @default(0)
+  total       Float    @default(0)
+  status      String   @default("pending")
+  paidAt      DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
 }
 
 enum LeadSource {

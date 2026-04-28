@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 
 import {
+  calcFirstSale,
+  checkAndAwardSlab,
+  detectPlanType,
+} from "@/lib/commission";
+import { notifySlabAchievement } from "@/lib/commission-notify";
+import {
   buildLeadUpdateData,
   getCrmContext,
   isLeadStatus,
@@ -12,6 +18,19 @@ type RouteContext = {
     id: string;
   };
 };
+
+function trialEndDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 14);
+  return date;
+}
+
+function monthYear(date = new Date()) {
+  return {
+    month: date.getMonth() + 1,
+    year: date.getFullYear(),
+  };
+}
 
 export async function GET(_request: Request, { params }: RouteContext) {
   try {
@@ -109,12 +128,131 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       include: {
         assignee: {
           select: {
+            id: true,
             name: true,
+            email: true,
             role: true,
           },
         },
       },
     });
+
+    if (statusChanged && body.status === "WON" && updatedLead.assignedTo) {
+      const planType = detectPlanType(updatedLead.value);
+      const commissionAmt = calcFirstSale(planType);
+      const { month, year } = monthYear();
+
+      await prisma.commission.upsert({
+        where: { leadId: updatedLead.id },
+        create: {
+          userId: updatedLead.assignedTo,
+          leadId: updatedLead.id,
+          businessId: context.businessId,
+          type: "FIRST_SALE",
+          planType,
+          dealValue: updatedLead.value,
+          commissionAmt,
+          status: "PENDING",
+          month,
+          year,
+        },
+        update: {
+          userId: updatedLead.assignedTo,
+          businessId: context.businessId,
+          type: "FIRST_SALE",
+          planType,
+          dealValue: updatedLead.value,
+          commissionAmt,
+          status: "PENDING",
+          paidAt: null,
+          clawbackAt: null,
+          clawbackReason: null,
+          month,
+          year,
+        },
+      });
+
+      await prisma.customerPortfolio.upsert({
+        where: { leadId: updatedLead.id },
+        create: {
+          userId: updatedLead.assignedTo,
+          leadId: updatedLead.id,
+          planType,
+          monthlyValue: updatedLead.value,
+          status: "TRIAL",
+          trialEndsAt: trialEndDate(),
+        },
+        update: {
+          userId: updatedLead.assignedTo,
+          planType,
+          monthlyValue: updatedLead.value,
+          status: "TRIAL",
+          trialEndsAt: trialEndDate(),
+        },
+      });
+
+      await notifySlabAchievement(updatedLead.assignedTo);
+
+      await prisma.nexaInsight.create({
+        data: {
+          businessId: context.businessId,
+          type: "opportunity",
+          message: `New deal closed by ${updatedLead.assignee?.name ?? "BDM"} - ${updatedLead.name} on ${planType}. Commission: ₹${commissionAmt.toLocaleString("en-IN")}`,
+          action: "Review payout",
+        },
+      });
+    }
+
+    if (
+      statusChanged &&
+      existingLead.status === "WON" &&
+      body.status !== "WON"
+    ) {
+      const commission = await prisma.commission.findUnique({
+        where: { leadId: existingLead.id },
+        select: { userId: true, month: true, year: true },
+      });
+
+      await prisma.commission.updateMany({
+        where: { leadId: existingLead.id },
+        data: {
+          status: "CLAWBACK",
+          clawbackAt: new Date(),
+          clawbackReason: "Deal reversed",
+        },
+      });
+
+      await prisma.customerPortfolio.updateMany({
+        where: { leadId: existingLead.id },
+        data: { status: "CHURNED" },
+      });
+
+      if (commission) {
+        await prisma.commission.deleteMany({
+          where: {
+            userId: commission.userId,
+            month: commission.month,
+            year: commission.year,
+            type: {
+              in: [
+                "SLAB_BRONZE",
+                "SLAB_SILVER",
+                "SLAB_GOLD",
+                "SLAB_DIAMOND",
+              ],
+            },
+          },
+        });
+        await prisma.slabAchievement.deleteMany({
+          where: {
+            userId: commission.userId,
+            month: commission.month,
+            year: commission.year,
+          },
+        });
+        await checkAndAwardSlab(commission.userId);
+      }
+    }
 
     if (statusChanged) {
       await prisma.leadActivity.create({

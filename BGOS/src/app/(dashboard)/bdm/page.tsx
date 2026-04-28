@@ -4,11 +4,16 @@ import { BdmDashboard } from "@/components/bdm/bdm-dashboard";
 import type { BdmMetrics } from "@/components/bdm/performance-card";
 import auth from "@/lib/auth";
 import { monthBounds, todayBounds } from "@/lib/bdm/server";
+import {
+  calcMonthlyEarnings,
+  getCurrentSlab,
+  getNextMilestone,
+} from "@/lib/commission";
 import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 const BRIEF_SYSTEM_PROMPT =
-  "You are NEXA, the AI CEO. Generate a morning brief for this BDM. Return only a JSON object with these fields: greeting (string — a warm personalised good morning message using their name and one motivational line under 20 words), tasks (array of 5 objects each with: title string, priority 'high'/'medium'/'low', leadId string or null, type 'follow_up'/'new_lead'/'demo'/'proposal'/'admin'), insights (array of 3 strings — each a sharp one-line sales tip for today). No other text.";
+  "You are NEXA, the AI CEO. Generate a morning brief for this BDM. Return only a JSON object with these fields: greeting (string - it must reference commission data: 'Good morning [name]. You have earned Rs [total] this month with [X] days left. [nextMilestone]. Your hottest lead is [topLead name] - call them first.'), tasks (array of 5 objects each with: title string, priority 'high'/'medium'/'low', leadId string or null, type 'follow_up'/'new_lead'/'demo'/'proposal'/'admin'), insights (array of 3 strings - each a sharp one-line sales tip for today). No other text.";
 
 type BriefTask = {
   title: string;
@@ -219,7 +224,20 @@ async function getOrCreateBrief(userId: string, userName: string) {
   if (existing) return existing;
 
   const month = monthBounds();
-  const [statusCounts, dueLeads, staleLeads, wonThisMonth, target] =
+  const totalDays = new Date(month.year, month.month, 0).getDate();
+  const daysRemaining = Math.max(0, totalDays - new Date().getDate());
+  const [
+    statusCounts,
+    dueLeads,
+    staleLeads,
+    wonThisMonth,
+    target,
+    commission,
+    slab,
+    dealsThisMonth,
+    portfolioCounts,
+    trialAtRisk,
+  ] =
     await Promise.all([
       prisma.lead.groupBy({
         by: ["status"],
@@ -257,7 +275,34 @@ async function getOrCreateBrief(userId: string, userName: string) {
           userId_month_year: { userId, month: month.month, year: month.year },
         },
       }),
+      calcMonthlyEarnings(userId, month.month, month.year),
+      getCurrentSlab(userId, month.month, month.year),
+      prisma.commission.count({
+        where: {
+          userId,
+          month: month.month,
+          year: month.year,
+          type: "FIRST_SALE",
+          status: { not: "CLAWBACK" },
+        },
+      }),
+      prisma.customerPortfolio.groupBy({
+        by: ["status"],
+        where: { userId, status: { in: ["PAYING", "TRIAL"] } },
+        _count: { _all: true },
+      }),
+      prisma.customerPortfolio.count({
+        where: {
+          userId,
+          status: "TRIAL",
+          trialEndsAt: { lte: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) },
+        },
+      }),
     ]);
+  const topLead = [...dueLeads, ...staleLeads].sort((a, b) => b.score - a.score)[0];
+  const payingCount =
+    portfolioCounts.find((item) => item.status === "PAYING")?._count._all ?? 0;
+  const nextMilestone = getNextMilestone(dealsThisMonth);
 
   let brief = fallbackBrief(userName, dueLeads[0]?.id);
 
@@ -275,6 +320,31 @@ async function getOrCreateBrief(userId: string, userName: string) {
             staleLeads,
             wonThisMonth,
             wonTarget: target?.wonTarget ?? 0,
+            commissionData: {
+              earnedThisMonth: commission.total,
+              firstSale: commission.firstSale,
+              renewalIncome: commission.renewal,
+              currentSlab: slab.name,
+              nextMilestone,
+              dealsClosed: dealsThisMonth,
+              daysRemaining,
+              payingCustomers: payingCount,
+              trialCustomersAtRisk: trialAtRisk,
+              hottestLead: topLead?.name ?? null,
+            },
+            promptContext: [
+              "COMMISSION DATA:",
+              `- Earned this month: Rs ${commission.total}`,
+              `- First sale: Rs ${commission.firstSale}`,
+              `- Renewal income: Rs ${commission.renewal}`,
+              `- Current slab: ${slab.name}`,
+              `- Next milestone: ${nextMilestone ?? "Diamond achieved"}`,
+              `- Deals closed: ${dealsThisMonth}`,
+              `- Days remaining: ${daysRemaining}`,
+              `- Paying customers: ${payingCount}`,
+              `- Trial customers at risk: ${trialAtRisk}`,
+              `- Hottest lead: ${topLead?.name ?? "No hot lead yet"}`,
+            ].join("\n"),
           }),
         },
       ],
@@ -318,7 +388,17 @@ export default async function BdmPage() {
 
   const month = monthBounds();
 
-  const [brief, initialMetrics, leads, callLogs, target] = await Promise.all([
+  const [
+    brief,
+    initialMetrics,
+    leads,
+    callLogs,
+    target,
+    earnings,
+    commissionCount,
+    portfolioCount,
+    onboardingMemory,
+  ] = await Promise.all([
     getOrCreateBrief(user.id, user.name),
     getMetrics(user.id, user.businessId),
     prisma.lead.findMany({
@@ -350,6 +430,17 @@ export default async function BdmPage() {
           userId: user.id,
           month: month.month,
           year: month.year,
+        },
+      },
+    }),
+    calcMonthlyEarnings(user.id, month.month, month.year),
+    prisma.commission.count({ where: { userId: user.id } }),
+    prisma.customerPortfolio.count({ where: { userId: user.id } }),
+    prisma.nexaMemory.findUnique({
+      where: {
+        businessId_key: {
+          businessId: user.businessId,
+          key: `bde_onboarding_complete:${user.id}`,
         },
       },
     }),
@@ -405,6 +496,14 @@ export default async function BdmPage() {
         wonTarget: target?.wonTarget ?? 0,
         revenueTarget: target?.revenueTarget ?? 0,
       }}
+      initialCommission={{
+        total: earnings.total,
+        target: 30000,
+        progressPct: (earnings.total / 30000) * 100,
+      }}
+      showBdeOnboarding={
+        !onboardingMemory && commissionCount === 0 && portfolioCount === 0
+      }
     />
   );
 }

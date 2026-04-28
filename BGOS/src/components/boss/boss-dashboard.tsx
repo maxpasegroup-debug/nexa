@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  Coins,
   Flame,
   TrendingUp,
   Trophy,
@@ -11,6 +12,7 @@ import {
 
 import { ActivityFeed, type Activity } from "@/components/boss/activity-feed";
 import { AnalyticsCharts } from "@/components/boss/analytics-charts";
+import { BDEPerformanceTable } from "@/components/boss/bde-performance-table";
 import { HealthScore } from "@/components/boss/health-score";
 import { InviteTeam } from "@/components/boss/invite-team";
 import { MetricCard } from "@/components/boss/metric-card";
@@ -272,6 +274,16 @@ export function BossDashboard({
               </h2>
             </div>
             <TeamPerformance />
+          </section>
+
+          <section>
+            <div className="mb-4 flex items-center gap-2">
+              <Coins className="h-5 w-5 text-[#F5A623]" />
+              <h2 className="font-heading text-base font-bold">
+                BDE Commission Tracker
+              </h2>
+            </div>
+            <BDEPerformanceTable />
           </section>
 
           <AnalyticsCharts businessId={business.id} />

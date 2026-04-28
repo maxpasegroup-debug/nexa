@@ -89,6 +89,7 @@ export default async function InternalPage() {
     recentBusinesses,
     teamMembers,
     savedInsights,
+    commissionsThisMonth,
   ] = await Promise.all([
     prisma.business.count({ where: customerBusinessWhere }),
     prisma.user.count(),
@@ -169,7 +170,27 @@ export default async function InternalPage() {
         action: true,
       },
     }),
+    prisma.commission.findMany({
+      where: {
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
+        status: { not: "CLAWBACK" },
+      },
+      select: {
+        type: true,
+        commissionAmt: true,
+      },
+    }),
   ]);
+  const firstSaleCommissions = commissionsThisMonth
+    .filter((item) => item.type === "FIRST_SALE")
+    .reduce((sum, item) => sum + item.commissionAmt, 0);
+  const renewalCommissions = commissionsThisMonth
+    .filter((item) => item.type === "RENEWAL")
+    .reduce((sum, item) => sum + item.commissionAmt, 0);
+  const slabBonuses = commissionsThisMonth
+    .filter((item) => item.type.startsWith("SLAB_"))
+    .reduce((sum, item) => sum + item.commissionAmt, 0);
 
   const businesses: InternalBusiness[] = recentBusinesses.map((business) => {
     const boss =
@@ -241,6 +262,13 @@ export default async function InternalPage() {
       }}
       businesses={businesses}
       teamMembers={bgosTeam}
+      commissionSummary={{
+        totalCommissionOwed:
+          firstSaleCommissions + renewalCommissions + slabBonuses,
+        firstSaleCommissions,
+        renewalCommissions,
+        slabBonuses,
+      }}
       insights={validInsights.map((insight) => ({
         ...insight,
         action: insight.action ?? null,

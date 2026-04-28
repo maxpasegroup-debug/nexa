@@ -12,6 +12,7 @@ import {
   Trophy,
 } from "lucide-react";
 
+import { BdeOnboarding } from "@/components/bde/bde-onboarding";
 import { CallLogHistory, type CallLog } from "@/components/bdm/call-log-history";
 import { DailyBrief } from "@/components/bdm/daily-brief";
 import { MyPipeline, type BdmLead } from "@/components/bdm/my-pipeline";
@@ -57,6 +58,12 @@ type TargetData = {
   revenueTarget: number;
 };
 
+type CompactCommission = {
+  total: number;
+  target: number;
+  progressPct: number;
+};
+
 type BdmDashboardProps = {
   user: BdmUser;
   initialBrief: DailyBriefData;
@@ -64,10 +71,53 @@ type BdmDashboardProps = {
   initialLeads: BdmLead[];
   initialCallLogs: CallLog[];
   initialTarget: TargetData;
+  initialCommission: CompactCommission;
+  showBdeOnboarding: boolean;
 };
 
 function isFreshBrief(createdAt: string) {
   return Date.now() - new Date(createdAt).getTime() < 60 * 60 * 1000;
+}
+
+function money(value: number) {
+  return `₹${Math.round(value).toLocaleString("en-IN")}`;
+}
+
+function CompactEarningsCard({ data }: { data: CompactCommission }) {
+  const progress = Math.max(0, Math.min(100, data.progressPct));
+
+  return (
+    <section className="rounded-2xl border border-[#22D9A0]/20 bg-[#13131c] p-5 shadow-2xl shadow-black/20">
+      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+            Earnings this month
+          </p>
+          <p className="mt-3 font-heading text-4xl font-bold text-[#22D9A0]">
+            {money(data.total)}
+          </p>
+        </div>
+        <Link
+          href="/bdm/commission"
+          className="rounded-xl border border-[#22D9A0]/30 px-4 py-2 text-sm font-bold text-[#22D9A0] transition hover:bg-[#22D9A0]/10"
+        >
+          View full earnings →
+        </Link>
+      </div>
+      <div className="mt-5">
+        <div className="mb-2 flex justify-between text-xs font-semibold text-zinc-500">
+          <span>Progress to {money(data.target)}</span>
+          <span>{Math.round(data.progressPct)}%</span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+          <div
+            className="h-full rounded-full bg-[#22D9A0]"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function BdmDashboard({
@@ -77,6 +127,8 @@ export function BdmDashboard({
   initialLeads,
   initialCallLogs,
   initialTarget,
+  initialCommission,
+  showBdeOnboarding,
 }: BdmDashboardProps) {
   const { toast } = useToast();
   const [metrics, setMetrics] = useState(initialMetrics);
@@ -85,6 +137,7 @@ export function BdmDashboard({
   const [search, setSearch] = useState("");
   const [revealedCards, setRevealedCards] = useState(0);
   const [newLeadOpen, setNewLeadOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(showBdeOnboarding);
   const overdueRef = useRef<HTMLDivElement>(null);
   const teamMembers = useMemo<TeamMember[]>(
     () => [{ id: user.id, name: user.name, role: user.role }],
@@ -167,6 +220,9 @@ export function BdmDashboard({
 
     const data = (await response.json()) as { lead: CrmLead };
     upsertLead(data.lead);
+    if (status === "WON") {
+      window.dispatchEvent(new Event("bgos:commission-created"));
+    }
   }
 
   const metricCards = [
@@ -207,6 +263,12 @@ export function BdmDashboard({
     <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
       <Sidebar role="BDM" userName={user.name} businessName={user.businessName} />
       <Navbar title={`Good morning, ${user.name}`} userName={user.name} />
+      {showOnboarding ? (
+        <BdeOnboarding
+          user={{ name: user.name, role: user.role }}
+          onComplete={() => setShowOnboarding(false)}
+        />
+      ) : null}
 
       <button
         type="button"
@@ -241,6 +303,8 @@ export function BdmDashboard({
               </Link>
             </div>
           ) : null}
+
+          <CompactEarningsCard data={initialCommission} />
 
           <DailyBrief
             brief={initialBrief}

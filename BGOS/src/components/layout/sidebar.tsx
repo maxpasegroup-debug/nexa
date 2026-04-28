@@ -10,6 +10,7 @@ import {
   Bot,
   Bug,
   CheckSquare,
+  DollarSign,
   GitBranch,
   LayoutDashboard,
   LogOut,
@@ -45,6 +46,7 @@ const roleLinks: Record<string, NavItem[]> = {
   ],
   BDM: [
     { label: "My Leads", href: "/bdm", icon: Target },
+    { label: "Earnings", href: "/bdm/commission", icon: DollarSign },
     { label: "Tasks", href: "/bdm/tasks", icon: CheckSquare },
     { label: "Performance", href: "/bdm/performance", icon: TrendingUp },
     { label: "Call Log", href: "/bdm/calls", icon: Phone },
@@ -104,6 +106,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
     businessName.length > 24 ? `${businessName.slice(0, 24)}...` : businessName;
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [earningsTotal, setEarningsTotal] = useState<number | null>(null);
 
   useEffect(() => {
     function toggle() {
@@ -129,6 +132,29 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
     void fetchUnread();
     const interval = window.setInterval(() => void fetchUnread(), 120_000);
     return () => window.clearInterval(interval);
+  }, [role]);
+
+  useEffect(() => {
+    if (role !== "BDM") return;
+
+    async function fetchEarnings() {
+      const response = await fetch("/api/commission", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as { total?: number };
+      setEarningsTotal(data.total ?? 0);
+    }
+
+    function refreshEarnings() {
+      void fetchEarnings();
+    }
+
+    void fetchEarnings();
+    window.addEventListener("bgos:commission-created", refreshEarnings);
+    const interval = window.setInterval(() => void fetchEarnings(), 60_000);
+    return () => {
+      window.removeEventListener("bgos:commission-created", refreshEarnings);
+      window.clearInterval(interval);
+    };
   }, [role]);
 
   return (
@@ -161,6 +187,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
           const Icon = item.icon;
           const active = isActive(pathname, item.href);
           const isInbox = item.href === "/boss/inbox";
+          const isEarnings = item.href === "/bdm/commission";
 
           return (
             <Link
@@ -178,6 +205,11 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
               {isInbox && unreadCount > 0 ? (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#7C6FFF] px-1 text-[10px] font-bold text-white">
                   {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
+              {isEarnings && earningsTotal !== null ? (
+                <span className="rounded-full bg-[#22D9A0]/15 px-2 py-0.5 text-[10px] font-bold text-[#22D9A0]">
+                  ₹{Math.round(earningsTotal).toLocaleString("en-IN")}
                 </span>
               ) : null}
             </Link>
