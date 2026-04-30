@@ -25,10 +25,22 @@ export type CrmLead = {
   value: number;
   notes?: string | null;
   assignedTo?: string | null;
+  pipelineId?: string | null;
   assignee?: CrmAssignee;
   followUpDate?: string | Date | null;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+};
+
+export type CrmPipeline = {
+  id: string;
+  name: string;
+  productName: string;
+  color: string;
+  stages: string[];
+  visibleTo?: string[];
+  slaDays?: Record<string, number>;
+  isActive: boolean;
 };
 
 export type TeamMember = {

@@ -13,6 +13,7 @@ model User {
   email             String    @unique
   password          String
   role              Role      @default(BDM)
+  active            Boolean   @default(true)
   defaultPassword   Boolean   @default(false)
   employeeCode      String?   @unique @default(cuid())
   businessId        String?
@@ -42,6 +43,9 @@ model User {
   slabAchievements  SlabAchievement[]
   customerPortfolio CustomerPortfolio[]
   payoutHistory     PayoutHistory[]
+  bdmOnboardingLeads OnboardingLead[] @relation("BDMOnboardingLeads")
+  sdeOnboardingLeads OnboardingLead[] @relation("SDEOnboardingLeads")
+  workspacesBuilt    WorkspaceConfig[]
   accounts          Account[]
   sessions          Session[]
 }
@@ -123,6 +127,9 @@ model Business {
   emails           Email[]
   emailTemplates   EmailTemplate[]
   commissions      Commission[]
+  onboardingLead   OnboardingLead?
+  trialSubscription TrialSubscription?
+  pipelines        Pipeline[]
 }
 
 model Lead {
@@ -148,6 +155,8 @@ model Lead {
   wonAt         DateTime?
   lostAt        DateTime?
   lostReason    String?
+  pipelineId    String?
+  pipeline      Pipeline?   @relation(fields: [pipelineId], references: [id])
   activities    LeadActivity[]
   reminders     Reminder[]
   callLogs      CallLog[]
@@ -254,6 +263,131 @@ model PayoutHistory {
   paidAt      DateTime?
   notes       String?
   createdAt   DateTime @default(now())
+}
+
+model OnboardingLead {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String
+  phone              String
+  companyName        String
+  employeeCount      String
+  businessType       String
+  challenge          String?
+  source             String   @default("landing_page")
+  status             OnboardingLeadStatus @default(NEW)
+  assignedBDMId      String?
+  assignedBDM        User?    @relation("BDMOnboardingLeads", fields: [assignedBDMId], references: [id])
+  bdmNotes           String?
+  bdmSubmittedAt     DateTime?
+  assignedSDEId      String?
+  assignedSDE        User?    @relation("SDEOnboardingLeads", fields: [assignedSDEId], references: [id])
+  sdeNotes           String?
+  sdeDeliveredAt     DateTime?
+  selectedPlan       String?
+  trialActivated     Boolean  @default(false)
+  trialStartedAt     DateTime?
+  trialEndsAt        DateTime?
+  convertedAt        DateTime?
+  cancelledAt        DateTime?
+  businessId         String?  @unique
+  business           Business? @relation(fields: [businessId], references: [id])
+  nexaSessionId      String?
+  razorpayMandateId  String?
+  razorpayCustomerId String?
+  workspaceConfig    WorkspaceConfig?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+enum OnboardingLeadStatus {
+  NEW
+  BDM_ASSIGNED
+  BDM_CONTACTED
+  BDM_SUBMITTED
+  SDE_BUILDING
+  SDE_DELIVERED
+  BOSS_PREVIEWING
+  TRIAL_ACTIVE
+  CONVERTED
+  CANCELLED
+  LOST
+}
+
+model WorkspaceConfig {
+  id               String   @id @default(cuid())
+  onboardingLeadId String   @unique
+  onboardingLead   OnboardingLead @relation(fields: [onboardingLeadId], references: [id])
+  businessId       String?
+  companyName      String
+  products         Json
+  teamRoles        Json
+  pipelines        Json
+  nexaConfig       Json
+  customBranding   Json     @default("{}")
+  sdeBuiltBy       String
+  sdeBuilder       User     @relation(fields: [sdeBuiltBy], references: [id])
+  status           String   @default("building")
+  deliveredAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model TrialSubscription {
+  id                 String   @id @default(cuid())
+  businessId         String   @unique
+  business           Business @relation(fields: [businessId], references: [id])
+  plan               String
+  trialStartedAt     DateTime
+  trialEndsAt        DateTime
+  autoPayEnabled     Boolean  @default(false)
+  razorpayMandateId  String?
+  razorpayCustomerId String?
+  status             TrialStatus @default(TRIAL)
+  chargedAt          DateTime?
+  cancelledAt        DateTime?
+  cancelReason       String?
+  monthlyAmount      Float
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+enum TrialStatus {
+  TRIAL
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
+model NexaOnboardingSession {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @default(cuid())
+  visitorName  String?
+  visitorEmail String?
+  visitorPhone String?
+  answers      Json     @default("{}")
+  step         Int      @default(0)
+  completed    Boolean  @default(false)
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Pipeline {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+  name        String
+  productName String
+  color       String   @default("#7C6FFF")
+  stages      Json
+  visibleTo   Json     @default("[]")
+  slaDays     Json     @default("{}")
+  isActive    Boolean  @default(true)
+  leads       Lead[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum LeadSource {

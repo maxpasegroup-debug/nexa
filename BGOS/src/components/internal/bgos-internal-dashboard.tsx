@@ -28,6 +28,7 @@ import {
   EmployeeList,
   type EmployeeListItem,
 } from "@/components/internal/employee-list";
+import { OnboardingPipeline } from "@/components/internal/onboarding-pipeline";
 
 type InternalUser = {
   id: string;
@@ -453,6 +454,8 @@ export function BgosInternalDashboard({
               onEmployeesChange={setEmployees}
             />
           </section>
+
+          <OnboardingPipeline />
 
           <section id="nexa-insights-panel" className="scroll-mt-24">
             <NexaInsightsPanel

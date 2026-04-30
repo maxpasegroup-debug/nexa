@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { CancelTrialButton } from "@/components/boss/cancel-trial-button";
 import { ChangePasswordForm } from "@/components/employee/change-password-form";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -63,6 +64,13 @@ export default async function BossSettingsPage() {
           type: true,
           teamSize: true,
           goal: true,
+          trialSubscription: {
+            select: {
+              status: true,
+              trialEndsAt: true,
+              monthlyAmount: true,
+            },
+          },
         },
       },
     },
@@ -125,6 +133,13 @@ export default async function BossSettingsPage() {
           </form>
 
           <ChangePasswordForm />
+
+          {user.business.trialSubscription?.status === "TRIAL" ? (
+            <CancelTrialButton
+              trialEndsAt={user.business.trialSubscription.trialEndsAt.toISOString()}
+              amount={user.business.trialSubscription.monthlyAmount}
+            />
+          ) : null}
 
           <section className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
             <h2 className="font-heading text-lg font-bold">Notifications</h2>

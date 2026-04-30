@@ -70,6 +70,13 @@ export default async function BossPage() {
           id: true,
           name: true,
           healthScore: true,
+          trialSubscription: {
+            select: {
+              status: true,
+              trialEndsAt: true,
+              monthlyAmount: true,
+            },
+          },
         },
       },
     },
@@ -123,6 +130,15 @@ export default async function BossPage() {
         role: user.role,
       }}
       business={user.business}
+      trialSubscription={
+        user.business.trialSubscription
+          ? {
+              status: user.business.trialSubscription.status,
+              trialEndsAt: user.business.trialSubscription.trialEndsAt.toISOString(),
+              monthlyAmount: user.business.trialSubscription.monthlyAmount,
+            }
+          : null
+      }
       initialMetrics={initialMetrics}
       initialActivity={activity.map((item) => ({
         ...item,

@@ -4,6 +4,11 @@
       "name": "process-renewals",
       "schedule": "0 6 1 * *",
       "command": "curl -H \"Authorization: Bearer $CRON_SECRET\" $RAILWAY_PUBLIC_DOMAIN/api/cron/process-renewals"
+    },
+    {
+      "name": "trial-conversion",
+      "schedule": "0 8 * * *",
+      "command": "curl -H \"Authorization: Bearer $CRON_SECRET\" $RAILWAY_PUBLIC_DOMAIN/api/cron/trial-conversion"
     }
   ]
 }

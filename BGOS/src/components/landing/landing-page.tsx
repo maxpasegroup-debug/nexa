@@ -5,6 +5,7 @@ import FeaturesSection from "./features-section";
 import HeroSection from "./hero-section";
 import LandingFooter from "./landing-footer";
 import LandingNavbar from "./landing-navbar";
+import { NexaCaptureWidget } from "./nexa-capture-widget";
 import NexaDemoSection from "./nexa-demo-section";
 import PricingSection from "./pricing-section";
 import TestimonialsSection from "./testimonials-section";
@@ -20,6 +21,7 @@ export default function LandingPage() {
       <TestimonialsSection />
       <CtaSection />
       <LandingFooter />
+      <NexaCaptureWidget />
     </main>
   );
 }

@@ -45,7 +45,7 @@ export async function GET(request: Request) {
         : {}),
     };
 
-    const [leads, total] = await Promise.all([
+    const [leads, total, pipelines] = await Promise.all([
       prisma.lead.findMany({
         where,
         include: {
@@ -62,9 +62,13 @@ export async function GET(request: Request) {
         take: limit,
       }),
       prisma.lead.count({ where }),
+      prisma.pipeline.findMany({
+        where: { businessId: context.businessId, isActive: true },
+        orderBy: { createdAt: "asc" },
+      }),
     ]);
 
-    return NextResponse.json({ leads, total, page, limit });
+    return NextResponse.json({ leads, total, page, limit, pipelines });
   } catch {
     return NextResponse.json(
       { error: "Unable to fetch leads." },
@@ -85,6 +89,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Name is required." }, { status: 400 });
     }
 
+    const pipelineId =
+      typeof body.pipelineId === "string"
+        ? await prisma.pipeline
+            .findFirst({
+              where: {
+                id: body.pipelineId,
+                businessId: context.businessId,
+                isActive: true,
+              },
+              select: { id: true },
+            })
+            .then((pipeline) => pipeline?.id)
+        : undefined;
+
     const lead = await prisma.lead.create({
       data: {
         name: body.name,
@@ -96,6 +114,7 @@ export async function POST(request: Request) {
         value: typeof body.value === "number" ? body.value : Number(body.value ?? 0) || 0,
         notes: typeof body.notes === "string" ? body.notes : undefined,
         createdBy: context.user.id,
+        pipelineId,
         assignedTo:
           context.user.role === "BDM"
             ? context.user.id

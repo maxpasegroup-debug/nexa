@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { PipelineColumn } from "@/components/crm/pipeline-column";
-import type { CrmLead, LeadStatus, TeamMember } from "@/components/crm/types";
+import type { CrmLead, CrmPipeline, LeadStatus, TeamMember } from "@/components/crm/types";
 
 type PipelineBoardProps = {
   leads: CrmLead[];
@@ -25,16 +25,42 @@ const columns: Array<{
   { status: "LOST", title: "Lost", color: "#FF6B6B" },
 ];
 
+const statusOrder: LeadStatus[] = ["NEW", "CONTACTED", "DEMO", "PROPOSAL", "WON", "LOST"];
+
+function normalizeStages(pipeline: CrmPipeline | null) {
+  if (!pipeline?.stages?.length) return columns;
+  return statusOrder.map((status, index) => ({
+    status,
+    title: pipeline.stages[index] ?? columns[index].title,
+    color: index === statusOrder.length - 1 ? "#FF6B6B" : pipeline.color || columns[index].color,
+  }));
+}
+
 export function PipelineBoard({
   leads,
   onLeadUpdate,
   onLeadClick,
 }: PipelineBoardProps) {
   const [localLeads, setLocalLeads] = useState(leads);
+  const [pipelines, setPipelines] = useState<CrmPipeline[]>([]);
 
   useEffect(() => {
     setLocalLeads(leads);
   }, [leads]);
+
+  useEffect(() => {
+    async function loadPipelines() {
+      const response = await fetch("/api/leads?limit=1", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as { pipelines?: CrmPipeline[] };
+      setPipelines(data.pipelines ?? []);
+    }
+
+    void loadPipelines();
+  }, []);
+
+  const activePipeline = pipelines.find((pipeline) => pipeline.isActive) ?? pipelines[0] ?? null;
+  const boardColumns = normalizeStages(activePipeline);
 
   async function handleDrop(status: LeadStatus, leadId: string) {
     if (!leadId) {
@@ -81,7 +107,7 @@ export function PipelineBoard({
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
-      {columns.map((column) => (
+      {boardColumns.map((column) => (
         <PipelineColumn
           key={column.status}
           status={column.status}

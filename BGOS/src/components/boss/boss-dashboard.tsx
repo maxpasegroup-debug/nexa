@@ -61,6 +61,11 @@ type BossDashboardProps = {
   initialMetrics: DashboardMetrics;
   initialActivity: Activity[];
   initialInsights: NexaInsight[];
+  trialSubscription?: {
+    status: string;
+    trialEndsAt: string;
+    monthlyAmount: number;
+  } | null;
 };
 
 function todayLabel() {
@@ -78,6 +83,7 @@ export function BossDashboard({
   initialMetrics,
   initialActivity,
   initialInsights,
+  trialSubscription,
 }: BossDashboardProps) {
   const [metrics, setMetrics] = useState(initialMetrics);
   const [activity, setActivity] = useState(initialActivity);
@@ -189,6 +195,15 @@ export function BossDashboard({
       trend: { direction: "up" as const, value: metrics.conversionRate },
     },
   ];
+  const trialDaysRemaining = trialSubscription?.status === "TRIAL"
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(trialSubscription.trialEndsAt).getTime() - Date.now()) /
+            86_400_000,
+        ),
+      )
+    : null;
 
   return (
     <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
@@ -201,6 +216,29 @@ export function BossDashboard({
 
       <main className="pt-[60px]">
         <div className="space-y-8 p-8">
+          {trialSubscription?.status === "TRIAL" && trialDaysRemaining !== null ? (
+            <section
+              className={`rounded-2xl border p-4 ${
+                trialDaysRemaining <= 2
+                  ? "border-amber-400/30 bg-amber-400/10"
+                  : "border-[#2ECC8A]/25 bg-[#2ECC8A]/10"
+              }`}
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <p className={trialDaysRemaining <= 2 ? "text-amber-100" : "text-emerald-100"}>
+                  <span className="font-semibold">Free trial</span> - {trialDaysRemaining} day
+                  {trialDaysRemaining === 1 ? "" : "s"} remaining. Your team is fully active.
+                </p>
+                <Link
+                  href="/boss/settings"
+                  className="text-sm font-bold text-white underline-offset-4 hover:underline"
+                >
+                  Manage subscription
+                </Link>
+              </div>
+            </section>
+          ) : null}
+
           <section>
             <h2 className="font-heading text-2xl font-bold tracking-normal">
               Dashboard

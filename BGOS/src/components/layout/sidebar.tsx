@@ -20,6 +20,7 @@ import {
   Target,
   TrendingUp,
   Users,
+  Wrench,
 } from "lucide-react";
 
 type SidebarProps = {
@@ -47,6 +48,7 @@ const roleLinks: Record<string, NavItem[]> = {
   BDM: [
     { label: "My Leads", href: "/bdm", icon: Target },
     { label: "Earnings", href: "/bdm/commission", icon: DollarSign },
+    { label: "Onboarding", href: "/bdm/onboarding", icon: Users },
     { label: "Tasks", href: "/bdm/tasks", icon: CheckSquare },
     { label: "Performance", href: "/bdm/performance", icon: TrendingUp },
     { label: "Call Log", href: "/bdm/calls", icon: Phone },
@@ -54,6 +56,7 @@ const roleLinks: Record<string, NavItem[]> = {
   ],
   SDE: [
     { label: "Tasks", href: "/sde", icon: CheckSquare },
+    { label: "Workspace builds", href: "/sde/workspaces", icon: Wrench },
     { label: "Bugs", href: "/sde/bugs", icon: Bug },
     { label: "Sprint", href: "/sde/sprint", icon: GitBranch },
     { label: "Integrations", href: "/sde/integrations", icon: Bot },
@@ -107,6 +110,8 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [earningsTotal, setEarningsTotal] = useState<number | null>(null);
+  const [onboardingCount, setOnboardingCount] = useState(0);
+  const [pendingBuilds, setPendingBuilds] = useState(0);
 
   useEffect(() => {
     function toggle() {
@@ -157,6 +162,46 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
     };
   }, [role]);
 
+  useEffect(() => {
+    if (role !== "SDE") return;
+
+    async function fetchPendingBuilds() {
+      const response = await fetch("/api/sde/workspaces", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as { pendingCount?: number };
+      setPendingBuilds(data.pendingCount ?? 0);
+    }
+
+    void fetchPendingBuilds();
+    const interval = window.setInterval(() => void fetchPendingBuilds(), 60_000);
+    return () => window.clearInterval(interval);
+  }, [role]);
+
+  useEffect(() => {
+    if (role !== "BDM") return;
+
+    async function fetchOnboardingCount() {
+      const response = await fetch("/api/bdm/onboarding-leads", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const data = (await response.json()) as { unsubmittedCount?: number };
+      setOnboardingCount(data.unsubmittedCount ?? 0);
+    }
+
+    function refreshOnboarding() {
+      void fetchOnboardingCount();
+    }
+
+    void fetchOnboardingCount();
+    window.addEventListener("bgos:onboarding-updated", refreshOnboarding);
+    const interval = window.setInterval(() => void fetchOnboardingCount(), 60_000);
+    return () => {
+      window.removeEventListener("bgos:onboarding-updated", refreshOnboarding);
+      window.clearInterval(interval);
+    };
+  }, [role]);
+
   return (
     <>
     {mobileOpen ? (
@@ -188,6 +233,8 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
           const active = isActive(pathname, item.href);
           const isInbox = item.href === "/boss/inbox";
           const isEarnings = item.href === "/bdm/commission";
+          const isOnboarding = item.href === "/bdm/onboarding";
+          const isWorkspaceBuilds = item.href === "/sde/workspaces";
 
           return (
             <Link
@@ -210,6 +257,16 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
               {isEarnings && earningsTotal !== null ? (
                 <span className="rounded-full bg-[#22D9A0]/15 px-2 py-0.5 text-[10px] font-bold text-[#22D9A0]">
                   ₹{Math.round(earningsTotal).toLocaleString("en-IN")}
+                </span>
+              ) : null}
+              {isOnboarding && onboardingCount > 0 ? (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#F5A623] px-1 text-[10px] font-bold text-black">
+                  {onboardingCount > 99 ? "99+" : onboardingCount}
+                </span>
+              ) : null}
+              {isWorkspaceBuilds && pendingBuilds > 0 ? (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#22D9A0] px-1 text-[10px] font-bold text-black">
+                  {pendingBuilds > 99 ? "99+" : pendingBuilds}
                 </span>
               ) : null}
             </Link>
