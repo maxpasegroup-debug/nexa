@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const messages = [
@@ -9,6 +8,11 @@ const messages = [
   "Your business health score improved from 62 to 74 this week. Revenue is up.",
   "3 proposals have been pending for 5+ days. Want me to send follow-up emails?",
 ];
+
+type NexaWidgetWindow = Window &
+  typeof globalThis & {
+    openNexaWidget?: () => void;
+  };
 
 export default function HeroSection() {
   const [index, setIndex] = useState(0);
@@ -64,42 +68,24 @@ export default function HeroSection() {
         </p>
 
         <div className="landing-up mt-9 flex flex-col items-center justify-center gap-3 [animation-delay:0.8s] sm:flex-row">
-          <Link
-            href="/register"
+          <button
+            type="button"
+            onClick={() => {
+              const nexaWindow = window as NexaWidgetWindow;
+              if (typeof window !== "undefined" && nexaWindow.openNexaWidget) {
+                nexaWindow.openNexaWidget();
+              }
+            }}
             className="rounded-lg bg-[#7C6FFF] px-8 py-3.5 text-[15px] font-medium text-white transition hover:-translate-y-0.5 hover:bg-[#9186FF]"
           >
-            Start free — no credit card
-          </Link>
-          <a
-            href="#how-it-works"
-            className="rounded-lg px-6 py-3.5 text-[15px] font-medium text-[#a89fff] transition hover:text-white"
-          >
-            Watch 2-min demo →
-          </a>
+            Get your free workspace →
+          </button>
         </div>
 
         <div className="landing-fade mt-8 [animation-delay:1s]">
-          <p className="text-xs text-[#6B6878]">
-            Trusted by growing businesses across India
+          <p className="text-center text-xs font-light text-[#6B6878]">
+            ✓ 7-day free trial · ✓ Custom built for your business · ✓ Our team contacts you within 2 hours
           </p>
-          <div className="mt-3 flex items-center justify-center">
-            {[
-              ["R", "bg-[#7C6FFF]"],
-              ["P", "bg-[#22D9A0]"],
-              ["S", "bg-[#4f46e5]"],
-            ].map(([letter, color], avatarIndex) => (
-              <span
-                key={letter}
-                className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#070709] text-xs font-bold text-white ${color}`}
-                style={{ marginLeft: avatarIndex === 0 ? 0 : -8 }}
-              >
-                {letter}
-              </span>
-            ))}
-            <span className="ml-3 text-sm text-[#6B6878]">
-              Join 200+ businesses on the waitlist
-            </span>
-          </div>
         </div>
 
         <div className="landing-up mx-auto mt-12 max-w-[560px] rounded-2xl border border-white/10 bg-[#13131c] p-5 text-left shadow-2xl shadow-[#7C6FFF]/5 [animation-delay:1.2s]">

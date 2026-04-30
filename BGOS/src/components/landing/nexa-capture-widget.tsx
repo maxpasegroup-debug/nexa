@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Send, X } from "lucide-react";
+import { Send, X } from "lucide-react";
 
 import { NexaAvatar } from "@/components/nexa/nexa-avatar";
 
@@ -39,6 +39,11 @@ const quickReplies: Record<number, string[]> = {
     "All of the above",
   ],
 };
+
+type NexaWidgetWindow = Window &
+  typeof globalThis & {
+    openNexaWidget?: () => void;
+  };
 
 function id() {
   return Math.random().toString(36).slice(2);
@@ -139,6 +144,15 @@ export function NexaCaptureWidget() {
 
   useEffect(() => {
     setState(loadState());
+  }, []);
+
+  useEffect(() => {
+    const nexaWindow = window as NexaWidgetWindow;
+    nexaWindow.openNexaWidget = () =>
+      setState((current) => ({ ...current, open: true, interacted: true }));
+    return () => {
+      delete nexaWindow.openNexaWidget;
+    };
   }, []);
 
   useEffect(() => {
@@ -310,21 +324,50 @@ export function NexaCaptureWidget() {
         </button>
       </header>
 
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
-        {state.messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            typing={typingId === message.id ? typedText : undefined}
-          />
-        ))}
-        {state.complete ? (
-          <div className="flex justify-center py-2 text-[#22D9A0]">
-            <CheckCircle2 className="h-8 w-8" />
-          </div>
-        ) : null}
-        <div ref={bottomRef} />
-      </div>
+      {state.complete ? (
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 py-8 text-center">
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 48 48"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <circle cx="24" cy="24" r="24" fill="#22D9A0" fillOpacity="0.16" />
+            <path
+              d="M15 24.5L21.2 30.5L33.5 17.5"
+              stroke="#22D9A0"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <h3 className="mt-5 font-heading text-[18px] font-bold text-white">
+            Thank you, {state.fields.name}! 🎉
+          </h3>
+          <p className="mt-3 text-sm font-normal text-zinc-500">
+            Our team will contact you shortly.
+          </p>
+          <p className="mt-4 font-heading text-sm font-bold text-[#22D9A0]">
+            {state.fields.company}
+          </p>
+          <p className="mt-3 text-xs font-light text-zinc-500">
+            We typically respond within 2 hours during business hours.
+          </p>
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          {state.messages.map((message) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              typing={typingId === message.id ? typedText : undefined}
+            />
+          ))}
+          <div ref={bottomRef} />
+        </div>
+      )}
 
       {!state.complete ? (
         <div className="border-t border-white/10 px-3 py-3">
