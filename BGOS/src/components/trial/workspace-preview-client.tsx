@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { Lock, Send } from "lucide-react";
 
 type WorkspaceConfig = {
   id: string;
@@ -10,21 +11,15 @@ type WorkspaceConfig = {
   teamRoles: unknown;
   pipelines: unknown;
   nexaConfig: unknown;
-  customBranding: unknown;
 };
 
 type PreviewPayload = {
   workspaceConfig: WorkspaceConfig;
-  business: {
-    id: string;
-    name: string;
-    healthScore: number;
-  };
-  accessToken: string;
-  expiresAt: string;
+  business: { id: string; name: string; healthScore: number };
+  lead?: { name: string; email: string; phone: string; selectedPlan: string | null };
 };
 
-function asArray<T = Record<string, unknown>>(value: unknown): T[] {
+function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
 
@@ -32,170 +27,125 @@ function text(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
-function TooltipButton({ children }: { children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      title="Activate trial to use this"
-      className="cursor-not-allowed rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-400"
-      onClick={(event) => event.preventDefault()}
-    >
-      {children}
-    </button>
-  );
-}
-
 export function WorkspacePreviewClient({ token }: { token: string }) {
   const [data, setData] = useState<PreviewPayload | null>(null);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState<Array<{ role: "nexa" | "user"; text: string }>>([]);
 
   useEffect(() => {
     async function loadPreview() {
-      setLoading(true);
-      const response = await fetch(`/api/onboarding/preview?token=${encodeURIComponent(token)}`, {
-        cache: "no-store",
-      });
-      const payload = (await response.json().catch(() => ({}))) as
-        | PreviewPayload
-        | { error?: string };
+      const response = await fetch(`/api/onboarding/preview?token=${encodeURIComponent(token)}`, { cache: "no-store" });
+      const payload = (await response.json().catch(() => ({}))) as PreviewPayload & { error?: string };
       setLoading(false);
-
       if (!response.ok) {
-        setError("error" in payload ? payload.error ?? "Preview not found." : "Preview not found.");
+        setError(payload.error ?? "Preview not found.");
         return;
       }
-
-      setData(payload as PreviewPayload);
+      setData(payload);
     }
-
     void loadPreview();
   }, [token]);
 
   const details = useMemo(() => {
     if (!data) return null;
-    const config = data.workspaceConfig;
-    const products = asArray<{ name?: string; pipelineStages?: string[] }>(config.products);
-    const roles = asArray<{ displayName?: string; systemRole?: string; assignedProducts?: string[] }>(
-      config.teamRoles,
-    );
-    const nexa = (config.nexaConfig ?? {}) as Record<string, unknown>;
+    const products = asArray<{ name?: string; productName?: string; pipelineStages?: string[]; stages?: string[] }>(data.workspaceConfig.products);
+    const pipelines = asArray<{ name?: string; productName?: string; stages?: string[]; pipelineStages?: string[] }>(data.workspaceConfig.pipelines);
+    const roles = asArray<{ displayName?: string; name?: string; title?: string; systemRole?: string; assignedProducts?: string[] }>(data.workspaceConfig.teamRoles);
+    const nexaConfig = (data.workspaceConfig.nexaConfig ?? {}) as Record<string, unknown>;
     const welcome = text(
-      nexa.customWelcomeMessage,
-      `Welcome to ${config.companyName}. NEXA is ready to help your team prioritize leads, tasks, and follow-ups.`,
+      nexaConfig.customWelcomeMessage,
+      text(nexaConfig.summary, `Welcome to ${data.workspaceConfig.companyName}. NEXA knows your configured pipelines, roles, and operating rules.`),
     );
-
-    return { products, roles, nexa, welcome };
+    return { products, pipelines: pipelines.length ? pipelines : products, roles, welcome };
   }, [data]);
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-[#070709] p-8 text-white">
-        <div className="mx-auto max-w-6xl animate-pulse space-y-5">
-          <div className="h-20 rounded-2xl bg-white/10" />
-          <div className="grid gap-4 md:grid-cols-4">
-            {[0, 1, 2, 3].map((item) => (
-              <div key={item} className="h-28 rounded-2xl bg-white/10" />
-            ))}
-          </div>
-          <div className="h-96 rounded-2xl bg-white/10" />
-        </div>
-      </main>
-    );
+  useEffect(() => {
+    if (details && messages.length === 0) {
+      setMessages([{ role: "nexa", text: details.welcome }]);
+    }
+  }, [details, messages.length]);
+
+  function askNexa() {
+    const question = chatInput.trim();
+    if (!question || !details || !data) return;
+    setMessages((current) => [
+      ...current,
+      { role: "user", text: question },
+      {
+        role: "nexa",
+        text: `For ${data.workspaceConfig.companyName}, I can already see ${details.pipelines.length} configured pipeline(s) and ${details.roles.length} team role(s). Start the trial and I will use live leads, tasks, and team activity to answer this precisely.`,
+      },
+    ]);
+    setChatInput("");
   }
 
-  if (error || !data || !details) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#070709] p-8 text-white">
-        <div className="max-w-md rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-center">
-          <h1 className="font-heading text-2xl font-bold">Preview unavailable</h1>
-          <p className="mt-2 text-sm text-red-100/80">{error || "This preview link is invalid or expired."}</p>
-        </div>
-      </main>
-    );
-  }
+  if (loading) return <main className="min-h-screen bg-[#070709] p-8 text-white"><div className="h-96 animate-pulse rounded-2xl bg-white/10" /></main>;
+  if (!data || !details || error) return <main className="flex min-h-screen items-center justify-center bg-[#070709] text-white">{error || "Preview unavailable."}</main>;
 
   const activateHref = `/activate-trial?businessId=${data.business.id}&token=${encodeURIComponent(token)}`;
 
   return (
-    <main className="min-h-screen bg-[#070709] pb-32 text-white">
-      <div className="sticky top-0 z-30 border-b border-emerald-400/20 bg-[#08110d]/95 px-6 py-4 backdrop-blur">
+    <main className="min-h-screen bg-[#070709] pb-28 text-white">
+      <div className="sticky top-0 z-30 border-b border-[#22D9A0]/20 bg-[#07100b]/95 px-6 py-4 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm text-emerald-50">
-            <span className="font-semibold">Your BGOS workspace is ready</span> - built specifically for{" "}
-            <span className="font-semibold text-[#2ECC8A]">{data.workspaceConfig.companyName}</span>. This is a
-            preview. Activate your free trial to unlock your team.
-          </p>
-          <Link
-            href={activateHref}
-            className="rounded-xl bg-[#2ECC8A] px-5 py-3 text-sm font-bold text-[#07100b] shadow-[0_0_30px_rgba(46,204,138,0.25)]"
-          >
-            Start 7-day free trial →
-          </Link>
+          <p className="font-heading text-lg font-bold">🎉 {data.workspaceConfig.companyName}&apos;s workspace is ready — built specifically for your business.</p>
+          <Link href={activateHref} className="rounded-xl bg-[#22D9A0] px-5 py-3 text-sm font-bold text-black">Activate your team — start free trial →</Link>
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-7xl gap-6 p-6 lg:grid-cols-[1fr_340px]">
+      <div className="mx-auto grid max-w-7xl gap-6 p-6 lg:grid-cols-[1fr_360px]">
         <section className="space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-[#111119] p-6">
-            <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">Read-only boss dashboard preview</p>
-            <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h1 className="font-heading text-3xl font-bold">{data.workspaceConfig.companyName}</h1>
-                <p className="mt-2 max-w-2xl text-sm text-zinc-400">{details.welcome}</p>
-              </div>
-              <TooltipButton>Invite team</TooltipButton>
-            </div>
+          <div className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
+            <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">Boss dashboard preview</p>
+            <h1 className="mt-3 font-heading text-3xl font-bold">{data.workspaceConfig.companyName}</h1>
+            <p className="mt-2 text-sm text-zinc-400">Employee logins are locked until trial activation.</p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-4">
-            {[
-              ["Health score", data.business.healthScore],
-              ["Total leads", 0],
-              ["Won this month", 0],
-              ["Team members", details.roles.length],
-            ].map(([label, value]) => (
+            {["Total leads", "Won this month", "Revenue", "Team active"].map((label) => (
               <div key={label} className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
                 <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">{label}</p>
-                <p className="mt-3 font-heading text-3xl font-bold">{value}</p>
-                <p className="mt-2 text-xs text-zinc-500">Preview data</p>
+                <p className="mt-3 font-heading text-3xl font-bold">0</p>
+                <p className="mt-2 text-xs text-zinc-500">Start your trial to see live data</p>
               </div>
             ))}
           </div>
 
           <section className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="font-heading text-lg font-bold">Configured pipelines</h2>
-              <TooltipButton>Add lead</TooltipButton>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {details.products.map((product, index) => (
-                <div key={`${product.name}-${index}`} className="rounded-2xl border border-white/10 bg-[#0d0d12] p-4">
-                  <h3 className="font-heading text-base font-bold">{product.name ?? `Pipeline ${index + 1}`}</h3>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {(product.pipelineStages ?? ["New", "Contacted", "Won"]).map((stage) => (
-                      <span key={stage} className="rounded-full border border-[#2ECC8A]/25 bg-[#2ECC8A]/10 px-3 py-1 text-xs text-[#bff7dc]">
-                        {stage}
-                      </span>
-                    ))}
+            <h2 className="font-heading text-lg font-bold">Custom pipelines</h2>
+            <div className="mt-5 space-y-4">
+              {details.pipelines.map((pipeline, index) => {
+                const stages: string[] = pipeline.stages ?? pipeline.pipelineStages ?? ["New", "Contacted", "Won"];
+                return (
+                  <div key={`${pipeline.name}-${index}`} className="rounded-xl border border-white/10 bg-[#0d0d12] p-4">
+                    <h3 className="font-heading text-base font-bold">{pipeline.name ?? pipeline.productName ?? `Pipeline ${index + 1}`}</h3>
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {stages.map((stage, stageIndex) => (
+                        <div key={`${stage}-${stageIndex}`} className="flex items-center gap-2">
+                          <span className="rounded-full bg-[#7C6FFF]/20 px-3 py-1 text-xs font-bold text-[#d8d4ff]">{stage}</span>
+                          {stageIndex < stages.length - 1 ? <span className="text-zinc-600">→</span> : null}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
-            <h2 className="font-heading text-lg font-bold">Team structure</h2>
-            <div className="mt-5 grid gap-3">
+            <h2 className="font-heading text-lg font-bold">Team</h2>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
               {details.roles.map((role, index) => (
-                <div key={`${role.displayName}-${index}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3">
+                <div key={`${role.displayName}-${index}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0d0d12] p-4">
                   <div>
-                    <p className="text-sm font-semibold">{role.displayName ?? `Role ${index + 1}`}</p>
-                    <p className="mt-1 text-xs text-zinc-500">{role.systemRole ?? "BDM"} access</p>
+                    <p className="text-sm font-bold">{role.displayName ?? role.name ?? `Employee ${index + 1}`}</p>
+                    <p className="mt-1 text-xs text-zinc-500">{role.systemRole ?? role.title ?? "Team member"}</p>
+                    <p className="mt-2 text-xs text-zinc-500">Employees will be activated when you start your trial.</p>
                   </div>
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
-                    {(role.assignedProducts ?? []).length || details.products.length} pipelines
-                  </span>
+                  <Lock className="h-5 w-5 text-zinc-500" />
                 </div>
               ))}
             </div>
@@ -203,30 +153,29 @@ export function WorkspacePreviewClient({ token }: { token: string }) {
         </section>
 
         <aside className="space-y-6">
-          <div className="rounded-2xl border border-[#2ECC8A]/25 bg-[#102017] p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#2ECC8A]">NEXA preview</p>
-            <p className="mt-4 text-sm leading-6 text-emerald-50">{details.welcome}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
-            <h2 className="font-heading text-base font-bold">Preview mode</h2>
-            <p className="mt-2 text-sm text-zinc-400">
-              Buttons, lead forms, team invites, and automations unlock once the trial is active.
-            </p>
-            <Link href={activateHref} className="mt-5 block rounded-xl bg-[#2ECC8A] px-4 py-3 text-center text-sm font-bold text-[#07100b]">
-              Start Trial
-            </Link>
-          </div>
+          <section className="rounded-2xl border border-[#22D9A0]/25 bg-[#102017] p-5">
+            <h2 className="font-heading text-lg font-bold text-[#22D9A0]">NEXA active</h2>
+            <div className="mt-4 max-h-[360px] space-y-3 overflow-auto">
+              {messages.map((message, index) => (
+                <div key={index} className={`rounded-xl p-3 text-sm ${message.role === "nexa" ? "bg-[#22D9A0]/10 text-emerald-50" : "bg-white/10 text-white"}`}>
+                  {message.text}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex gap-2">
+              <input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Ask NEXA..." className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0d0d12] px-3 py-2 text-sm outline-none focus:border-[#22D9A0]" />
+              <button onClick={askNexa} className="rounded-xl bg-[#22D9A0] px-3 text-black"><Send className="h-4 w-4" /></button>
+            </div>
+          </section>
         </aside>
       </div>
 
-      <div className="fixed bottom-5 right-5 z-40 max-w-sm rounded-2xl border border-[#2ECC8A]/25 bg-[#0f1914]/95 p-5 shadow-2xl backdrop-blur">
-        <p className="text-sm text-emerald-50">
-          You are previewing {data.workspaceConfig.companyName}&apos;s workspace. Looks good? Start your free trial - no
-          charge for 7 days.
-        </p>
-        <Link href={activateHref} className="mt-4 block rounded-xl bg-[#2ECC8A] px-4 py-3 text-center text-sm font-bold text-[#07100b]">
-          Start Trial
-        </Link>
+      <div className="fixed bottom-5 right-5 z-40 max-w-sm rounded-2xl border border-[#22D9A0]/25 bg-[#0f1914]/95 p-5 shadow-2xl backdrop-blur">
+        <p className="text-sm text-emerald-50">You are previewing {data.workspaceConfig.companyName}&apos;s BGOS workspace. Happy with what you see? Activate your 7-day free trial below.</p>
+        <div className="mt-4 flex gap-3">
+          <Link href={activateHref} className="rounded-xl bg-[#22D9A0] px-4 py-3 text-sm font-bold text-black">Start trial →</Link>
+          <a href="tel:+910000000000" className="rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-zinc-300">Call our team</a>
+        </div>
       </div>
     </main>
   );

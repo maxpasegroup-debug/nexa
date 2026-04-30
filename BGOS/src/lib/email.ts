@@ -21,11 +21,13 @@ export async function sendEmail({
   toName,
   subject,
   html,
+  fromName,
 }: {
   to: string;
   toName: string;
   subject: string;
   html: string;
+  fromName?: string;
 }): Promise<boolean> {
   if (!BREVO_API_KEY) {
     console.warn("[email] BREVO_API_KEY not set. Skipping email.");
@@ -42,7 +44,7 @@ export async function sendEmail({
       },
       body: JSON.stringify({
         sender: {
-          name: FROM_NAME,
+          name: fromName ?? FROM_NAME,
           email: FROM_EMAIL,
         },
         to: [{ email: to, name: toName }],

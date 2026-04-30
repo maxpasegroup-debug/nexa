@@ -1,52 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
-import { WorkspaceBuilder } from "@/components/sde/workspace-builder";
 
 type User = {
-  id: string;
   name: string;
-  email: string;
   role: string;
-  businessId: string;
   businessName: string;
 };
 
-type Lead = {
+type BuildRow = {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
   companyName: string;
-  businessType: string;
-  employeeCount: string;
-  challenge: string | null;
+  plan: string | null;
   status: string;
-  selectedPlan: string | null;
-  bdmNotes: string | null;
-  updatedAt: string;
-  assignedBDM?: { name: string; email: string } | null;
+  assignedAt: string;
 };
 
-function statusLabel(status: string) {
-  if (status === "BDM_SUBMITTED") return { label: "Pending build", className: "bg-amber-400/10 text-amber-300" };
-  if (status === "SDE_BUILDING") return { label: "In progress", className: "bg-[#7C6FFF]/10 text-[#c6c1ff]" };
-  if (status === "SDE_DELIVERED") return { label: "Delivered", className: "bg-[#22D9A0]/10 text-[#22D9A0]" };
-  return { label: status, className: "bg-white/5 text-zinc-400" };
+function statusBadge(status: string) {
+  if (status === "SDE_BUILDING") return { label: "Building", className: "bg-amber-400/10 text-amber-300" };
+  if (status === "CLARIFICATION_NEEDED") return { label: "Clarification needed", className: "bg-red-500/10 text-red-300" };
+  if (status === "SDE_APPROVED") return { label: "Approved", className: "bg-[#22D9A0]/10 text-[#22D9A0]" };
+  return { label: "Submitted", className: "bg-white/5 text-zinc-400" };
 }
 
-export function WorkspaceBuildsPage({ user, initialLeads }: { user: User; initialLeads: Lead[] }) {
-  const [leads, setLeads] = useState(initialLeads);
-  const [selected, setSelected] = useState<Lead | null>(null);
-
-  function markDelivered() {
-    if (!selected) return;
-    setLeads((current) => current.map((lead) => lead.id === selected.id ? { ...lead, status: "SDE_DELIVERED" } : lead));
-  }
-
+export function WorkspaceBuildsPage({ user, builds }: { user: User; builds: BuildRow[] }) {
   return (
     <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
       <Sidebar role="SDE" userName={user.name} businessName={user.businessName} />
@@ -55,34 +35,37 @@ export function WorkspaceBuildsPage({ user, initialLeads }: { user: User; initia
         <div className="space-y-6 p-8">
           <section>
             <h1 className="font-heading text-2xl font-bold">Workspace builds</h1>
-            <p className="mt-1 text-sm text-zinc-500">Build and deliver BGOS workspaces from BDM briefs.</p>
+            <p className="mt-1 text-sm text-zinc-500">Review intelligent onboarding summaries and approve workspaces.</p>
           </section>
-
-          {selected ? (
-            <div className="space-y-4">
-              <button onClick={() => setSelected(null)} className="text-sm font-semibold text-[#7C6FFF]">← Back to builds</button>
-              <WorkspaceBuilder onboardingLead={selected} onDelivered={markDelivered} />
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {leads.length > 0 ? leads.map((lead) => {
-                const label = statusLabel(lead.status);
-                return (
-                  <button key={lead.id} onClick={() => setSelected(lead)} className="rounded-2xl border border-white/10 bg-[#13131c] p-5 text-left transition hover:border-[#7C6FFF]/40">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <h2 className="font-heading text-lg font-bold">{lead.companyName}</h2>
-                        <p className="mt-1 text-sm text-zinc-500">{lead.businessType} · {lead.employeeCount} employees · BDM {lead.assignedBDM?.name ?? "-"}</p>
-                      </div>
-                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${label.className}`}>{label.label}</span>
-                    </div>
-                  </button>
-                );
-              }) : (
-                <div className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-zinc-500">No workspace builds assigned yet.</div>
-              )}
-            </div>
-          )}
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#13131c]">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="border-b border-white/10 text-xs uppercase text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3">Company name</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Assigned time</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {builds.length ? builds.map((build) => {
+                  const badge = statusBadge(build.status);
+                  return (
+                    <tr key={build.id} className="border-b border-white/5">
+                      <td className="px-4 py-4 font-semibold text-white">{build.companyName}</td>
+                      <td className="text-zinc-400">{build.plan ?? "Not selected"}</td>
+                      <td><span className={`rounded-full px-3 py-1 text-xs font-bold ${badge.className}`}>{badge.label}</span></td>
+                      <td className="text-zinc-500">{new Date(build.assignedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</td>
+                      <td><Link href={`/sde/workspaces/${build.id}`} className="rounded-xl bg-[#7C6FFF] px-3 py-2 text-xs font-bold text-white">Open build</Link></td>
+                    </tr>
+                  );
+                }) : (
+                  <tr><td colSpan={5} className="px-4 py-10 text-center text-zinc-500">No build sessions assigned yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </main>
     </div>

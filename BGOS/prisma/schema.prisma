@@ -45,6 +45,11 @@ model User {
   payoutHistory     PayoutHistory[]
   bdmOnboardingLeads OnboardingLead[] @relation("BDMOnboardingLeads")
   sdeOnboardingLeads OnboardingLead[] @relation("SDEOnboardingLeads")
+  bdmOnboardingSessions OnboardingSession[] @relation("BDMSessions")
+  sdeOnboardingSessions OnboardingSession[] @relation("SDESessions")
+  clarificationsRaised OnboardingClarification[] @relation("ClarificationRaiser")
+  clarificationsAnswered OnboardingClarification[] @relation("ClarificationAnswerer")
+  workspaceTemplates WorkspaceTemplate[]
   workspacesBuilt    WorkspaceConfig[]
   accounts          Account[]
   sessions          Session[]
@@ -157,6 +162,7 @@ model Lead {
   lostReason    String?
   pipelineId    String?
   pipeline      Pipeline?   @relation(fields: [pipelineId], references: [id])
+  onboardingSession OnboardingSession?
   activities    LeadActivity[]
   reminders     Reminder[]
   callLogs      CallLog[]
@@ -544,11 +550,106 @@ model NexaInsight {
 
 model OnboardingSession {
   id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id])
+  userId       String?  @unique
+  user         User?    @relation(fields: [userId], references: [id])
+  leadId       String?  @unique
+  lead         Lead?    @relation(fields: [leadId], references: [id])
+  bdmId        String?
+  bdm          User?    @relation("BDMSessions", fields: [bdmId], references: [id])
+  status       OnboardingSessionStatus @default(COLLECTING)
+  completenessScore Int @default(0)
+  companyData  Json     @default("{}")
+  employeeData Json     @default("[]")
+  pipelineData Json     @default("[]")
+  operatingRules Json   @default("[]")
+  nexaGaps     Json     @default("[]")
+  nexaSuggestions Json  @default("[]")
+  nexaMessages Json     @default("[]")
+  selectedPlan String?
+  planReason   String?
+  bdmNotes     String?
+  summaryGenerated Boolean @default(false)
+  summaryText  String?  @db.Text
+  summaryJson  Json?
+  submittedAt  DateTime?
+  sdeId        String?
+  sde          User?    @relation("SDESessions", fields: [sdeId], references: [id])
+  employees    OnboardingEmployee[]
+  clarifications OnboardingClarification[]
+  buildStatus  String?
+  approvedAt   DateTime?
+  approvedBy   String?
   step         Int      @default(0)
   answers      Json     @default("{}")
   completed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum OnboardingSessionStatus {
+  COLLECTING
+  NEXA_REVIEWING
+  GAP_FILLING
+  READY
+  SUBMITTED
+  SDE_BUILDING
+  CLARIFICATION_NEEDED
+  SDE_APPROVED
+  DELIVERED
+  TRIAL_ACTIVE
+  CONVERTED
+  CANCELLED
+}
+
+model OnboardingEmployee {
+  id               String   @id @default(cuid())
+  sessionId        String
+  session          OnboardingSession @relation(fields: [sessionId], references: [id])
+  name             String
+  title            String
+  email            String
+  phone            String?
+  reportsTo        String?
+  directReports    Json     @default("[]")
+  systemRole       String
+  assignedPipelines Json    @default("[]")
+  operatingProcedures String? @db.Text
+  dailyTasks       Json     @default("[]")
+  decisionAuthority Json    @default("[]")
+  communicationPrefs Json   @default("{}")
+  nexaFlags        Json     @default("[]")
+  completeness     Int      @default(0)
+  createdAt        DateTime @default(now())
+}
+
+model OnboardingClarification {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     OnboardingSession @relation(fields: [sessionId], references: [id])
+  raisedBy    String
+  raiser      User     @relation("ClarificationRaiser", fields: [raisedBy], references: [id])
+  question    String   @db.Text
+  context     String?
+  answeredBy  String?
+  answerer    User?    @relation("ClarificationAnswerer", fields: [answeredBy], references: [id])
+  answer      String?  @db.Text
+  status      String   @default("pending")
+  notifiedAt  DateTime?
+  answeredAt  DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model WorkspaceTemplate {
+  id           String   @id @default(cuid())
+  name         String
+  industry     String
+  description  String
+  config       Json
+  usageCount   Int      @default(0)
+  createdFrom  String?
+  isPublic     Boolean  @default(false)
+  createdBy    String
+  creator      User     @relation(fields: [createdBy], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

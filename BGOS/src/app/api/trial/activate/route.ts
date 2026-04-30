@@ -5,12 +5,13 @@ import { calcFirstSale } from "@/lib/commission";
 import { sendEmail } from "@/lib/email";
 import { addDays, getInternalBusiness, getString, planMonthlyAmount } from "@/lib/onboarding-flow";
 import { prisma } from "@/lib/prisma";
+import { sendEmployeeWelcomeEmails } from "@/lib/welcome-emails";
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const businessId = getString(body.businessId);
-    const planType = getString(body.planType).toUpperCase() || "STARTER";
+    const planType = (getString(body.plan) || getString(body.planType)).toUpperCase() || "STARTER";
     const razorpayMandateId = getString(body.razorpayMandateId);
     const razorpayCustomerId = getString(body.razorpayCustomerId);
     const name = getString(body.name);
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
 
     if (!businessId || !planType || !razorpayMandateId) {
       return NextResponse.json(
-        { error: "businessId, planType, and razorpayMandateId are required." },
+        { error: "businessId, plan, and razorpayMandateId are required." },
         { status: 400 },
       );
     }
@@ -109,16 +110,21 @@ export async function POST(request: Request) {
         : []),
     ]);
 
+    const template = await prisma.workspaceTemplate.findFirst({
+      where: { name: { startsWith: business.name } },
+      orderBy: { createdAt: "desc" },
+      select: { createdFrom: true },
+    });
+    if (template?.createdFrom) {
+      await prisma.onboardingSession.update({
+        where: { id: template.createdFrom },
+        data: { status: "TRIAL_ACTIVE" },
+      }).catch(() => null);
+    }
+
     const internalBusiness = await getInternalBusiness();
     await Promise.allSettled([
-      ...business.users.map((member) =>
-        sendEmail({
-          to: member.email,
-          toName: member.name,
-          subject: "Your BGOS workspace is now live",
-          html: `<p>Hi ${member.name},</p><p>Your BGOS workspace for <strong>${business.name}</strong> is now live.</p><p>Login at <strong>iceconnect.in</strong>.</p>`,
-        }),
-      ),
+      sendEmployeeWelcomeEmails(businessId),
       business.onboardingLead?.assignedBDM
         ? sendEmail({
             to: business.onboardingLead.assignedBDM.email,
