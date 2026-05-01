@@ -53,6 +53,7 @@ model User {
   workspacesBuilt    WorkspaceConfig[]
   accounts          Account[]
   sessions          Session[]
+  sdeInstallations  AgentInstallation[] @relation("SDEInstallations")
 }
 
 enum Role {
@@ -135,6 +136,121 @@ model Business {
   onboardingLead   OnboardingLead?
   trialSubscription TrialSubscription?
   pipelines        Pipeline[]
+  agentInstallations AgentInstallation[]
+}
+
+model MarketplaceAgent {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  tagline         String
+  description     String   @db.Text
+  category        AgentCategory
+  icon            String
+  colorPrimary    String
+  colorSecondary  String
+  gradient        String
+  onboardingFee   Float
+  monthlyFee      Float
+  isActive        Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  features        Json     @default("[]")
+  benefits        Json     @default("[]")
+  howItWorks      Json     @default("[]")
+  stats           Json     @default("{}")
+  metaTitle       String?
+  metaDesc        String?
+  installations   AgentInstallation[]
+  offers          AgentOffer[]
+  notifyRequests  AgentNotifyRequest[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum AgentCategory {
+  UNIVERSAL
+  HEALTHCARE
+  EDUCATION
+  REAL_ESTATE
+  CONSTRUCTION
+  RETAIL
+  FINANCE
+}
+
+model AgentInstallation {
+  id                String   @id @default(cuid())
+  agentId           String
+  agent             MarketplaceAgent @relation(fields: [agentId], references: [id])
+  businessId        String
+  business          Business @relation(fields: [businessId], references: [id])
+  status            InstallStatus @default(PENDING)
+  onboardingFeePaid Boolean @default(false)
+  monthlyFeePaid    Boolean @default(false)
+  razorpaySetupId   String?
+  razorpayMandateId String?
+  installedAt       DateTime?
+  activeFrom        DateTime?
+  cancelledAt       DateTime?
+  cancelReason      String?
+  sdeAssignedId     String?
+  sdeAssignee       User?    @relation("SDEInstallations", fields: [sdeAssignedId], references: [id])
+  sdeCompletedAt    DateTime?
+  customConfig      Json     @default("{}")
+  whitelabelName    String?
+  whitelabelIcon    String?
+  isWhitelabeled    Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([agentId, businessId])
+}
+
+enum InstallStatus {
+  PENDING
+  PAYMENT_DONE
+  SDE_BUILDING
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+model AgentOffer {
+  id             String   @id @default(cuid())
+  agentId        String?
+  agent          MarketplaceAgent? @relation(fields: [agentId], references: [id])
+  name           String
+  description    String
+  offerType      OfferType
+  discount       Float
+  isCombo        Boolean  @default(false)
+  comboAgents    Json     @default("[]")
+  targetPlan     String?
+  targetIndustry String?
+  validFrom      DateTime
+  validUntil     DateTime?
+  isActive       Boolean  @default(true)
+  usageCount     Int      @default(0)
+  createdAt      DateTime @default(now())
+}
+
+enum OfferType {
+  SETUP_WAIVED
+  MONTHLY_DISCOUNT
+  FIRST_MONTH_FREE
+  COMBO_DISCOUNT
+  PERCENTAGE_OFF
+}
+
+model AgentNotifyRequest {
+  id         String   @id @default(cuid())
+  agentId    String
+  agent      MarketplaceAgent @relation(fields: [agentId], references: [id])
+  email      String
+  businessId String?
+  createdAt  DateTime @default(now())
+
+  @@unique([agentId, email])
 }
 
 model Lead {

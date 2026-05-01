@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
+  ShoppingCart,
   Target,
   UserPlus,
   Users,
@@ -87,6 +88,7 @@ const navItems = [
   { label: "My Team", href: "/internal/team", icon: Users },
   { label: "BGOS Leads", href: "/internal/leads", icon: Target },
   { label: "NEXA", href: "/internal/nexa", icon: Bot },
+  { label: "Marketplace", href: "/internal/marketplace", icon: ShoppingCart },
   { label: "Settings", href: "/internal/settings", icon: Settings },
 ];
 

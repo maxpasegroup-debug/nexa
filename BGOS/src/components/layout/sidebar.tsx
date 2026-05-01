@@ -17,6 +17,7 @@ import {
   Mail,
   Phone,
   Settings,
+  ShoppingCart,
   Target,
   TrendingUp,
   Users,
@@ -42,6 +43,7 @@ const roleLinks: Record<string, NavItem[]> = {
     { label: "Inbox", href: "/boss/inbox", icon: Mail },
     { label: "Team", href: "/boss/team", icon: Users },
     { label: "NEXA", href: "/boss/nexa", icon: Bot },
+    { label: "Marketplace", href: "/internal/marketplace", icon: ShoppingCart },
     { label: "Reports", href: "/boss/reports", icon: BarChart3 },
     { label: "Settings", href: "/boss/settings", icon: Settings },
   ],
@@ -69,6 +71,7 @@ const roleLinks: Record<string, NavItem[]> = {
     { label: "My Team", href: "/internal/team", icon: Users },
     { label: "BGOS Leads", href: "/internal/leads", icon: Target },
     { label: "NEXA", href: "/internal/nexa", icon: Bot },
+    { label: "Marketplace", href: "/boss/marketplace", icon: ShoppingCart },
     { label: "Settings", href: "/internal/settings", icon: Settings },
   ],
 };
@@ -112,6 +115,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
   const [earningsTotal, setEarningsTotal] = useState<number | null>(null);
   const [onboardingCount, setOnboardingCount] = useState(0);
   const [pendingBuilds, setPendingBuilds] = useState(0);
+  const marketplaceRecommendations = role === "BOSS" || role === "OWNER" ? 1 : 0;
 
   useEffect(() => {
     function toggle() {
@@ -235,6 +239,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
           const isEarnings = item.href === "/bdm/commission";
           const isOnboarding = item.href === "/bdm/onboarding";
           const isWorkspaceBuilds = item.href === "/sde/workspaces";
+          const isMarketplace = item.href === "/boss/marketplace";
 
           return (
             <Link
@@ -267,6 +272,11 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
               {isWorkspaceBuilds && pendingBuilds > 0 ? (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#22D9A0] px-1 text-[10px] font-bold text-black">
                   {pendingBuilds > 99 ? "99+" : pendingBuilds}
+                </span>
+              ) : null}
+              {isMarketplace && marketplaceRecommendations > 0 ? (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#7C6FFF] px-1 text-[10px] font-bold text-white">
+                  {marketplaceRecommendations}
                 </span>
               ) : null}
             </Link>
