@@ -1,6 +1,15 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let openai: OpenAI | null = null;
+
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+
+  openai ??= new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return openai;
+}
 
 type CompletenessCheck = {
   score: number;
@@ -67,11 +76,13 @@ function parseJsonObject<T>(value: string | null | undefined, fallback: T): T {
 }
 
 async function completeJson(prompt: string, maxTokens: number) {
-  if (!process.env.OPENAI_API_KEY) {
+  const client = getOpenAIClient();
+
+  if (!client) {
     return null;
   }
 
-  const response = await openai.chat.completions.create({
+  const response = await client.chat.completions.create({
     model: "gpt-4o",
     max_tokens: maxTokens,
     messages: [{ role: "user", content: prompt }],
