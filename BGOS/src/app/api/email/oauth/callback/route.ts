@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { exchangeCodeForTokens, syncEmails } from "@/lib/gmail";
+import {
+  exchangeCodeForTokens,
+  syncEmails,
+  verifyGmailOAuthState,
+} from "@/lib/gmail";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const userId = searchParams.get("state");
+  const state = searchParams.get("state");
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  if (!code || !userId) {
+  if (!code || !state) {
+    return NextResponse.redirect(`${appUrl}/boss/inbox?connected=false`);
+  }
+
+  let userId: string;
+  try {
+    userId = verifyGmailOAuthState(state).userId;
+  } catch (error) {
+    console.warn("[gmail:oauth:state]", error);
     return NextResponse.redirect(`${appUrl}/boss/inbox?connected=false`);
   }
 

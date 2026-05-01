@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-
-import auth from "@/lib/auth";
+import { requireInternalOwner } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 import {
   BgosInternalDashboard,
@@ -32,48 +30,7 @@ function isActive(date: Date | null) {
 }
 
 export default async function InternalPage() {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const owner = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      businessId: true,
-      business: {
-        select: {
-          id: true,
-          name: true,
-          healthScore: true,
-        },
-      },
-    },
-  });
-
-  if (owner?.email !== "boss@bgos.online" || owner.role !== "OWNER") {
-    redirect("/login");
-  }
-
-  const internalBusiness =
-    owner.business ??
-    (await prisma.business.findFirst({
-      where: { name: "BGOS" },
-      select: {
-        id: true,
-        name: true,
-        healthScore: true,
-      },
-    }));
-
-  if (!internalBusiness) {
-    redirect("/login");
-  }
+  const { owner, business: internalBusiness } = await requireInternalOwner();
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { OnboardingLeadStatus } from "@prisma/client";
 
-import auth from "@/lib/auth";
+import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -17,10 +17,8 @@ const statuses: OnboardingLeadStatus[] = [
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id || session.user.role !== "OWNER") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authResult = await requireInternalOwnerApi();
+    if ("error" in authResult) return authResult.error;
 
     const now = new Date();
     const startOfToday = new Date(now);

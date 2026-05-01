@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { requireRole } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id || session.user.role !== "BDM") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const authResult = await requireRole("BDM");
+    if (authResult.response) {
+      return authResult.response;
     }
 
     const leads = await prisma.onboardingLead.findMany({
-      where: { assignedBDMId: session.user.id },
+      where: { assignedBDMId: authResult.user.id },
       orderBy: { createdAt: "desc" },
       include: {
         assignedSDE: { select: { id: true, name: true, email: true } },
@@ -34,10 +33,9 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id || session.user.role !== "BDM") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const authResult = await requireRole("BDM");
+    if (authResult.response) {
+      return authResult.response;
     }
 
     const body = (await request.json()) as {
@@ -58,7 +56,7 @@ export async function PATCH(request: Request) {
     const lead = await prisma.onboardingLead.updateMany({
       where: {
         id: body.onboardingLeadId,
-        assignedBDMId: session.user.id,
+        assignedBDMId: authResult.user.id,
         status: { in: ["BDM_ASSIGNED", "BDM_CONTACTED"] },
       },
       data: { status: "BDM_CONTACTED" },

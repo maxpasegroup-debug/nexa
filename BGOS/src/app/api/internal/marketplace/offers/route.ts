@@ -1,7 +1,8 @@
 import type { OfferType } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-import { getBool, getDate, getNumber, getString, requireSession } from "@/lib/marketplace";
+import { requireInternalOwnerApi } from "@/lib/internal-owner";
+import { getBool, getDate, getNumber, getString } from "@/lib/marketplace";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ function isOfferType(value: unknown): value is OfferType {
 
 export async function GET() {
   try {
-    const authResult = await requireSession(["OWNER"]);
+    const authResult = await requireInternalOwnerApi();
     if ("error" in authResult) return authResult.error;
 
     const offers = await prisma.agentOffer.findMany({
@@ -57,7 +58,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const authResult = await requireSession(["OWNER"]);
+    const authResult = await requireInternalOwnerApi();
     if ("error" in authResult) return authResult.error;
 
     const body = (await request.json()) as Record<string, unknown>;

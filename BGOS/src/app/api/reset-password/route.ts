@@ -1,9 +1,18 @@
 import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
+import { hashPasswordResetToken } from "@/lib/password-reset";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, {
+    key: "reset-password",
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const { token, newPassword } = await request.json();
 
@@ -14,9 +23,10 @@ export async function POST(request: Request) {
       );
     }
 
+    const tokenHash = hashPasswordResetToken(String(token));
     const user = await prisma.user.findFirst({
       where: {
-        resetToken: String(token),
+        resetToken: tokenHash,
         resetTokenExpiry: {
           gt: new Date(),
         },

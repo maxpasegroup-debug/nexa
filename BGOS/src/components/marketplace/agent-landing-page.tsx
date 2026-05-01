@@ -244,7 +244,7 @@ export function InstallModal({
     }
 
     setStep(4);
-    onInstalled("PAYMENT_DONE");
+    onInstalled("PENDING");
   }
 
   return (

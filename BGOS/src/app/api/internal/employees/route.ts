@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import cuid from "cuid";
 
-import auth from "@/lib/auth";
 import { sendWelcomeEmail } from "@/lib/email";
+import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
 const DEFAULT_PASSWORD = "123456789";
@@ -28,36 +28,6 @@ function escapeHtml(value: string) {
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
-}
-
-async function getOwnerAndBusiness() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
-
-  const owner = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      email: true,
-      role: true,
-      businessId: true,
-      business: { select: { id: true, name: true } },
-    },
-  });
-
-  if (owner?.email !== "boss@bgos.online" || owner.role !== "OWNER") {
-    return null;
-  }
-
-  const business =
-    owner.business ??
-    (await prisma.business.findFirst({
-      where: { name: "BGOS" },
-      select: { id: true, name: true },
-    }));
-
-  if (!business) return null;
-  return { owner, business };
 }
 
 function welcomeEmailHtml(name: string, email: string) {
@@ -88,10 +58,8 @@ function welcomeEmailHtml(name: string, email: string) {
 void welcomeEmailHtml;
 
 export async function GET() {
-  const context = await getOwnerAndBusiness();
-  if (!context) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const context = await requireInternalOwnerApi();
+  if ("error" in context) return context.error;
 
   const employees = await prisma.user.findMany({
     where: {
@@ -157,10 +125,9 @@ export async function POST(request: Request) {
   try {
     console.log("[ADD-EMP] Starting...");
 
-    let context: Awaited<ReturnType<typeof getOwnerAndBusiness>>;
+    let context: Awaited<ReturnType<typeof requireInternalOwnerApi>>;
     try {
-      context = await getOwnerAndBusiness();
-      console.log("[ADD-EMP] Auth:", context?.owner.id ?? null);
+      context = await requireInternalOwnerApi();
     } catch (authError) {
       console.error("[ADD-EMP] Auth lookup failed:", authError);
       return NextResponse.json(
@@ -169,10 +136,11 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!context) {
+    if ("error" in context) {
       console.warn("[ADD-EMP] Forbidden: owner context missing");
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return context.error;
     }
+    console.log("[ADD-EMP] Auth:", context.owner.id);
 
     let body: { name?: string; email?: string; role?: string };
     try {

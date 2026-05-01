@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { requireRole } from "@/lib/api-auth";
 import { sendEmail } from "@/lib/email";
 import { escapeHtml, findBossForBusiness } from "@/lib/marketplace";
 import { prisma } from "@/lib/prisma";
@@ -10,13 +10,18 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id || session.user.role !== "SDE") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const authResult = await requireRole(["SDE", "OWNER"]);
+    if (authResult.response) {
+      return authResult.response;
     }
 
     const installation = await prisma.agentInstallation.findFirst({
-      where: { id: params.id, sdeAssignedId: session.user.id },
+      where: {
+        id: params.id,
+        ...(authResult.user.role === "SDE"
+          ? { sdeAssignedId: authResult.user.id }
+          : {}),
+      },
       include: {
         agent: true,
         business: true,

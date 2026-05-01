@@ -8,6 +8,7 @@ import {
   getString,
 } from "@/lib/onboarding-flow";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 function required(value: string, label: string) {
   if (!value) throw new Error(`${label} is required.`);
@@ -15,6 +16,13 @@ function required(value: string, label: string) {
 }
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, {
+    key: "onboarding-landing",
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const internalBusiness = await getInternalBusiness();

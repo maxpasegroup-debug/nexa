@@ -1,36 +1,18 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
-import auth from "@/lib/auth";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
 const DEFAULT_PASSWORD = "123456789";
-
-async function getOwner() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
-
-  const owner = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { id: true, email: true, role: true },
-  });
-
-  if (owner?.email !== "boss@bgos.online" || owner.role !== "OWNER") {
-    return null;
-  }
-
-  return owner;
-}
 
 export async function POST(
   _request: Request,
   { params }: { params: { id: string } },
 ) {
-  const owner = await getOwner();
-  if (!owner) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const context = await requireInternalOwnerApi();
+  if ("error" in context) return context.error;
 
   const employee = await prisma.user.findUnique({
     where: { id: params.id },
@@ -54,7 +36,7 @@ export async function POST(
     prisma.passwordResetRequest.create({
       data: {
         userId: employee.id,
-        requestedBy: owner.id,
+        requestedBy: context.owner.id,
         completed: true,
       },
     }),

@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 import type { Email, EmailAccount, EmailLabel, Lead } from "@prisma/client";
 import { google } from "googleapis";
 
@@ -9,6 +11,7 @@ const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/gmail.modify",
 ];
+const GMAIL_STATE_TTL_MS = 10 * 60 * 1000;
 
 type EmailClassification = {
   label: EmailLabel;
@@ -17,6 +20,75 @@ type EmailClassification = {
   isLead: boolean;
   suggestedReply: string | null;
 };
+
+type GmailOAuthState = {
+  userId: string;
+  exp: number;
+};
+
+function getStateSecret() {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET is required to sign Gmail OAuth state.");
+  return secret;
+}
+
+function base64UrlEncode(value: string) {
+  return Buffer.from(value, "utf8").toString("base64url");
+}
+
+function base64UrlDecode(value: string) {
+  return Buffer.from(value, "base64url").toString("utf8");
+}
+
+function signStatePayload(payload: string) {
+  return crypto
+    .createHmac("sha256", getStateSecret())
+    .update(payload)
+    .digest("base64url");
+}
+
+export function createGmailOAuthState(userId: string) {
+  const payload = base64UrlEncode(
+    JSON.stringify({
+      userId,
+      exp: Date.now() + GMAIL_STATE_TTL_MS,
+    } satisfies GmailOAuthState),
+  );
+  const signature = signStatePayload(payload);
+
+  return `${payload}.${signature}`;
+}
+
+export function verifyGmailOAuthState(state: string) {
+  const [payload, signature, extra] = state.split(".");
+  if (!payload || !signature || extra) {
+    throw new Error("Invalid Gmail OAuth state.");
+  }
+
+  const expected = signStatePayload(payload);
+  if (expected.length !== signature.length) {
+    throw new Error("Invalid Gmail OAuth state signature.");
+  }
+
+  const validSignature = crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature),
+  );
+  if (!validSignature) {
+    throw new Error("Invalid Gmail OAuth state signature.");
+  }
+
+  const decoded = JSON.parse(base64UrlDecode(payload)) as Partial<GmailOAuthState>;
+  if (!decoded.userId || typeof decoded.userId !== "string") {
+    throw new Error("Gmail OAuth state user is missing.");
+  }
+
+  if (typeof decoded.exp !== "number" || decoded.exp <= Date.now()) {
+    throw new Error("Gmail OAuth state expired.");
+  }
+
+  return { userId: decoded.userId };
+}
 
 function getOAuthClient() {
   return new google.auth.OAuth2(
@@ -118,7 +190,7 @@ export function getGmailAuthUrl(userId: string) {
     access_type: "offline",
     prompt: "consent",
     scope: GMAIL_SCOPES,
-    state: userId,
+    state: createGmailOAuthState(userId),
   });
 }
 

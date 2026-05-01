@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { requireAuth } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.businessId) {
+  const authResult = await requireAuth();
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.user.businessId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const subscription = await prisma.trialSubscription.findUnique({
-    where: { businessId: session.user.businessId },
+    where: { businessId: authResult.user.businessId },
     select: {
       id: true,
       plan: true,

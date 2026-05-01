@@ -2,7 +2,7 @@ import { hash } from "bcryptjs";
 import type { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { requireRole } from "@/lib/api-auth";
 import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
@@ -149,14 +149,13 @@ export async function POST(request: Request) {
       return acceptInvite(body);
     }
 
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authResult = await requireRole(["BOSS", "OWNER"]);
+    if (authResult.response) {
+      return authResult.response;
     }
 
     const boss = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authResult.user.id },
     });
 
     if (!boss?.businessId) {

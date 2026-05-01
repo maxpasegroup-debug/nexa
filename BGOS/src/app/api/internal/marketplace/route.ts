@@ -6,8 +6,8 @@ import {
   getNumber,
   getString,
   isAgentCategory,
-  requireSession,
 } from "@/lib/marketplace";
+import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -71,7 +71,7 @@ function readAgentData(
 
 export async function GET() {
   try {
-    const authResult = await requireSession(["OWNER"]);
+    const authResult = await requireInternalOwnerApi();
     if ("error" in authResult) return authResult.error;
 
     const [agents, installations, offers] = await Promise.all([
@@ -131,7 +131,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const authResult = await requireSession(["OWNER"]);
+    const authResult = await requireInternalOwnerApi();
     if ("error" in authResult) return authResult.error;
 
     const body = (await request.json()) as Record<string, unknown>;

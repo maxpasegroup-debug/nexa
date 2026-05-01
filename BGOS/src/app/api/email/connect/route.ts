@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { requireAuth } from "@/lib/api-auth";
 import { getGmailAuthUrl } from "@/lib/gmail";
 
 export async function GET() {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authResult = await requireAuth();
+  if (authResult.response) {
+    return authResult.response;
   }
 
-  return NextResponse.json({ url: getGmailAuthUrl(session.user.id) });
+  return NextResponse.json({ url: getGmailAuthUrl(authResult.user.id) });
 }

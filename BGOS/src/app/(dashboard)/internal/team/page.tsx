@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-
-import auth from "@/lib/auth";
+import { requireInternalOwner } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 import { TeamManagementPage } from "@/components/internal/team-management-page";
 import type { EmployeeListItem } from "@/components/internal/employee-list";
@@ -15,33 +13,7 @@ function latestDate(...values: Array<Date | null | undefined>) {
 }
 
 export default async function InternalTeamPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
-  const owner = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      businessId: true,
-      business: { select: { id: true } },
-    },
-  });
-
-  if (owner?.email !== "boss@bgos.online" || owner.role !== "OWNER") {
-    redirect("/login");
-  }
-
-  const business =
-    owner.business ??
-    (await prisma.business.findFirst({
-      where: { name: "BGOS" },
-      select: { id: true },
-    }));
-
-  if (!business) redirect("/login");
+  const { owner, business } = await requireInternalOwner();
 
   const employees = await prisma.user.findMany({
     where: {

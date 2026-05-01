@@ -1,19 +1,18 @@
+import type { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { requireRole } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 
-export async function getBdmContext() {
-  const session = await auth();
+export async function getBdmContext(roles: Role | Role[] = "BDM") {
+  const authResult = await requireRole(roles);
 
-  if (!session?.user?.id) {
-    return {
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
+  if (authResult.response) {
+    return { error: authResult.response };
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: authResult.user.id },
     select: {
       id: true,
       name: true,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { getString, requireSession } from "@/lib/marketplace";
+import { requireInternalOwnerApi } from "@/lib/internal-owner";
+import { getString } from "@/lib/marketplace";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export async function PATCH(
   { params }: { params: { id: string } },
 ) {
   try {
-    const authResult = await requireSession(["OWNER"]);
+    const authResult = await requireInternalOwnerApi();
     if ("error" in authResult) return authResult.error;
 
     const body = (await request.json()) as Record<string, unknown>;

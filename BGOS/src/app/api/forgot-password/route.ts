@@ -2,9 +2,18 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/mail";
+import { hashPasswordResetToken } from "@/lib/password-reset";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, {
+    key: "forgot-password",
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const { email } = await request.json();
     const successResponse = {
@@ -24,12 +33,13 @@ export async function POST(request: Request) {
     }
 
     const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = hashPasswordResetToken(token);
     const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        resetToken: token,
+        resetToken: tokenHash,
         resetTokenExpiry,
       },
     });

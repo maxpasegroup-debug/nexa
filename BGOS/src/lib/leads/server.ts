@@ -1,7 +1,7 @@
 import type { LeadSource, LeadStatus, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { requireRole } from "@/lib/api-auth";
 import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
@@ -37,16 +37,14 @@ export function isLeadSource(value: unknown): value is LeadSource {
 }
 
 export async function getCrmContext() {
-  const session = await auth();
+  const authResult = await requireRole(["BOSS", "OWNER", "BDM"]);
 
-  if (!session?.user?.id) {
-    return {
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
+  if (authResult.response) {
+    return { error: authResult.response };
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: authResult.user.id },
     select: {
       id: true,
       name: true,

@@ -2,19 +2,28 @@ import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, {
+    key: "register",
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const { name, email, password } = await request.json();
+    const userName = String(name ?? "").trim();
 
-    if (!name || !email || !password) {
+    if (!userName || !email || !password) {
       return NextResponse.json(
         { error: "Name, email, and password are required." },
         { status: 400 },
       );
     }
 
-    const normalizedEmail = String(email).toLowerCase();
+    const normalizedEmail = String(email).trim().toLowerCase();
     const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
@@ -27,22 +36,36 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await hash(String(password), 12);
-    const user = await prisma.user.create({
-      data: {
-        name: String(name),
-        email: normalizedEmail,
-        password: hashedPassword,
-        role: "BOSS",
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        businessId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const business = await tx.business.create({
+        data: {
+          name: `${userName}'s Business`,
+          type: "Not set",
+          teamSize: "Not set",
+          goal: "Not set",
+          healthScore: 50,
+        },
+        select: { id: true },
+      });
+
+      return tx.user.create({
+        data: {
+          name: userName,
+          email: normalizedEmail,
+          password: hashedPassword,
+          role: "BOSS",
+          businessId: business.id,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          businessId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
     });
 
     return NextResponse.json({ user }, { status: 201 });

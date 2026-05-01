@@ -6,8 +6,8 @@ import {
   getNumber,
   getString,
   isAgentCategory,
-  requireSession,
 } from "@/lib/marketplace";
+import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -74,7 +74,7 @@ export async function PATCH(
   { params }: { params: { id: string } },
 ) {
   try {
-    const authResult = await requireSession(["OWNER"]);
+    const authResult = await requireInternalOwnerApi();
     if ("error" in authResult) return authResult.error;
 
     const body = (await request.json()) as Record<string, unknown>;
@@ -103,7 +103,7 @@ export async function DELETE(
   { params }: { params: { id: string } },
 ) {
   try {
-    const authResult = await requireSession(["OWNER"]);
+    const authResult = await requireInternalOwnerApi();
     if ("error" in authResult) return authResult.error;
 
     const activeInstallations = await prisma.agentInstallation.count({

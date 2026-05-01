@@ -14,6 +14,11 @@ async function main() {
     return
   }
 
+  const ownerPassword = process.env.SEED_OWNER_PASSWORD
+  if (!ownerPassword) {
+    throw new Error("SEED_OWNER_PASSWORD is required to seed the owner account")
+  }
+
   // Create BGOS internal business
   const business = await prisma.business.create({
     data: {
@@ -26,7 +31,7 @@ async function main() {
   })
 
   // Create owner account
-  const hashedPassword = await bcrypt.hash("bgos@owner2025", 12)
+  const hashedPassword = await bcrypt.hash(ownerPassword, 12)
   const owner = await prisma.user.create({
     data: {
       name: "BGOS Owner",
@@ -56,7 +61,6 @@ async function main() {
 
   console.log("BGOS owner account created")
   console.log("Email: boss@bgos.online")
-  console.log("Password: bgos@owner2025")
   console.log("Business: BGOS Internal")
 }
 

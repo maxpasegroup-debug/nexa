@@ -40,13 +40,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const context = await getBdmContext();
+    const context = await getBdmContext(["BOSS", "OWNER"]);
 
     if (context.error) return context.error;
-
-    if (context.user.role !== "BOSS") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     const { userId, leadsTarget, wonTarget, revenueTarget } = await request.json();
 

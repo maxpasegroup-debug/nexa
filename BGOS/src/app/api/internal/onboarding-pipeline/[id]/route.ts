@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
-import auth from "@/lib/auth";
+import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { getString } from "@/lib/onboarding-flow";
 import { prisma } from "@/lib/prisma";
 
@@ -26,10 +26,8 @@ export async function PATCH(
   { params }: { params: { id: string } },
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id || session.user.role !== "OWNER") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authResult = await requireInternalOwnerApi();
+    if ("error" in authResult) return authResult.error;
 
     const body = (await request.json()) as Record<string, unknown>;
     const assignedBDMId = getString(body.assignedBDMId);

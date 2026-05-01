@@ -9,20 +9,18 @@ import type {
 } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { requireRole } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function getSdeContext() {
-  const session = await auth();
+  const authResult = await requireRole(["SDE", "OWNER"]);
 
-  if (!session?.user?.id) {
-    return {
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
+  if (authResult.response) {
+    return { error: authResult.response };
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: authResult.user.id },
     select: {
       id: true,
       name: true,
