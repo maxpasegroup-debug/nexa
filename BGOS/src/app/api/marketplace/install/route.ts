@@ -39,20 +39,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Business not found." }, { status: 404 });
     }
 
-    if (existing) {
+    if (existing && existing.status !== "FAILED") {
       return NextResponse.json(
         { error: "Agent is already installed for this business." },
         { status: 400 },
       );
     }
 
-    const installation = await prisma.agentInstallation.create({
-      data: {
-        agentId,
-        businessId,
-        status: "PENDING",
-      },
-    });
+    const installation = existing
+      ? await prisma.agentInstallation.update({
+          where: { id: existing.id },
+          data: {
+            status: "PENDING",
+            cancelReason: null,
+          },
+        })
+      : await prisma.agentInstallation.create({
+          data: {
+            agentId,
+            businessId,
+            status: "PENDING",
+          },
+        });
 
     const order = await createRazorpayOrder({
       amount: agent.onboardingFee,

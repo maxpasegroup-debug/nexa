@@ -49,6 +49,15 @@ export async function POST(request: Request) {
       select: { id: true },
     });
 
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        onboardingStarted: true,
+        onboardingSessionId: session.id,
+        bdmStatus: "ONBOARDING",
+      },
+    });
+
     return NextResponse.json({ sessionId: session.id });
   } catch (error) {
     console.error("[onboarding-session:create]", error);

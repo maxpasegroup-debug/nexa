@@ -21,6 +21,7 @@ function serializeAgent(agent: RawAgent): MarketplaceAgentView {
     tagline: agent.tagline,
     description: agent.description,
     category: agent.category,
+    type: agent.type,
     icon: agent.icon,
     colorPrimary: agent.colorPrimary,
     colorSecondary: agent.colorSecondary,

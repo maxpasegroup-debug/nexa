@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-import type { AgentCategory, MarketplaceAgent, Role } from "@prisma/client";
+import type { AgentCategory, AgentType, MarketplaceAgent, Role } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { requireAuth, requireRole } from "@/lib/api-auth";
@@ -17,6 +17,8 @@ export const agentCategories: AgentCategory[] = [
   "RETAIL",
   "FINANCE",
 ];
+
+export const agentTypes: AgentType[] = ["UI", "BACKGROUND"];
 
 export function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
@@ -45,6 +47,14 @@ export function getDate(value: unknown) {
 
 export function isAgentCategory(value: unknown): value is AgentCategory {
   return typeof value === "string" && agentCategories.includes(value as AgentCategory);
+}
+
+export function isAgentType(value: unknown): value is AgentType {
+  return typeof value === "string" && agentTypes.includes(value as AgentType);
+}
+
+export function getAgentType(value: unknown) {
+  return isAgentType(value) ? value : undefined;
 }
 
 export function dueInHours(hours: number) {

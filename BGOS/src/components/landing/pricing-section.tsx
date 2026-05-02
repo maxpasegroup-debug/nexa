@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { LandingCtaButton } from "./landing-cta-button";
+
 type Plan = {
   name: string;
   price: string;
@@ -12,12 +14,12 @@ type Plan = {
 const plans: Plan[] = [
   {
     name: "Starter",
-    price: "₹799",
+    price: "Rs 799",
     featured: false,
     features: [
       ["Up to 3 users", true],
       ["1 custom pipeline", true],
-      ["NEXA AI (basic insights)", true],
+      ["NEXA basic insights", true],
       ["500 leads/month", true],
       ["Email inbox", true],
       ["Boss dashboard", true],
@@ -26,12 +28,12 @@ const plans: Plan[] = [
   },
   {
     name: "Growth",
-    price: "₹2,499",
+    price: "Rs 2,499",
     featured: true,
     features: [
       ["Up to 15 users", true],
       ["3 custom pipelines", true],
-      ["NEXA AI CEO (full)", true],
+      ["NEXA full recommendations", true],
       ["5,000 leads/month", true],
       ["All role dashboards", true],
       ["Email + chat support", true],
@@ -41,15 +43,15 @@ const plans: Plan[] = [
   },
   {
     name: "Scale",
-    price: "₹6,999",
+    price: "Rs 6,999",
     featured: false,
     features: [
       ["Up to 50 users", true],
       ["Unlimited pipelines", true],
-      ["NEXA AI CEO (advanced)", true],
+      ["Advanced NEXA recommendations", true],
       ["Unlimited leads", true],
       ["All dashboards + API", true],
-      ["Priority support (4hr)", true],
+      ["Priority support", true],
       ["Full marketplace", true],
       ["Data export", true],
     ],
@@ -62,29 +64,19 @@ const plans: Plan[] = [
       ["Unlimited users", true],
       ["Custom NEXA training", true],
       ["Dedicated success manager", true],
-      ["SLA 99.9% guarantee", true],
+      ["SLA support", true],
       ["White label option", true],
-      ["All marketplace agents free", true],
+      ["Marketplace agent bundles", true],
       ["Custom integrations", true],
     ],
   },
 ];
 
 const teaserAgents = [
-  { icon: "⚡", name: "Sales Booster", price: "₹1,499/mo" },
-  { icon: "💬", name: "Wazzup", price: "₹999/mo" },
-  { icon: "🧾", name: "TaxMate", price: "₹799/mo" },
+  { icon: "SB", name: "Sales Booster", price: "Rs 1,499/mo" },
+  { icon: "WA", name: "Wazzup", price: "Rs 999/mo" },
+  { icon: "TX", name: "TaxMate", price: "Rs 799/mo" },
 ];
-
-declare global {
-  interface Window {
-    openNexaWidget?: () => void;
-  }
-}
-
-function openNexa() {
-  window.openNexaWidget?.();
-}
 
 export default function PricingSection() {
   return (
@@ -92,11 +84,11 @@ export default function PricingSection() {
       <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7C6FFF]">
         PRICING
       </p>
-      <h2 className="mt-4 font-heading text-4xl font-extrabold tracking-[-0.04em] text-white md:text-5xl">
+      <h2 className="mt-4 font-heading text-4xl font-extrabold text-white md:text-5xl">
         Start with BGOS. Extend when ready.
       </h2>
-      <p className="mx-auto mt-4 max-w-[560px] text-base font-light leading-7 text-[#6B6878]">
-        Clean subscription plans with autopay. Marketplace agents can be installed after your workspace is active.
+      <p className="mx-auto mt-4 max-w-[560px] text-base font-light leading-7 text-[#A5A1B3]">
+        No credit card is required to start. We set up your workspace during the trial, then you choose a plan before billing starts.
       </p>
 
       <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -112,7 +104,7 @@ export default function PricingSection() {
                 Most popular
               </span>
             ) : null}
-            <p className="font-heading text-[13px] font-bold uppercase text-[#6B6878]">
+            <p className="font-heading text-[13px] font-bold uppercase text-[#A5A1B3]">
               {plan.name}
             </p>
             <div className="mt-5">
@@ -120,11 +112,11 @@ export default function PricingSection() {
                 {plan.price}
               </span>
               {plan.name !== "Enterprise" ? (
-                <span className="ml-1 text-[13px] text-[#6B6878]">/mo</span>
+                <span className="ml-1 text-[13px] text-[#A5A1B3]">/mo</span>
               ) : null}
             </div>
-            <p className="mt-2 text-[11px] text-[#6B6878]">
-              + 18% GST · autopay
+            <p className="mt-2 text-[11px] text-[#A5A1B3]">
+              + 18% GST after trial
             </p>
             <div className="my-6 h-px bg-white/10" />
             <ul className="space-y-3">
@@ -139,17 +131,24 @@ export default function PricingSection() {
                 </li>
               ))}
             </ul>
-            <button
-              type="button"
-              onClick={openNexa}
-              className="mt-8 block w-full rounded-lg bg-[#7C6FFF] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#9186FF]"
-            >
-              Get your free workspace →
-            </button>
-            <p className="mt-3 text-center text-[11px] text-[#6B6878]">
-              7-day free trial · Custom setup by our team
+            <LandingCtaButton className="mt-8 block w-full rounded-lg bg-[#7C6FFF] px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-[#9186FF]" />
+            <p className="mt-3 text-center text-[11px] text-[#A5A1B3]">
+              No credit card required to start | Cancel anytime
             </p>
           </article>
+        ))}
+      </div>
+
+      <div className="mx-auto mt-8 grid max-w-[900px] gap-3 text-left text-sm text-[#A5A1B3] md:grid-cols-2">
+        {[
+          "No credit card required to start",
+          "We set up your workspace during the trial",
+          "You choose a plan before billing starts",
+          "Cancel anytime",
+        ].map((item) => (
+          <div key={item} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            {item}
+          </div>
         ))}
       </div>
 
@@ -159,19 +158,19 @@ export default function PricingSection() {
             <h3 className="font-heading text-lg font-bold text-white">
               Extend with AI agents
             </h3>
-            <p className="mt-1 text-[13px] text-[#6B6878]">
-              Install after subscribing. Each agent set up by our team in 24 hours.
+            <p className="mt-1 text-[13px] text-[#A5A1B3]">
+              Install after subscribing. Each agent is set up by our team.
             </p>
           </div>
           <Link href="/marketplace" className="text-sm font-bold text-[#7C6FFF]">
-            View all agents →
+            View all agents
           </Link>
         </div>
         <div className="mt-5 grid gap-3 md:grid-cols-3">
           {teaserAgents.map((agent) => (
             <div key={agent.name} className="rounded-xl border border-white/10 bg-[#0e0e13] p-4">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{agent.icon}</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#7C6FFF]/15 font-heading text-xs font-extrabold text-[#a89fff]">{agent.icon}</span>
                 <div>
                   <p className="font-heading text-sm font-bold text-white">{agent.name}</p>
                   <p className="mt-0.5 text-xs text-[#22D9A0]">{agent.price}</p>

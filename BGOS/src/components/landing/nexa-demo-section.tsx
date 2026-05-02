@@ -5,30 +5,30 @@ import { useEffect, useRef, useState } from "react";
 const steps = [
   {
     number: "01",
-    icon: "👁️",
-    title: "NEXA watches everything",
-    desc: "Every lead, task, message and metric — monitored 24/7 without you lifting a finger.",
+    icon: "WATCH",
+    title: "NEXA watches the work",
+    desc: "Every lead, task, message, and metric is monitored so your team does not depend on memory.",
   },
   {
     number: "02",
-    icon: "⚡",
-    title: "NEXA decides and acts",
-    desc: "Assigns tasks, sends reminders, scores leads, and executes automations based on your business rules.",
+    icon: "ACT",
+    title: "NEXA recommends action",
+    desc: "It scores leads, flags delays, suggests follow-ups, and turns owner decisions into clear team tasks.",
   },
   {
     number: "03",
-    icon: "🔔",
-    title: "Only alerts what matters",
-    desc: "You get pinged only when a human decision is needed. Everything else — NEXA handles.",
+    icon: "ALERT",
+    title: "You see what matters",
+    desc: "Owners get a focused view of missed follow-ups, team blockers, and revenue risks before they become problems.",
   },
 ];
 
 const logs = [
-  ["09:14 AM", '→ Assigned lead "Suresh Kumar" to BDM Ravi', "Done"],
-  ["09:31 AM", "→ Sent follow-up WhatsApp to 8 cold leads", "Done"],
-  ["10:02 AM", "→ Health score recalculated: 74 (+12 from last week)", "Done"],
-  ["10:45 AM", "→ Escalated unresponsive lead to Boss", "Pending your review"],
-  ["11:20 AM", "→ Generated weekly performance report for 3 BDMs", "Done"],
+  ["09:14 AM", '-> Assigned lead "Suresh Kumar" to BDM Ravi', "Done"],
+  ["09:31 AM", "-> Created follow-up tasks for 8 cold leads", "Done"],
+  ["10:02 AM", "-> Health score recalculated: 74 (+12 from last week)", "Done"],
+  ["10:45 AM", "-> Escalated unresponsive lead to Boss", "Review"],
+  ["11:20 AM", "-> Generated weekly performance report for 3 BDMs", "Done"],
 ];
 
 export default function NexaDemoSection() {
@@ -50,12 +50,11 @@ export default function NexaDemoSection() {
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7C6FFF]">
           HOW NEXA WORKS
         </p>
-        <h2 className="mt-4 font-heading text-4xl font-extrabold tracking-[-0.04em] text-white md:text-5xl">
-          Not a chatbot. An AI CEO.
+        <h2 className="mt-4 font-heading text-4xl font-extrabold text-white md:text-5xl">
+          From scattered follow-ups to clear action.
         </h2>
-        <p className="mx-auto mt-4 max-w-[480px] text-base font-light leading-7 text-[#6B6878]">
-          NEXA reads your business data, makes decisions, and executes them —
-          only asking you when it truly matters.
+        <p className="mx-auto mt-4 max-w-[540px] text-base font-light leading-7 text-[#A5A1B3]">
+          NEXA turns your business activity into simple next steps for owners and teams.
         </p>
       </div>
 
@@ -71,13 +70,13 @@ export default function NexaDemoSection() {
               <div className="font-heading text-6xl font-extrabold text-[#7C6FFF]/15">
                 {step.number}
               </div>
-              <div className="mt-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#7C6FFF]/15 text-2xl">
+              <div className="mt-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#7C6FFF]/15 font-heading text-[10px] font-extrabold text-[#a89fff]">
                 {step.icon}
               </div>
               <h3 className="mt-5 font-heading text-lg font-bold text-white">
                 {step.title}
               </h3>
-              <p className="mt-3 text-sm font-light leading-7 text-[#6B6878]">
+              <p className="mt-3 text-sm font-light leading-7 text-[#A5A1B3]">
                 {step.desc}
               </p>
             </article>

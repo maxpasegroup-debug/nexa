@@ -35,6 +35,23 @@ export default async function SdeWorkspacesPage() {
         in: ["SUBMITTED", "SDE_BUILDING", "CLARIFICATION_NEEDED", "SDE_APPROVED"],
       },
     },
+    include: {
+      lead: {
+        include: {
+          callNotes: {
+            orderBy: { createdAt: "desc" },
+            include: { author: { select: { name: true } } },
+          },
+        },
+      },
+      bdm: {
+        select: {
+          name: true,
+          bdmAnalysis: true,
+        },
+      },
+      employees: true,
+    },
     orderBy: { updatedAt: "desc" },
   });
 
@@ -44,9 +61,21 @@ export default async function SdeWorkspacesPage() {
       builds={builds.map((build) => ({
         id: build.id,
         companyName: companyNameFrom(build.companyData),
+        bdmName: build.bdm?.name ?? null,
         plan: build.selectedPlan,
         status: build.status,
-        assignedAt: (build.submittedAt ?? build.updatedAt).toISOString(),
+        submittedAt: (build.submittedAt ?? build.updatedAt).toISOString(),
+        completenessScore: build.completenessScore,
+        summaryText: build.summaryText,
+        summaryJson: build.summaryJson,
+        callNotes: build.lead?.callNotes.map((note) => ({
+          content: note.content,
+          createdAt: note.createdAt.toISOString(),
+          author: { name: note.author.name },
+        })) ?? [],
+        bdmAnalysis: build.bdm?.bdmAnalysis ?? null,
+        employeeCount: build.employees.length,
+        pipelineCount: Array.isArray(build.pipelineData) ? build.pipelineData.length : 0,
       }))}
     />
   );

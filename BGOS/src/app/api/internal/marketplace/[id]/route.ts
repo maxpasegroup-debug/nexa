@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 
 import {
   getBool,
+  getAgentType,
   getNumber,
   getString,
   isAgentCategory,
@@ -44,6 +45,12 @@ function updateData(
     const category = getString(body.category);
     if (!isAgentCategory(category)) return { error: "Invalid category." };
     data.category = category;
+  }
+
+  if ("type" in body || "agentType" in body) {
+    const type = getAgentType(body.type ?? body.agentType);
+    if (!type) return { error: "Invalid agent type." };
+    data.type = type;
   }
 
   for (const field of ["onboardingFee", "monthlyFee", "sortOrder"]) {

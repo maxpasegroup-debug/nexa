@@ -8,6 +8,12 @@ import {
 } from "@/lib/leads/server";
 import { prisma } from "@/lib/prisma";
 
+const bdmLeadStatuses = ["NEW", "CONTACTED", "FOLLOW_UP", "ONBOARDING", "LOST"] as const;
+
+function isBdmLeadStatus(value: unknown): value is (typeof bdmLeadStatuses)[number] {
+  return typeof value === "string" && bdmLeadStatuses.includes(value as (typeof bdmLeadStatuses)[number]);
+}
+
 function tomorrow() {
   const date = new Date();
   date.setDate(date.getDate() + 1);
@@ -103,6 +109,17 @@ export async function POST(request: Request) {
             .then((pipeline) => pipeline?.id)
         : undefined;
 
+    const followUpDate =
+      typeof body.followUpDate === "string"
+        ? new Date(body.followUpDate)
+        : undefined;
+    const assignedTo =
+      context.user.role === "BDM"
+        ? context.user.id
+        : typeof body.assignedTo === "string"
+          ? body.assignedTo
+          : undefined;
+
     const lead = await prisma.lead.create({
       data: {
         name: body.name,
@@ -111,20 +128,15 @@ export async function POST(request: Request) {
           typeof body.email === "string" ? body.email.toLowerCase() : undefined,
         company: typeof body.company === "string" ? body.company : undefined,
         source: isLeadSource(body.source) ? body.source : "MANUAL",
+        bdmStatus: isBdmLeadStatus(body.bdmStatus) ? body.bdmStatus : "NEW",
         value: typeof body.value === "number" ? body.value : Number(body.value ?? 0) || 0,
         notes: typeof body.notes === "string" ? body.notes : undefined,
+        lastContactedAt: new Date(),
         createdBy: context.user.id,
         pipelineId,
-        assignedTo:
-          context.user.role === "BDM"
-            ? context.user.id
-            : typeof body.assignedTo === "string"
-              ? body.assignedTo
-              : undefined,
-        followUpDate:
-          typeof body.followUpDate === "string"
-            ? new Date(body.followUpDate)
-            : undefined,
+        assignedTo,
+        followUpDate,
+        followUpTime: typeof body.followUpTime === "string" ? body.followUpTime : undefined,
         businessId: context.businessId,
       },
       include: {
@@ -135,8 +147,41 @@ export async function POST(request: Request) {
             role: true,
           },
         },
+        callNotes: {
+          orderBy: { createdAt: "desc" },
+          include: { author: { select: { id: true, name: true } } },
+        },
       },
     });
+
+    const initialNotes =
+      typeof body.initialNotes === "string" ? body.initialNotes.trim() : "";
+
+    if (initialNotes || (followUpDate && assignedTo)) {
+      await Promise.all([
+        initialNotes
+          ? prisma.leadNote.create({
+              data: {
+                leadId: lead.id,
+                authorId: context.user.id,
+                content: initialNotes,
+                noteType: "call",
+              },
+            })
+          : Promise.resolve(null),
+        followUpDate && assignedTo
+          ? prisma.task.create({
+              data: {
+                title: `Follow up with ${lead.company ?? lead.name}`,
+                description: "Created automatically from the BDM lead follow-up date.",
+                priority: "HIGH",
+                dueDate: followUpDate,
+                assignedTo,
+              },
+            })
+          : Promise.resolve(null),
+      ]);
+    }
 
     await prisma.activityLog.create({
       data: {
@@ -165,7 +210,24 @@ export async function POST(request: Request) {
         }),
       ]);
 
-      return NextResponse.json({ lead, score: null }, { status: 201 });
+      const leadWithNotes = await prisma.lead.findUnique({
+        where: { id: lead.id },
+        include: {
+          assignee: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+            },
+          },
+          callNotes: {
+            orderBy: { createdAt: "desc" },
+            include: { author: { select: { id: true, name: true } } },
+          },
+        },
+      });
+
+      return NextResponse.json({ lead: leadWithNotes, score: null }, { status: 201 });
     }
 
     const score = await scoreLead(lead.id);
@@ -178,6 +240,10 @@ export async function POST(request: Request) {
             name: true,
             role: true,
           },
+        },
+        callNotes: {
+          orderBy: { createdAt: "desc" },
+          include: { author: { select: { id: true, name: true } } },
         },
       },
     });

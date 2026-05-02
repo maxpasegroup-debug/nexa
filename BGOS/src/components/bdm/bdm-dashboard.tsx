@@ -16,6 +16,7 @@ import { BdeOnboarding } from "@/components/bde/bde-onboarding";
 import { CallLogHistory, type CallLog } from "@/components/bdm/call-log-history";
 import { DailyBrief } from "@/components/bdm/daily-brief";
 import { MyPipeline, type BdmLead } from "@/components/bdm/my-pipeline";
+import { NexaBDMAnalysis } from "@/components/bdm/nexa-bdm-analysis";
 import { NewLeadForm } from "@/components/bdm/new-lead-form";
 import { PerformanceCard, type BdmMetrics } from "@/components/bdm/performance-card";
 import { TargetProgress } from "@/components/bdm/target-progress";
@@ -138,6 +139,7 @@ export function BdmDashboard({
   const [revealedCards, setRevealedCards] = useState(0);
   const [newLeadOpen, setNewLeadOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(showBdeOnboarding);
+  const [activeTab, setActiveTab] = useState<"overview" | "analysis">("overview");
   const overdueRef = useRef<HTMLDivElement>(null);
   const teamMembers = useMemo<TeamMember[]>(
     () => [{ id: user.id, name: user.name, role: user.role }],
@@ -304,30 +306,54 @@ export function BdmDashboard({
             </div>
           ) : null}
 
-          <CompactEarningsCard data={initialCommission} />
-
-          <DailyBrief
-            brief={initialBrief}
-            loading={false}
-            animateLines={isFreshBrief(initialBrief.createdAt)}
-          />
-
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {metricCards.map((card, index) => (
-              <MetricCard
-                key={card.title}
-                title={card.title}
-                value={card.value}
-                subtitle={card.subtitle}
-                icon={card.icon}
-                trend={card.trend}
-                loading={revealedCards <= index}
-              />
+          <div className="flex gap-2 rounded-2xl border border-white/10 bg-[#13131c] p-1">
+            {[
+              { id: "overview", label: "Overview" },
+              { id: "analysis", label: "NEXA Analysis" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as "overview" | "analysis")}
+                className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+                  activeTab === tab.id
+                    ? "bg-white text-black"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                {tab.label}
+              </button>
             ))}
-          </section>
+          </div>
 
-          <section className="grid gap-6 xl:grid-cols-[65fr_35fr]">
-            <div ref={overdueRef} className="scroll-mt-24 rounded-2xl border border-white/10 bg-[#13131c] p-5">
+          {activeTab === "analysis" ? (
+            <NexaBDMAnalysis />
+          ) : (
+            <>
+              <CompactEarningsCard data={initialCommission} />
+
+              <DailyBrief
+                brief={initialBrief}
+                loading={false}
+                animateLines={isFreshBrief(initialBrief.createdAt)}
+              />
+
+              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {metricCards.map((card, index) => (
+                  <MetricCard
+                    key={card.title}
+                    title={card.title}
+                    value={card.value}
+                    subtitle={card.subtitle}
+                    icon={card.icon}
+                    trend={card.trend}
+                    loading={revealedCards <= index}
+                  />
+                ))}
+              </section>
+
+              <section className="grid gap-6 xl:grid-cols-[65fr_35fr]">
+                <div ref={overdueRef} className="scroll-mt-24 rounded-2xl border border-white/10 bg-[#13131c] p-5">
               <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="font-heading text-lg font-bold">My Leads</h2>
@@ -353,23 +379,25 @@ export function BdmDashboard({
                 onLeadClick={(lead) => setSelectedLeadId(lead.id)}
                 onStatusChange={(lead, status) => void changeLeadStatus(lead, status)}
               />
-            </div>
+                </div>
 
-            <div className="space-y-6">
-              <TargetProgress target={initialTarget} metrics={metrics} />
-              <PerformanceCard metrics={metrics} />
-            </div>
-          </section>
+                <div className="space-y-6">
+                  <TargetProgress target={initialTarget} metrics={metrics} />
+                  <PerformanceCard metrics={metrics} />
+                </div>
+              </section>
 
-          <section className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="font-heading text-lg font-bold">Recent Calls</h2>
-              <Link href="/bdm/calls" className="text-sm font-semibold text-[#7C6FFF]">
-                View all
-              </Link>
-            </div>
-            <CallLogHistory callLogs={initialCallLogs.slice(0, 5)} />
-          </section>
+              <section className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
+                <div className="mb-5 flex items-center justify-between">
+                  <h2 className="font-heading text-lg font-bold">Recent Calls</h2>
+                  <Link href="/bdm/calls" className="text-sm font-semibold text-[#7C6FFF]">
+                    View all
+                  </Link>
+                </div>
+                <CallLogHistory callLogs={initialCallLogs.slice(0, 5)} />
+              </section>
+            </>
+          )}
         </div>
       </main>
 

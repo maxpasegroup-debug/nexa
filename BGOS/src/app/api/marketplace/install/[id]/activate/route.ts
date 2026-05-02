@@ -32,6 +32,18 @@ export async function POST(
       return NextResponse.json({ error: "Installation not found." }, { status: 404 });
     }
 
+    if (installation.status === "FAILED" || installation.status === "CANCELLED") {
+      return NextResponse.json(
+        { error: "Failed or cancelled installations cannot be activated." },
+        { status: 400 },
+      );
+    }
+
+    await prisma.agentInstallation.update({
+      where: { id: installation.id },
+      data: { status: "SDE_BUILDING" },
+    });
+
     const updated = await prisma.agentInstallation.update({
       where: { id: installation.id },
       data: {

@@ -1,68 +1,43 @@
 "use client";
 
-const testimonials = [
+const trustItems = [
   {
-    quote:
-      "NEXA assigned tasks to my team before I even woke up. My BDMs know exactly what to do every morning without me calling them.",
-    name: "Rajesh M.",
-    role: "Real Estate Agency Owner, Kochi",
-    initial: "R",
-    color: "#7C6FFF",
+    title: "Early access, built with operators",
+    desc: "BGOS is being shaped with real owner-led workflows: leads, follow-ups, team tasks, inbox work, and the daily reviews founders actually need.",
   },
   {
-    quote:
-      "We were managing 200 leads on WhatsApp and Excel. BGOS cleaned that up in one day. Now nothing falls through.",
-    name: "Priya S.",
-    role: "Clinic Manager, Coimbatore",
-    initial: "P",
-    color: "#22D9A0",
+    title: "A guided setup, not a blank account",
+    desc: "Share your current sales process and our team helps map your first workspace so the product starts with your actual business structure.",
   },
   {
-    quote:
-      "I used to spend 3 hours every Monday making reports. NEXA does it Sunday night and sends it to me. I just review and approve.",
-    name: "Arun T.",
-    role: "Digital Agency Founder, Surat",
-    initial: "A",
-    color: "#F5A623",
+    title: "Founder-led product support",
+    desc: "You are not buying a faceless tool. Early customers get direct implementation feedback loops so BGOS improves around practical SME needs.",
   },
 ];
 
 export default function TestimonialsSection() {
   return (
     <section className="mx-auto max-w-[1000px] px-5 py-24 md:px-12">
-      <h2 className="text-center font-heading text-4xl font-extrabold tracking-[-0.04em] text-white md:text-5xl">
-        Real businesses. Real results.
+      <h2 className="text-center font-heading text-4xl font-extrabold text-white md:text-5xl">
+        Built honestly, with the first customers.
       </h2>
+      <p className="mx-auto mt-4 max-w-[620px] text-center text-base font-light leading-7 text-[#A5A1B3]">
+        BGOS is early-stage software with hands-on setup support. The promise is simple: help owner-led teams bring scattered sales and operations work into one clear dashboard.
+      </p>
       <div className="mt-12 grid gap-5 md:grid-cols-3">
-        {testimonials.map((item) => (
-          <article key={item.name} className="rounded-[14px] border border-white/10 bg-[#13131c] p-7">
-            <div className="font-heading text-[64px] font-extrabold leading-[0.5] text-[#7C6FFF]/30">
-              “
+        {trustItems.map((item) => (
+          <article key={item.title} className="rounded-[14px] border border-white/10 bg-[#13131c] p-7">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7C6FFF]/15 font-heading text-sm font-extrabold text-[#a89fff]">
+              OK
             </div>
-            <p className="mt-6 text-[15px] font-light leading-8 text-[#F0EEF8]">
-              {item.quote}
+            <h3 className="mt-6 font-heading text-lg font-bold text-white">
+              {item.title}
+            </h3>
+            <p className="mt-3 text-[15px] font-light leading-8 text-[#A5A1B3]">
+              {item.desc}
             </p>
-            <div className="my-6 h-px bg-white/10" />
-            <div className="flex items-center gap-3">
-              <span
-                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ background: item.color }}
-              >
-                {item.initial}
-              </span>
-              <div>
-                <p className="font-heading text-sm font-bold text-white">{item.name}</p>
-                <p className="mt-1 text-xs text-[#6B6878]">{item.role}</p>
-              </div>
-            </div>
           </article>
         ))}
-      </div>
-      <div className="mt-14 text-center">
-        <p className="text-sm text-[#6B6878]">
-          YourStory · Inc42 · The Ken · Economic Times
-        </p>
-        <p className="mt-2 text-[11px] text-[#6B6878]">Coming soon.</p>
       </div>
     </section>
   );

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { LandingCtaButton } from "./landing-cta-button";
+
 export default function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -35,11 +37,12 @@ export default function LandingNavbar() {
             ["Features", "#features"],
             ["How it works", "#how-it-works"],
             ["Pricing", "#pricing"],
+            ["Marketplace", "/marketplace"],
           ].map(([label, href]) => (
             <a
               key={label}
               href={href}
-              className="text-sm font-medium text-[#6B6878] transition hover:text-white"
+              className="text-sm font-medium text-[#A5A1B3] transition hover:text-white"
             >
               {label}
             </a>
@@ -53,12 +56,7 @@ export default function LandingNavbar() {
           >
             Sign in
           </Link>
-          <Link
-            href="/register"
-            className="rounded-md bg-[#7C6FFF] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#9186FF] md:px-5"
-          >
-            Get started free
-          </Link>
+          <LandingCtaButton className="rounded-md bg-[#7C6FFF] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#9186FF] md:px-5" />
         </div>
       </nav>
     </header>

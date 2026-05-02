@@ -54,6 +54,8 @@ model User {
   accounts          Account[]
   sessions          Session[]
   sdeInstallations  AgentInstallation[] @relation("SDEInstallations")
+  leadNotes         LeadNote[]    @relation("NoteAuthor")
+  bdmAnalysis       NexaBDMAnalysis?
 }
 
 enum Role {
@@ -146,6 +148,7 @@ model MarketplaceAgent {
   tagline         String
   description     String   @db.Text
   category        AgentCategory
+  type            AgentType @default(BACKGROUND) @map("agentType")
   icon            String
   colorPrimary    String
   colorSecondary  String
@@ -176,6 +179,11 @@ enum AgentCategory {
   CONSTRUCTION
   RETAIL
   FINANCE
+}
+
+enum AgentType {
+  UI
+  BACKGROUND
 }
 
 model AgentInstallation {
@@ -211,6 +219,7 @@ enum InstallStatus {
   PAYMENT_DONE
   SDE_BUILDING
   ACTIVE
+  FAILED
   PAUSED
   CANCELLED
 }
@@ -261,6 +270,7 @@ model Lead {
   company       String?
   source        LeadSource  @default(MANUAL)
   status        LeadStatus  @default(NEW)
+  bdmStatus     BDMLeadStatus @default(NEW)
   score         Int         @default(0)
   scoreReason   String?
   value         Float       @default(0)
@@ -272,21 +282,67 @@ model Lead {
   createdBy     String?
   creator       User?       @relation("LeadCreator", fields: [createdBy], references: [id])
   followUpDate  DateTime?
+  followUpTime  String?
   lastContactAt DateTime?
+  lastContactedAt DateTime?
+  daysSinceContact Int?
   wonAt         DateTime?
   lostAt        DateTime?
   lostReason    String?
+  onboardingStarted Boolean  @default(false)
+  onboardingSessionId String?
   pipelineId    String?
   pipeline      Pipeline?   @relation(fields: [pipelineId], references: [id])
   onboardingSession OnboardingSession?
   activities    LeadActivity[]
   reminders     Reminder[]
   callLogs      CallLog[]
+  callNotes     LeadNote[]
   emails        Email[]
   commission    Commission?
   customerPortfolio CustomerPortfolio? @relation("PortfolioLead")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+enum BDMLeadStatus {
+  NEW
+  CONTACTED
+  FOLLOW_UP
+  ONBOARDING
+  LOST
+}
+
+model LeadNote {
+  id           String   @id @default(cuid())
+  leadId       String
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User     @relation("NoteAuthor", fields: [authorId], references: [id])
+  content      String   @db.Text
+  callDuration Int?
+  noteType     String   @default("call")
+  createdAt    DateTime @default(now())
+}
+
+model NexaBDMAnalysis {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  weekStart        DateTime
+  callsMade        Int      @default(0)
+  conversations    Int      @default(0)
+  demoBookings     Int      @default(0)
+  noteQualityScore Int      @default(0)
+  patterns         Json     @default("[]")
+  warnings         Json     @default("[]")
+  tips             Json     @default("[]")
+  urgentAlerts     Json     @default("[]")
+  topHooks         Json     @default("[]")
+  commonPains      Json     @default("[]")
+  lastAnalysedAt   DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Commission {

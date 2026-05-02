@@ -11,6 +11,7 @@ import {
   getCrmContext,
   isLeadStatus,
 } from "@/lib/leads/server";
+import { analyseNotes } from "@/lib/nexa-bdm-analysis";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -18,6 +19,12 @@ type RouteContext = {
     id: string;
   };
 };
+
+const bdmLeadStatuses = ["NEW", "CONTACTED", "FOLLOW_UP", "ONBOARDING", "LOST"] as const;
+
+function isBdmLeadStatus(value: unknown): value is (typeof bdmLeadStatuses)[number] {
+  return typeof value === "string" && bdmLeadStatuses.includes(value as (typeof bdmLeadStatuses)[number]);
+}
 
 function trialEndDate() {
   const date = new Date();
@@ -111,6 +118,30 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     const data = buildLeadUpdateData(body);
     const statusChanged =
       isLeadStatus(body.status) && body.status !== existingLead.status;
+    const bdmStatusChanged =
+      isBdmLeadStatus(body.bdmStatus) && body.bdmStatus !== existingLead.bdmStatus;
+
+    if (bdmStatusChanged) {
+      data.bdmStatus = body.bdmStatus;
+      data.lastContactedAt = new Date();
+
+      if (body.bdmStatus === "LOST") {
+        data.lostReason =
+          typeof body.lostReason === "string" ? body.lostReason : existingLead.lostReason;
+      }
+
+      if (body.bdmStatus === "ONBOARDING") {
+        data.onboardingStarted = true;
+      }
+    }
+
+    if (typeof body.followUpDate === "string" || body.followUpDate === null) {
+      data.followUpDate = body.followUpDate ? new Date(body.followUpDate) : null;
+    }
+
+    if (typeof body.followUpTime === "string" || body.followUpTime === null) {
+      data.followUpTime = body.followUpTime;
+    }
 
     if (statusChanged && body.status === "WON") {
       data.wonAt = new Date();
@@ -263,6 +294,20 @@ export async function PATCH(request: Request, { params }: RouteContext) {
           note: `Status changed from ${existingLead.status} to ${body.status}`,
         },
       });
+    }
+
+    if (bdmStatusChanged) {
+      await prisma.leadActivity.create({
+        data: {
+          leadId: existingLead.id,
+          userId: context.user.id,
+          type: "bdm_status_change",
+          note: `BDM status changed from ${existingLead.bdmStatus} to ${body.bdmStatus}`,
+        },
+      });
+
+      const analysisUserId = updatedLead.assignedTo ?? context.user.id;
+      void Promise.allSettled([analyseNotes(analysisUserId)]);
     }
 
     await prisma.activityLog.create({

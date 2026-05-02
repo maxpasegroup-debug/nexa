@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
-import { BdmLeadsPage } from "@/components/bdm/bdm-leads-page";
+import { LeadList } from "@/components/bdm/lead-list";
+import { Navbar } from "@/components/layout/navbar";
+import { Sidebar } from "@/components/layout/sidebar";
 import auth from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -21,53 +23,17 @@ export default async function BdmLeadsRoute() {
   });
 
   if (!user?.businessId || !user.business) redirect("/onboarding");
-
-  const leads = await prisma.lead.findMany({
-    where: {
-      businessId: user.businessId,
-      OR: [{ assignedTo: user.id }, { createdBy: user.id }],
-    },
-    include: {
-      assignee: { select: { id: true, name: true, role: true } },
-      _count: { select: { activities: true } },
-      activities: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        select: { createdAt: true },
-      },
-    },
-    orderBy: [{ score: "desc" }],
-  });
+  if (user.role !== "BDM") redirect("/");
 
   return (
-    <BdmLeadsPage
-      user={{
-        id: user.id,
-        name: user.name,
-        role: user.role,
-        businessId: user.businessId,
-        businessName: user.business.name,
-      }}
-      initialLeads={leads.map((lead) => ({
-        id: lead.id,
-        name: lead.name,
-        phone: lead.phone,
-        email: lead.email,
-        company: lead.company,
-        source: lead.source,
-        status: lead.status,
-        score: lead.score,
-        scoreReason: lead.scoreReason,
-        value: lead.value,
-        notes: lead.notes,
-        assignedTo: lead.assignedTo,
-        assignee: lead.assignee,
-        followUpDate: lead.followUpDate?.toISOString() ?? null,
-        createdAt: lead.createdAt.toISOString(),
-        updatedAt: lead.updatedAt.toISOString(),
-        activitiesCount: lead._count.activities,
-        lastActivityDate: lead.activities[0]?.createdAt.toISOString() ?? null,
-      }))}
-    />
+    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+      <Sidebar role="BDM" userName={user.name} businessName={user.business.name} />
+      <Navbar title="My Leads" userName={user.name} />
+      <main className="pt-[60px]">
+        <div className="p-8">
+          <LeadList />
+        </div>
+      </main>
+    </div>
   );
 }

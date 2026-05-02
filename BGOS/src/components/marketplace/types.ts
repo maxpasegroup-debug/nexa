@@ -5,6 +5,7 @@ export type MarketplaceAgentView = {
   tagline: string;
   description: string;
   category: string;
+  type?: "UI" | "BACKGROUND";
   icon: string;
   colorPrimary: string;
   colorSecondary: string;

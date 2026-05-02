@@ -6,14 +6,16 @@ import { ArrowRight, BadgePercent, Bot, Clock, Sparkles } from "lucide-react";
 
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { marketplaceStatusClass, marketplaceStatusLabel } from "@/lib/marketplace-status";
 import { InstallModal } from "./agent-landing-page";
 import type { AgentInstallationView, AgentOfferView, MarketplaceAgentView } from "./types";
 import {
   categoryLabel,
   filters,
+  modeLabel,
   money,
+  positioningFor,
   recommendationFor,
-  shortDescription,
 } from "./marketplace-utils";
 
 type BossMarketplacePageProps = {
@@ -41,6 +43,8 @@ function BossAgentCard({
   installed?: AgentInstallationView;
   onInstall: (agent: MarketplaceAgentView) => void;
 }) {
+  const positioning = positioningFor(agent);
+
   return (
     <div
       className="flex min-h-[250px] flex-col rounded-2xl border border-white/10 p-5"
@@ -53,19 +57,27 @@ function BossAgentCard({
           </p>
           <div className="mt-4 text-[28px]">{agent.icon}</div>
         </div>
-        {installed ? (
-          <span className="rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-2.5 py-1 text-[10px] font-bold text-[#22D9A0]">
-            Installed
+        <div className="flex flex-col items-end gap-1.5">
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold text-zinc-200">
+            {modeLabel(agent)}
           </span>
-        ) : null}
+          {installed ? (
+            <span className="rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-2.5 py-1 text-[10px] font-bold text-[#22D9A0]">
+              Installed
+            </span>
+          ) : null}
+        </div>
       </div>
       <div className="mt-5 flex-1">
         <h3 className="font-heading text-lg font-extrabold text-white">{agent.name}</h3>
-        <p className="mt-1 truncate text-xs font-bold" style={{ color: agent.colorPrimary }}>
-          {agent.tagline}
+        <p className="mt-1 text-xs font-bold" style={{ color: agent.colorPrimary }}>
+          {positioning.problem}
         </p>
-        <p className="mt-3 line-clamp-2 text-[11px] leading-5 text-zinc-400">
-          {shortDescription(agent)}
+        <p className="mt-3 line-clamp-2 text-[11px] leading-5 text-zinc-300">
+          {positioning.does}
+        </p>
+        <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+          {positioning.setup}
         </p>
       </div>
       <div className="mt-5 flex items-end justify-between gap-3">
@@ -110,17 +122,18 @@ export function BossMarketplacePage({
   );
   const recommendedSlug = recommendationFor(business.type);
   const recommendedAgent = agents.find((agent) => agent.slug === recommendedSlug) ?? agents[0];
+  const recommendedPositioning = recommendedAgent ? positioningFor(recommendedAgent) : null;
   const filteredAgents =
     activeFilter === "ALL"
       ? agents
       : agents.filter((agent) => agent.category === activeFilter);
   const featuredOffer = offers[0];
 
-  function markInstalled(agent: MarketplaceAgentView, status: string) {
+  function markInstalled(agent: MarketplaceAgentView, status: string, installationId?: string) {
     setInstallations((current) => [
       ...current,
       {
-        id: `pending-${agent.id}`,
+        id: installationId ?? `pending-${agent.id}`,
         agentId: agent.id,
         businessId: business.id,
         status,
@@ -156,7 +169,7 @@ export function BossMarketplacePage({
                   </h1>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-300">
                     {recommendedAgent
-                      ? `${recommendedAgent.name} will help with ${recommendedAgent.tagline.toLowerCase()} ${money(recommendedAgent.onboardingFee)} setup + ${money(recommendedAgent.monthlyFee)}/mo.`
+                      ? `${recommendedPositioning?.problem}. ${recommendedPositioning?.does} ${recommendedPositioning?.setup}. ${money(recommendedAgent.onboardingFee)} setup + ${money(recommendedAgent.monthlyFee)}/mo.`
                       : "Browse agents below and install the right automation for your workspace."}
                   </p>
                 </div>
@@ -212,8 +225,12 @@ export function BossMarketplacePage({
                           <p className="text-xs text-zinc-500">{money(installation.agent.monthlyFee)}/mo</p>
                         </div>
                       </div>
-                      <span className="rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-2.5 py-1 text-[10px] font-bold text-[#22D9A0]">
-                        {installation.status}
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase ${marketplaceStatusClass(
+                          installation.status,
+                        )}`}
+                      >
+                        {marketplaceStatusLabel(installation.status)}
                       </span>
                     </div>
                     <Link href={`/marketplace/${installation.agent.slug}`} className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-[#7C6FFF]">
@@ -271,9 +288,8 @@ export function BossMarketplacePage({
           agent={installingAgent}
           businessId={business.id}
           onClose={() => setInstallingAgent(null)}
-          onInstalled={(status) => {
-            markInstalled(installingAgent, status);
-            setInstallingAgent(null);
+          onInstalled={(status, installationId) => {
+            markInstalled(installingAgent, status, installationId);
           }}
         />
       ) : null}

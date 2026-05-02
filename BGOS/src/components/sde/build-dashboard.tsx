@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { Copy, ExternalLink, Send } from "lucide-react";
 
+import { formatSdeOnboardingSummary } from "@/lib/onboarding-summary-format";
+
 type Employee = {
   id: string;
   name: string;
@@ -40,6 +42,19 @@ type BuildSession = {
   summaryText?: string | null;
   summaryJson?: unknown;
   selectedPlan?: string | null;
+  callNotes: Array<{
+    content: string;
+    createdAt: string;
+    author?: { name?: string | null } | null;
+  }>;
+  bdmAnalysis?: {
+    patterns?: unknown;
+    warnings?: unknown;
+    tips?: unknown;
+    urgentAlerts?: unknown;
+    topHooks?: unknown;
+    commonPains?: unknown;
+  } | null;
   companyData: Record<string, unknown>;
   pipelineData: Pipeline[];
   employees: Employee[];
@@ -79,11 +94,18 @@ export function BuildDashboard({ session }: { session: BuildSession }) {
   const [success, setSuccess] = useState<{ previewUrl: string; businessId: string } | null>(null);
   const [error, setError] = useState("");
 
+  const companyName = String(session.companyData?.name ?? "Client workspace");
   const summaryText = session.summaryText ?? "No readable summary generated yet.";
-  const fullSummary = `${summaryText}\n\nSTRUCTURED JSON\n${JSON.stringify(session.summaryJson ?? {}, null, 2)}`;
+  const fullSummary = formatSdeOnboardingSummary({
+    companyName,
+    selectedPlan: session.selectedPlan,
+    summaryText: session.summaryText,
+    summaryJson: session.summaryJson,
+    callNotes: session.callNotes,
+    bdmAnalysis: session.bdmAnalysis,
+  });
   const progress = Math.round((Object.values(checked).filter(Boolean).length / checklistItems.length) * 100);
   const allChecked = progress === 100;
-  const companyName = String(session.companyData?.name ?? "Client workspace");
 
   const hierarchy = useMemo(() => {
     const root = session.employees.find((employee) => !employee.reportsTo || /owner|boss/i.test(employee.reportsTo));

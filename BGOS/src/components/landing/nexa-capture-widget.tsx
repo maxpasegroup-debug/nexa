@@ -58,7 +58,7 @@ function initialMessage(): ChatMessage {
     id: id(),
     role: "nexa",
     content:
-      "Hi! I am NEXA 👋 I help Indian businesses run on autopilot. What is your name?",
+      "Hi! I am NEXA. I help Indian businesses organize leads, follow-ups, and team work in BGOS. What is your name?",
   };
 }
 
@@ -226,7 +226,7 @@ export function NexaCaptureWidget() {
     };
     const bdmName = data.bdmName ?? "our Business Manager";
     const successMessage = response.ok
-      ? `Thank you ${nextFields.name}! 🎉 I have notified our team. ${bdmName} will call you on ${nextFields.phone} within 2 hours. Check your email ${nextFields.email} for a confirmation.`
+      ? `Thank you ${nextFields.name}. I have notified our team. ${bdmName} will call you on ${nextFields.phone} within 2 hours. Check your email ${nextFields.email} for a confirmation.`
       : "I could not notify the team right now. Please try again in a moment.";
 
     setState((current) => ({
@@ -344,7 +344,7 @@ export function NexaCaptureWidget() {
             />
           </svg>
           <h3 className="mt-5 font-heading text-[18px] font-bold text-white">
-            Thank you, {state.fields.name}! 🎉
+            Thank you, {state.fields.name}.
           </h3>
           <p className="mt-3 text-sm font-normal text-zinc-500">
             Our team will contact you shortly.

@@ -18,6 +18,22 @@ export async function PATCH(
     const action = getString(body.action);
     const sdeAssignedId = getString(body.sdeAssignedId);
 
+    const current = await prisma.agentInstallation.findUnique({
+      where: { id: params.id },
+      select: { id: true, status: true },
+    });
+
+    if (!current) {
+      return NextResponse.json({ error: "Installation not found." }, { status: 404 });
+    }
+
+    if (current.status === "FAILED" || current.status === "CANCELLED") {
+      return NextResponse.json(
+        { error: "Failed or cancelled installations cannot be advanced." },
+        { status: 400 },
+      );
+    }
+
     if (action === "assign_sde") {
       if (!sdeAssignedId) {
         return NextResponse.json({ error: "sdeAssignedId is required." }, { status: 400 });
@@ -40,6 +56,13 @@ export async function PATCH(
     }
 
     if (action === "mark_building") {
+      if (current.status !== "PAYMENT_DONE") {
+        return NextResponse.json(
+          { error: "Only paid installations can be marked as activating." },
+          { status: 400 },
+        );
+      }
+
       const installation = await prisma.agentInstallation.update({
         where: { id: params.id },
         data: { status: "SDE_BUILDING" },
@@ -49,6 +72,13 @@ export async function PATCH(
     }
 
     if (action === "mark_active") {
+      if (current.status !== "SDE_BUILDING") {
+        return NextResponse.json(
+          { error: "Only activating installations can be marked active." },
+          { status: 400 },
+        );
+      }
+
       const now = new Date();
       const installation = await prisma.agentInstallation.update({
         where: { id: params.id },

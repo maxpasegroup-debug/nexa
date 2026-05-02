@@ -137,6 +137,7 @@ function statusClass(status: string) {
   if (status === "PAYMENT_DONE") return "border-blue-400/30 bg-blue-400/10 text-blue-200";
   if (status === "SDE_BUILDING") return "border-[#7C6FFF]/30 bg-[#7C6FFF]/10 text-[#c8c2ff]";
   if (status === "ACTIVE") return "border-[#22D9A0]/30 bg-[#22D9A0]/10 text-[#22D9A0]";
+  if (status === "FAILED") return "border-red-400/30 bg-red-400/10 text-red-200";
   if (status === "CANCELLED") return "border-red-400/30 bg-red-400/10 text-red-200";
   return "border-white/10 bg-white/5 text-zinc-300";
 }
@@ -685,7 +686,7 @@ function InstallationsTab({
         <div className="mb-5 flex flex-col gap-3 md:flex-row">
           <input className={inputClass} placeholder="Search business name" value={search} onChange={(event) => setSearch(event.target.value)} />
           <select className={inputClass} value={status} onChange={(event) => setStatus(event.target.value)}>
-            {["ALL", "PENDING", "PAYMENT_DONE", "SDE_BUILDING", "ACTIVE", "CANCELLED"].map((item) => <option key={item}>{item}</option>)}
+            {["ALL", "PENDING", "PAYMENT_DONE", "SDE_BUILDING", "ACTIVE", "FAILED", "CANCELLED"].map((item) => <option key={item}>{item}</option>)}
           </select>
         </div>
         <div className="overflow-x-auto">

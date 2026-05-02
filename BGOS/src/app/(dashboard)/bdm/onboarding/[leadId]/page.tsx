@@ -14,6 +14,17 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function extractNoteValue(notes: Array<{ content: string }>, label: string) {
+  const prefix = `${label}:`;
+  for (const note of notes) {
+    const line = note.content
+      .split(/\r?\n/)
+      .find((item) => item.trim().toLowerCase().startsWith(prefix.toLowerCase()));
+    if (line) return line.slice(prefix.length).trim();
+  }
+  return "";
+}
+
 export default async function BdmOnboardingWizardPage({
   params,
 }: {
@@ -36,13 +47,23 @@ export default async function BdmOnboardingWizardPage({
     },
     include: {
       onboardingSession: true,
+      callNotes: {
+        orderBy: { createdAt: "desc" },
+        include: { author: { select: { id: true, name: true } } },
+      },
     },
   });
 
   if (!lead) redirect("/bdm/onboarding");
 
+  const callNoteText = lead.callNotes.map((note) => note.content).join("\n\n");
+  const location = extractNoteValue(lead.callNotes, "Location");
+  const companyType = extractNoteValue(lead.callNotes, "Company type");
+  const teamSize = extractNoteValue(lead.callNotes, "Team size");
+  const existingSession = lead.onboardingSession;
+
   const onboardingSession =
-    lead.onboardingSession ??
+    existingSession ??
     (await prisma.onboardingSession.create({
       data: {
         leadId: lead.id,
@@ -50,13 +71,28 @@ export default async function BdmOnboardingWizardPage({
         status: "COLLECTING",
         companyData: {
           name: lead.company ?? lead.name,
-          industry: "",
+          industry: companyType,
           contactName: lead.name,
           email: lead.email,
           phone: lead.phone,
+          location,
+          employeeCount: Number(teamSize) || 1,
+          description: callNoteText,
+          callNotes: callNoteText,
         },
       },
     }));
+
+  if (!existingSession) {
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: {
+        onboardingStarted: true,
+        onboardingSessionId: onboardingSession.id,
+        bdmStatus: "ONBOARDING",
+      },
+    });
+  }
 
   return (
     <OnboardingWizard
@@ -68,6 +104,18 @@ export default async function BdmOnboardingWizardPage({
         company: lead.company,
         value: lead.value,
         notes: lead.notes,
+        location,
+        companyType,
+        teamSize,
+        callNotes: lead.callNotes.map((note) => ({
+          id: note.id,
+          content: note.content,
+          createdAt: note.createdAt.toISOString(),
+          authorName: note.author.name,
+        })),
+        resumeBanner: existingSession
+          ? `Resuming your onboarding session for ${lead.company ?? lead.name}. You are at step ${Math.max(1, onboardingSession.step || 1)} of 7.`
+          : null,
         onboardingSession: {
           id: onboardingSession.id,
           companyData: asRecord(onboardingSession.companyData),

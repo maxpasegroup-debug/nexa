@@ -18,15 +18,15 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "BGOS — AI Operating System for Indian SMEs",
+  title: "BGOS - AI Operating System for Indian SMEs",
   description:
-    "NEXA, your AI CEO, manages your sales team, tracks every lead, and runs your business on autopilot. Built for Indian businesses with 5 to 50 employees.",
+    "BGOS helps Indian SME owners manage leads, team tasks, follow-ups, inboxes, and daily AI recommendations from one operating dashboard.",
   keywords:
-    "AI CRM India, business automation India, AI CEO, SME software India, lead management India, WhatsApp CRM",
+    "AI CRM India, business automation India, SME software India, lead management India, WhatsApp CRM",
   openGraph: {
-    title: "BGOS — AI Operating System for Indian SMEs",
+    title: "BGOS - AI Operating System for Indian SMEs",
     description:
-      "NEXA manages your team so you don't have to. CRM, automation, and AI agents — built for Indian SMEs.",
+      "CRM, team tasks, follow-ups, inboxes, and AI recommendations - built for Indian SMEs.",
     url: "https://your-railway-domain.up.railway.app",
     siteName: "BGOS",
     locale: "en_IN",
@@ -34,8 +34,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BGOS — AI Operating System for Indian SMEs",
-    description: "NEXA manages your team so you don't have to.",
+    title: "BGOS - AI Operating System for Indian SMEs",
+    description: "CRM, team tasks, follow-ups, inboxes, and AI recommendations for Indian SMEs.",
   },
   robots: {
     index: true,

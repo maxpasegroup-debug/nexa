@@ -4,45 +4,44 @@ import { useEffect, useRef, useState } from "react";
 
 const features = [
   {
-    icon: "⚡",
-    title: "NEXA AI CEO",
-    desc: "Your always-on business brain. Monitors KPIs, assigns work, and keeps your team on track without daily standups.",
-    badge: "Most powerful",
+    icon: "AI",
+    title: "NEXA daily intelligence",
+    desc: "NEXA watches your CRM, team activity, and follow-ups so owners can see what needs attention today.",
+    badge: "Core",
   },
   {
-    icon: "📊",
-    title: "CRM + Lead Engine",
-    desc: "Drag-and-drop pipeline, AI lead scoring, automatic follow-up reminders. Never lose a hot lead again.",
+    icon: "CRM",
+    title: "CRM + lead engine",
+    desc: "Manage pipelines, score leads, assign owners, and keep every hot opportunity moving.",
   },
   {
-    icon: "💬",
-    title: "Omni Inbox",
-    desc: "WhatsApp, Instagram, Email — one inbox. NEXA auto-replies to FAQs so your team focuses on real conversations.",
-    badge: "Phase 2",
+    icon: "IN",
+    title: "Business inbox",
+    desc: "Bring email follow-ups into the same operating view so leads and conversations stay connected.",
   },
   {
-    icon: "👥",
-    title: "Team Dashboards",
-    desc: "Boss, BDM, and SDE each get a role-specific dashboard with daily AI tasks. No confusion, no micromanagement.",
+    icon: "TM",
+    title: "Team dashboards",
+    desc: "Boss, BDM, and SDE users get role-specific dashboards with the tasks and metrics they need.",
   },
   {
-    icon: "🤖",
-    title: "AI Employees",
-    desc: "Sales AI, HR AI, Marketing AI — agents that work independently, report to NEXA, and never call in sick.",
-    badge: "Phase 2",
+    icon: "AE",
+    title: "AI agents",
+    desc: "Add focused assistants for sales, marketing, operations, and support as your workspace grows.",
+    badge: "Coming next",
   },
   {
-    icon: "🛒",
-    title: "Agent Marketplace",
-    desc: "Add GST compliance, Payroll AI, or a Sales Caller bot with one click — like an app store for your business.",
-    badge: "Phase 3",
+    icon: "MP",
+    title: "Agent marketplace",
+    desc: "Install business-specific agents with setup support from the BGOS team.",
+    badge: "Marketplace",
   },
 ];
 
 function badgeClass(badge?: string) {
-  if (badge === "Most powerful") return "bg-[#7C6FFF]/10 text-[#a89fff]";
-  if (badge === "Phase 2") return "bg-[#F5A623]/10 text-[#F5A623]";
-  return "bg-white/5 text-[#6B6878]";
+  if (badge === "Core") return "bg-[#7C6FFF]/10 text-[#a89fff]";
+  if (badge === "Coming next") return "bg-[#F5A623]/10 text-[#F5A623]";
+  return "bg-white/5 text-[#A5A1B3]";
 }
 
 export default function FeaturesSection() {
@@ -65,11 +64,11 @@ export default function FeaturesSection() {
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7C6FFF]">
             FEATURES
           </p>
-          <h2 className="mt-4 font-heading text-4xl font-extrabold tracking-[-0.04em] text-white md:text-5xl">
-            One platform. Every team.
+          <h2 className="mt-4 font-heading text-4xl font-extrabold text-white md:text-5xl">
+            One operating view for your team.
           </h2>
-          <p className="mx-auto mt-4 max-w-[540px] text-base font-light leading-7 text-[#6B6878]">
-            Replace 6 different tools with BGOS — built specifically for Indian SMEs.
+          <p className="mx-auto mt-4 max-w-[540px] text-base font-light leading-7 text-[#A5A1B3]">
+            Replace scattered spreadsheets, inboxes, and follow-up lists with a focused dashboard built for Indian SMEs.
           </p>
         </div>
 
@@ -82,7 +81,7 @@ export default function FeaturesSection() {
               }`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7C6FFF]/[0.12] text-2xl">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7C6FFF]/[0.12] font-heading text-sm font-extrabold text-[#a89fff]">
                 {feature.icon}
               </div>
               <div className="mt-6 flex items-center gap-3">
@@ -95,7 +94,7 @@ export default function FeaturesSection() {
                   </span>
                 ) : null}
               </div>
-              <p className="mt-3 text-sm font-light leading-7 text-[#6B6878]">
+              <p className="mt-3 text-sm font-light leading-7 text-[#A5A1B3]">
                 {feature.desc}
               </p>
             </article>

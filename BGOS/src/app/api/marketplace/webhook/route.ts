@@ -83,7 +83,10 @@ export async function POST(request: Request) {
             razorpaySetupId: orderId,
             onboardingFeePaid: false,
           },
-          data: { status: "PENDING" },
+          data: {
+            status: "FAILED",
+            cancelReason: "Razorpay payment failed",
+          },
         });
       }
 

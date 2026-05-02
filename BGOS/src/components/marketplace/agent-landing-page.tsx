@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowLeft, Check, Loader2, X } from "lucide-react";
 
+import { marketplaceStatusClass, marketplaceStatusLabel } from "@/lib/marketplace-status";
 import type { AgentOfferView, MarketplaceAgentView } from "./types";
 import { benefitsFor, featuresFor, money, stepsFor } from "./marketplace-utils";
 
@@ -160,11 +161,12 @@ export function InstallModal({
   agent: MarketplaceAgentView;
   businessId?: string | null;
   onClose: () => void;
-  onInstalled: (status: string) => void;
+  onInstalled: (status: string, installationId?: string) => void;
 }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successInstallationId, setSuccessInstallationId] = useState<string | null>(null);
   const gst = Math.round(agent.onboardingFee * 0.18);
   const total = firstPaymentTotal(agent);
 
@@ -235,7 +237,10 @@ export function InstallModal({
         razorpaySignature: payment.razorpay_signature,
       }),
     });
-    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      installationId?: string;
+    };
     setLoading(false);
 
     if (!response.ok) {
@@ -243,8 +248,9 @@ export function InstallModal({
       return;
     }
 
+    setSuccessInstallationId(data.installationId ?? null);
     setStep(4);
-    onInstalled("PENDING");
+    onInstalled("PENDING", data.installationId);
   }
 
   return (
@@ -294,8 +300,12 @@ export function InstallModal({
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#22D9A0]/15 text-[#22D9A0]">
                 <Check className="h-7 w-7" />
               </div>
-              <h3 className="mt-5 font-heading text-2xl font-extrabold text-white">Installation request submitted</h3>
-              <p className="mt-3 text-sm leading-6 text-zinc-400">Our team will set it up within 24 hours.</p>
+              <h3 className="mt-5 font-heading text-2xl font-extrabold text-white">Agent installed successfully</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-400">
+                {agent.type === "UI"
+                  ? "You can open the agent page now. Our team will finish setup and activation from there."
+                  : "We are setting this up for you. You can track progress from your Apps page."}
+              </p>
             </div>
           ) : null}
 
@@ -315,9 +325,29 @@ export function InstallModal({
               </button>
             ) : null}
             {step === 4 ? (
-              <button type="button" onClick={onClose} className="flex-1 rounded-full bg-white px-5 py-3 text-sm font-extrabold text-black">
-                Done
-              </button>
+              <>
+                {agent.type === "UI" && successInstallationId ? (
+                  <Link
+                    href={`/boss/agents/${successInstallationId}`}
+                    className="flex-1 rounded-full bg-white px-5 py-3 text-center text-sm font-extrabold text-black"
+                  >
+                    Open agent
+                  </Link>
+                ) : null}
+                <Link
+                  href="/boss/apps"
+                  className="flex-1 rounded-full border border-white/10 px-5 py-3 text-center text-sm font-extrabold text-white"
+                >
+                  Go to Apps
+                </Link>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-full border border-white/10 px-5 py-3 text-sm font-extrabold text-zinc-300"
+                >
+                  Close
+                </button>
+              </>
             ) : null}
           </div>
         </div>
@@ -354,8 +384,12 @@ export function AgentLandingPage({
               <ArrowLeft className="h-4 w-4" /> Back to Marketplace
             </Link>
             {installed ? (
-              <span className="rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-4 py-2 text-sm font-bold text-[#22D9A0]">
-                Installed ✓ {status ? `· ${status}` : ""}
+              <span
+                className={`rounded-full border px-4 py-2 text-sm font-bold ${marketplaceStatusClass(
+                  status ?? "ACTIVE",
+                )}`}
+              >
+                Installed {status ? `- ${marketplaceStatusLabel(status)}` : ""}
               </span>
             ) : (
               <button
@@ -397,7 +431,7 @@ export function AgentLandingPage({
             className="mt-8 rounded-full px-6 py-3 text-sm font-extrabold text-black"
             style={{ background: `linear-gradient(135deg, ${agent.colorPrimary}, ${agent.colorSecondary})` }}
           >
-            {installed ? `Installed - ${status ?? "ACTIVE"}` : `Install ${agent.name}`}
+            {installed ? `Installed - ${status ? marketplaceStatusLabel(status) : "active"}` : `Install ${agent.name}`}
           </button>
           <p className="mt-4 text-xs text-zinc-500">
             {money(agent.onboardingFee)} one-time setup + {money(agent.monthlyFee)}/mo · +18% GST · Autopay - cancel anytime
@@ -461,8 +495,12 @@ export function AgentLandingPage({
             ))}
           </div>
           {installed ? (
-            <div className="mt-8 rounded-2xl border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-5 py-4 font-bold text-[#22D9A0]">
-              Installed ✓ {status ? `Status: ${status}` : ""}
+            <div
+              className={`mt-8 rounded-2xl border px-5 py-4 font-bold ${marketplaceStatusClass(
+                status ?? "ACTIVE",
+              )}`}
+            >
+              Installed {status ? `- ${marketplaceStatusLabel(status)}` : ""}
             </div>
           ) : (
             <button

@@ -6,7 +6,13 @@ import { ArrowRight, ExternalLink } from "lucide-react";
 
 import { NexaCaptureWidget } from "@/components/landing/nexa-capture-widget";
 import type { MarketplaceAgentView } from "./types";
-import { categoryLabel, filters, money, shortDescription } from "./marketplace-utils";
+import {
+  categoryLabel,
+  filters,
+  modeLabel,
+  money,
+  positioningFor,
+} from "./marketplace-utils";
 
 type MarketplacePageProps = {
   initialAgents?: MarketplaceAgentView[];
@@ -69,6 +75,8 @@ function ChannelMockup() {
 }
 
 function AgentCard({ agent }: { agent: MarketplaceAgentView }) {
+  const positioning = positioningFor(agent);
+
   return (
     <Link
       href={`/marketplace/${agent.slug}`}
@@ -89,22 +97,30 @@ function AgentCard({ agent }: { agent: MarketplaceAgentView }) {
           </p>
           <div className="mt-4 text-[28px] leading-none">{agent.icon}</div>
         </div>
-        {agent.installed ? (
-          <span className="rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-2.5 py-1 text-[10px] font-bold text-[#22D9A0]">
-            Installed
+        <div className="flex flex-col items-end gap-1.5">
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold text-zinc-200">
+            {modeLabel(agent)}
           </span>
-        ) : null}
+          {agent.installed ? (
+            <span className="rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-2.5 py-1 text-[10px] font-bold text-[#22D9A0]">
+              Installed
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-5 min-h-0 flex-1">
         <h3 className="font-heading text-lg font-extrabold tracking-normal text-white">
           {agent.name}
         </h3>
-        <p className="mt-1 truncate text-xs font-bold" style={{ color: agent.colorPrimary }}>
-          {agent.tagline}
+        <p className="mt-1 text-xs font-bold" style={{ color: agent.colorPrimary }}>
+          {positioning.problem}
         </p>
-        <p className="mt-3 line-clamp-2 text-[11px] leading-5 text-zinc-400">
-          {shortDescription(agent)}
+        <p className="mt-3 line-clamp-2 text-[11px] leading-5 text-zinc-300">
+          {positioning.does}
+        </p>
+        <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+          {positioning.setup}
         </p>
       </div>
 
@@ -152,6 +168,7 @@ export function MarketplacePage({ initialAgents = [] }: MarketplacePageProps) {
     [activeFilter, agents],
   );
   const featured = agents.find((agent) => agent.slug === "sales-booster") ?? agents.find((agent) => agent.isFeatured);
+  const featuredPositioning = featured ? positioningFor(featured) : null;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#070709] text-white">
@@ -220,12 +237,17 @@ export function MarketplacePage({ initialAgents = [] }: MarketplacePageProps) {
           >
             <div className="flex flex-col justify-center">
               <span className="mb-5 w-fit rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#22D9A0]">
-                Featured agent
+                Recommended
               </span>
               <h2 className="font-heading text-4xl font-extrabold tracking-[-1px] text-transparent md:text-5xl" style={{ backgroundImage: `linear-gradient(135deg, ${featured.colorPrimary}, ${featured.colorSecondary})`, WebkitBackgroundClip: "text" }}>
                 {featured.name}
               </h2>
-              <p className="mt-3 text-xl font-semibold text-white">{featured.tagline}</p>
+              <p className="mt-3 text-xl font-semibold text-white">
+                {featuredPositioning?.problem ?? featured.tagline}
+              </p>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-300">
+                {featuredPositioning?.does ?? featured.description}
+              </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {["WhatsApp", "Instagram", "Facebook", "Email", "SMS"].map((item) => (
                   <span key={item} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-bold text-zinc-200">

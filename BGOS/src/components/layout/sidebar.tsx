@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   BarChart3,
@@ -12,6 +12,7 @@ import {
   CheckSquare,
   DollarSign,
   GitBranch,
+  Layers,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -36,6 +37,14 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
+type InstalledUiAgent = {
+  id: string;
+  installationId: string;
+  name: string;
+  slug: string;
+  href: string;
+};
+
 const roleLinks: Record<string, NavItem[]> = {
   BOSS: [
     { label: "Dashboard", href: "/boss", icon: LayoutDashboard },
@@ -43,7 +52,7 @@ const roleLinks: Record<string, NavItem[]> = {
     { label: "Inbox", href: "/boss/inbox", icon: Mail },
     { label: "Team", href: "/boss/team", icon: Users },
     { label: "NEXA", href: "/boss/nexa", icon: Bot },
-    { label: "Marketplace", href: "/internal/marketplace", icon: ShoppingCart },
+    { label: "Marketplace", href: "/boss/marketplace", icon: ShoppingCart },
     { label: "Reports", href: "/boss/reports", icon: BarChart3 },
     { label: "Settings", href: "/boss/settings", icon: Settings },
   ],
@@ -97,7 +106,18 @@ function roleBadgeClass(role: string) {
   return "border-[#7C6FFF]/30 bg-[#7C6FFF]/10 text-[#b8b2ff]";
 }
 
-function isActive(pathname: string, href: string) {
+function isActive(pathname: string, href: string, currentHref: string) {
+  if (href.includes("?")) {
+    return currentHref === href;
+  }
+
+  if (
+    href === "/boss/marketplace" &&
+    currentHref.startsWith("/boss/marketplace?agent=")
+  ) {
+    return false;
+  }
+
   if (href === "/boss" || href === "/bdm" || href === "/sde" || href === "/internal") {
     return pathname === href;
   }
@@ -107,7 +127,11 @@ function isActive(pathname: string, href: string) {
 
 export function Sidebar({ role, userName, businessName }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const links = roleLinks[role] ?? roleLinks.BDM;
+  const currentHref = searchParams.toString()
+    ? `${pathname}?${searchParams.toString()}`
+    : pathname;
   const displayBusinessName =
     businessName.length > 24 ? `${businessName.slice(0, 24)}...` : businessName;
   const [unreadCount, setUnreadCount] = useState(0);
@@ -115,7 +139,13 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
   const [earningsTotal, setEarningsTotal] = useState<number | null>(null);
   const [onboardingCount, setOnboardingCount] = useState(0);
   const [pendingBuilds, setPendingBuilds] = useState(0);
+  const [installedUiAgents, setInstalledUiAgents] = useState<InstalledUiAgent[]>([]);
   const marketplaceRecommendations = role === "BOSS" || role === "OWNER" ? 1 : 0;
+  const agentLinks = installedUiAgents.map((agent): NavItem => ({
+    label: agent.name,
+    href: agent.href,
+    icon: Layers,
+  }));
 
   useEffect(() => {
     function toggle() {
@@ -164,6 +194,24 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
       window.removeEventListener("bgos:commission-created", refreshEarnings);
       window.clearInterval(interval);
     };
+  }, [role]);
+
+  useEffect(() => {
+    if (role !== "BOSS") return;
+
+    async function fetchInstalledUiAgents() {
+      const response = await fetch("/api/marketplace/installed-ui-agents", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+
+      const data = (await response.json()) as { agents?: InstalledUiAgent[] };
+      setInstalledUiAgents(data.agents ?? []);
+    }
+
+    void fetchInstalledUiAgents();
+    const interval = window.setInterval(() => void fetchInstalledUiAgents(), 120_000);
+    return () => window.clearInterval(interval);
   }, [role]);
 
   useEffect(() => {
@@ -234,7 +282,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
       <nav className="flex-1 space-y-1 px-3 py-5">
         {links.map((item) => {
           const Icon = item.icon;
-          const active = isActive(pathname, item.href);
+          const active = isActive(pathname, item.href, currentHref);
           const isInbox = item.href === "/boss/inbox";
           const isEarnings = item.href === "/bdm/commission";
           const isOnboarding = item.href === "/bdm/onboarding";
@@ -282,6 +330,39 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
             </Link>
           );
         })}
+        {role === "BOSS" && agentLinks.length > 0 ? (
+          <div className="mt-5 border-t border-white/10 pt-4">
+            <Link
+              href="/boss/apps"
+              onClick={() => setMobileOpen(false)}
+              className="block px-4 pb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#6B6878] transition hover:text-white"
+            >
+              Apps
+            </Link>
+            <div className="space-y-1">
+              {agentLinks.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(pathname, item.href, currentHref);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                      active
+                        ? "border-l-2 border-[#7C6FFF] bg-[rgba(124,111,255,0.12)] text-white"
+                        : "text-[#6B6878] hover:bg-[rgba(255,255,255,0.04)]"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="flex-1 truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </nav>
 
       <div className="border-t border-white/10 p-4">

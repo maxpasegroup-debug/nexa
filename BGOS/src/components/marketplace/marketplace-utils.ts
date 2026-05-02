@@ -91,6 +91,107 @@ export function shortDescription(agent: MarketplaceAgentView) {
     : agent.description;
 }
 
+const positioningBySlug: Record<string, { problem: string; does: string; setup: string }> = {
+  "sales-booster": {
+    problem: "Never miss a hot lead",
+    does: "Captures, scores, and follows up with leads from every channel.",
+    setup: "Setup in 24-48 hours",
+  },
+  wazzup: {
+    problem: "Run updates from WhatsApp",
+    does: "Brings BGOS reminders, summaries, and quick actions into WhatsApp.",
+    setup: "Setup in 24 hours",
+  },
+  careloop: {
+    problem: "Reduce missed patient follow-ups",
+    does: "Tracks appointments, no-show risk, and patient communication.",
+    setup: "Setup in 1-2 days",
+  },
+  classmate: {
+    problem: "Keep parents and students aligned",
+    does: "Organizes student updates, reminders, and school follow-ups.",
+    setup: "Setup in 1-2 days",
+  },
+  eduflow: {
+    problem: "Convert more enquiries into enrollments",
+    does: "Tracks admissions leads, counsellor tasks, and parent follow-ups.",
+    setup: "Setup in 1-2 days",
+  },
+  proppilot: {
+    problem: "Turn property enquiries into site visits",
+    does: "Matches leads, tracks visits, and keeps follow-ups moving.",
+    setup: "Setup in 24-48 hours",
+  },
+  sitesync: {
+    problem: "Keep project work from slipping",
+    does: "Tracks milestones, site tasks, delays, and approvals in one place.",
+    setup: "Setup in 1-2 days",
+  },
+  stocksense: {
+    problem: "Stay ahead of stock and dealer follow-ups",
+    does: "Monitors orders, dealers, payments, and repeat sales activity.",
+    setup: "Setup in 1-2 days",
+  },
+  taxmate: {
+    problem: "Stop losing track of finance reminders",
+    does: "Tracks invoices, GST tasks, outstanding payments, and renewals.",
+    setup: "Setup in 1-2 days",
+  },
+};
+
+const positioningByCategory: Record<string, { problem: string; does: string; setup: string }> = {
+  UNIVERSAL: {
+    problem: "Automate repeated team work",
+    does: "Adds focused workflows and AI assistance to your BGOS dashboard.",
+    setup: "Setup in 24-48 hours",
+  },
+  HEALTHCARE: {
+    problem: "Keep patient operations on track",
+    does: "Helps manage appointments, follow-ups, and clinic team tasks.",
+    setup: "Setup in 1-2 days",
+  },
+  EDUCATION: {
+    problem: "Improve student and parent follow-up",
+    does: "Helps manage enquiries, reminders, and education workflows.",
+    setup: "Setup in 1-2 days",
+  },
+  REAL_ESTATE: {
+    problem: "Move leads from enquiry to visit",
+    does: "Helps teams prioritize property leads and site visit follow-ups.",
+    setup: "Setup in 24-48 hours",
+  },
+  CONSTRUCTION: {
+    problem: "Make project execution visible",
+    does: "Helps track site tasks, milestones, and delay signals.",
+    setup: "Setup in 1-2 days",
+  },
+  RETAIL: {
+    problem: "Keep orders and dealers moving",
+    does: "Helps track stock, orders, payments, and repeat sales.",
+    setup: "Setup in 1-2 days",
+  },
+  FINANCE: {
+    problem: "Stay on top of billing work",
+    does: "Helps track invoices, tax reminders, and payment follow-ups.",
+    setup: "Setup in 1-2 days",
+  },
+};
+
+export function positioningFor(agent: MarketplaceAgentView) {
+  return (
+    positioningBySlug[agent.slug] ??
+    positioningByCategory[agent.category] ?? {
+      problem: agent.tagline,
+      does: shortDescription(agent),
+      setup: "Setup in 24-48 hours",
+    }
+  );
+}
+
+export function modeLabel(agent: MarketplaceAgentView) {
+  return agent.type === "UI" ? "Interactive" : "Runs automatically";
+}
+
 export function recommendationFor(type?: string | null) {
   const normalized = (type ?? "").toLowerCase();
   if (normalized.includes("clinic") || normalized.includes("hospital") || normalized.includes("health")) {

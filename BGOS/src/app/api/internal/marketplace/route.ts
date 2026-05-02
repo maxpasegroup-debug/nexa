@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 
 import {
   getBool,
+  getAgentType,
   getNumber,
   getString,
   isAgentCategory,
@@ -26,6 +27,7 @@ function readAgentData(
   const gradient = getString(body.gradient);
   const onboardingFee = getNumber(body.onboardingFee);
   const monthlyFee = getNumber(body.monthlyFee);
+  const type = getAgentType(body.type ?? body.agentType) ?? "BACKGROUND";
 
   if (
     !name ||
@@ -50,6 +52,7 @@ function readAgentData(
       tagline,
       description,
       category,
+      type,
       icon,
       colorPrimary,
       colorSecondary,

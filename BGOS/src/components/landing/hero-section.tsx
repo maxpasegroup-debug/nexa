@@ -2,17 +2,14 @@
 
 import { useEffect, useState } from "react";
 
+import { LandingCtaButton } from "./landing-cta-button";
+
 const messages = [
   "Lead conversion dropped 18%. I've reassigned 12 hot leads to your BDM team.",
   "Ravi hasn't followed up with 6 leads in 3 days. Sending him a task now.",
   "Your business health score improved from 62 to 74 this week. Revenue is up.",
   "3 proposals have been pending for 5+ days. Want me to send follow-up emails?",
 ];
-
-type NexaWidgetWindow = Window &
-  typeof globalThis & {
-    openNexaWidget?: () => void;
-  };
 
 export default function HeroSection() {
   const [index, setIndex] = useState(0);
@@ -50,41 +47,39 @@ export default function HeroSection() {
 
       <div className="relative z-10 mx-auto max-w-6xl">
         <div className="landing-fade mx-auto inline-flex rounded-full border border-[#7C6FFF]/30 bg-[#7C6FFF]/[0.08] px-3.5 py-1 text-xs text-[#a89fff] [animation-delay:0.2s]">
-          ⚡ AI Operating System for Indian SMEs
+          AI CRM and team dashboard for Indian SMEs
         </div>
 
-        <h1 className="mt-7 font-heading text-[clamp(44px,7vw,88px)] font-extrabold leading-none tracking-[-0.04em]">
+        <h1 className="mt-7 font-heading text-[clamp(38px,11vw,56px)] font-extrabold leading-[1.05] md:text-[clamp(56px,7vw,82px)]">
           <span className="landing-up block text-white [animation-delay:0.4s]">
-            Your business runs
+            Run leads, tasks,
           </span>
           <span className="landing-up block text-[#7C6FFF] [animation-delay:0.48s]">
-            itself with NEXA.
+            and follow-ups in one place.
           </span>
         </h1>
 
-        <p className="landing-up mx-auto mt-7 max-w-[520px] text-lg font-light leading-[1.7] text-[#6B6878] [animation-delay:0.6s]">
-          NEXA is your AI CEO. It manages your sales team, tracks every lead,
-          and tells you exactly what to fix — before you even ask.
+        <p className="landing-up mx-auto mt-7 max-w-[620px] text-lg font-light leading-[1.65] text-[#A5A1B3] [animation-delay:0.6s]">
+          BGOS gives business owners a clean operating dashboard for CRM, team
+          execution, inbox follow-ups, and daily AI recommendations from NEXA.
+        </p>
+        <p className="landing-up mx-auto mt-3 max-w-[620px] text-sm font-light leading-6 text-[#F0EEF8] [animation-delay:0.68s]">
+          BGOS is your business dashboard. NEXA is the AI assistant inside it.
         </p>
 
         <div className="landing-up mt-9 flex flex-col items-center justify-center gap-3 [animation-delay:0.8s] sm:flex-row">
-          <button
-            type="button"
-            onClick={() => {
-              const nexaWindow = window as NexaWidgetWindow;
-              if (typeof window !== "undefined" && nexaWindow.openNexaWidget) {
-                nexaWindow.openNexaWidget();
-              }
-            }}
-            className="rounded-lg bg-[#7C6FFF] px-8 py-3.5 text-[15px] font-medium text-white transition hover:-translate-y-0.5 hover:bg-[#9186FF]"
+          <LandingCtaButton className="rounded-lg bg-[#7C6FFF] px-8 py-3.5 text-[15px] font-medium text-white transition hover:-translate-y-0.5 hover:bg-[#9186FF]" />
+          <a
+            href="#how-it-works"
+            className="rounded-lg border border-white/15 px-8 py-3.5 text-[15px] font-medium text-white transition hover:-translate-y-0.5 hover:border-[#7C6FFF]/50 hover:text-[#a89fff]"
           >
-            Get your free workspace →
-          </button>
+            See how it works
+          </a>
         </div>
 
         <div className="landing-fade mt-8 [animation-delay:1s]">
-          <p className="text-center text-xs font-light text-[#6B6878]">
-            ✓ 7-day free trial · ✓ Custom built for your business · ✓ Our team contacts you within 2 hours
+          <p className="text-center text-xs font-light text-[#A5A1B3]">
+            No credit card required to start | Guided setup during trial | Our team contacts you within 2 hours
           </p>
         </div>
 
@@ -96,7 +91,7 @@ export default function HeroSection() {
               </span>
               <span className="font-heading font-bold text-white">NEXA</span>
             </div>
-            <span className="text-[11px] font-bold text-[#22D9A0]">● Live</span>
+            <span className="text-[11px] font-bold text-[#22D9A0]">Live</span>
           </div>
           <p
             className={`min-h-[72px] text-[15px] leading-7 text-[#F0EEF8] transition-opacity duration-300 ${
@@ -114,7 +109,7 @@ export default function HeroSection() {
             ].map(([label, color]) => (
               <div
                 key={label}
-                className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] text-[#6B6878]"
+                className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] text-[#A5A1B3]"
               >
                 <span className="h-2 w-2 rounded-full" style={{ background: color }} />
                 {label}

@@ -35,6 +35,19 @@ export default async function SdeBuildDashboardPage({
     where: { id: params.sessionId, sdeId: user.id },
     include: {
       employees: true,
+      lead: {
+        include: {
+          callNotes: {
+            orderBy: { createdAt: "desc" },
+            include: { author: { select: { name: true } } },
+          },
+        },
+      },
+      bdm: {
+        select: {
+          bdmAnalysis: true,
+        },
+      },
       clarifications: {
         include: {
           raiser: { select: { name: true, email: true } },
@@ -60,6 +73,12 @@ export default async function SdeBuildDashboardPage({
               summaryText: session.summaryText,
               summaryJson: session.summaryJson,
               selectedPlan: session.selectedPlan,
+              callNotes: session.lead?.callNotes.map((note) => ({
+                content: note.content,
+                createdAt: note.createdAt.toISOString(),
+                author: { name: note.author.name },
+              })) ?? [],
+              bdmAnalysis: session.bdm?.bdmAnalysis ?? null,
               companyData: asRecord(session.companyData),
               pipelineData: asArray(session.pipelineData),
               employees: session.employees.map((employee) => ({

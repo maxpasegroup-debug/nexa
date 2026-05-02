@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ArrowUp, ChevronRight, Plus, Trash2, X } from "lucide-react";
 
 type Lead = {
@@ -11,6 +12,16 @@ type Lead = {
   company?: string | null;
   value?: number;
   notes?: string | null;
+  location?: string;
+  companyType?: string;
+  teamSize?: string;
+  resumeBanner?: string | null;
+  callNotes?: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    authorName: string;
+  }>;
   onboardingSession?: SessionSnapshot | null;
 };
 
@@ -193,6 +204,17 @@ export function OnboardingWizard({
   const [otherIndustry, setOtherIndustry] = useState("");
   const [location, setLocation] = useState(asString(initial?.companyData?.location, ""));
   const [employeeCount, setEmployeeCount] = useState(String(asNumber(initial?.companyData?.employeeCount, 1)));
+  const [companyDescription, setCompanyDescription] = useState(
+    asString(initial?.companyData?.description, lead.callNotes?.map((note) => note.content).join("\n\n") ?? ""),
+  );
+  const [callNoteInsight, setCallNoteInsight] = useState(
+    asString(
+      initial?.companyData?.callNoteInsight,
+      lead.callNotes?.length
+        ? "You mentioned operational pains in the call notes. I have added these to their challenges."
+        : "",
+    ),
+  );
   const [revenueRange, setRevenueRange] = useState(asString(initial?.companyData?.revenueRange, ""));
   const [toolInput, setToolInput] = useState("");
   const [tools, setTools] = useState<string[]>(asArray<string>(initial?.companyData?.tools));
@@ -251,6 +273,9 @@ export function OnboardingWizard({
           industry: effectiveIndustry,
           location,
           employeeCount: Number(employeeCount) || 0,
+          description: companyDescription,
+          callNotes: lead.callNotes?.map((note) => note.content).join("\n\n") ?? "",
+          callNoteInsight,
           revenueRange,
           tools,
           products,
@@ -348,6 +373,9 @@ export function OnboardingWizard({
           industry: effectiveIndustry,
           location,
           employeeCount: Number(employeeCount) || 0,
+          description: companyDescription,
+          callNotes: lead.callNotes?.map((note) => note.content).join("\n\n") ?? "",
+          callNoteInsight,
           revenueRange,
           tools,
           products,
@@ -441,9 +469,14 @@ export function OnboardingWizard({
               <p className="text-xs uppercase tracking-[0.22em] text-[#22D9A0]">BDM onboarding wizard</p>
               <h1 className="mt-2 font-heading text-2xl font-bold">{companyName || lead.name}</h1>
             </div>
-            <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400">
-              Session {sessionId.slice(0, 8)}
-            </span>
+            <div className="flex items-center gap-2">
+              <Link href="/bdm/leads" className="rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-zinc-300 transition hover:text-white">
+                Back to lead
+              </Link>
+              <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400">
+                Session {sessionId.slice(0, 8)}
+              </span>
+            </div>
           </div>
           <div className="mt-5 grid gap-2 md:grid-cols-5">
             {steps.map((label, index) => (
@@ -463,6 +496,11 @@ export function OnboardingWizard({
       </div>
 
       <main className="mx-auto max-w-6xl px-6 py-8">
+        {lead.resumeBanner ? (
+          <div className="mb-5 rounded-2xl border border-[#7C6FFF]/30 bg-[#7C6FFF]/10 p-4 text-sm text-[#dedaff]">
+            {lead.resumeBanner}
+          </div>
+        ) : null}
         {error ? <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-100">{error}</div> : null}
 
         {step === 0 ? (
@@ -476,6 +514,13 @@ export function OnboardingWizard({
               <label className="text-sm text-zinc-300">Total employees<input type="number" value={employeeCount} onChange={(event) => setEmployeeCount(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" /></label>
               <label className="text-sm text-zinc-300">Annual revenue range<select value={revenueRange} onChange={(event) => setRevenueRange(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]"><option value="">Optional</option>{revenueRanges.map((item) => <option key={item}>{item}</option>)}</select></label>
             </div>
+            <div className="mt-5 rounded-2xl border border-[#22D9A0]/20 bg-[#22D9A0]/10 p-4 text-sm text-emerald-50">
+              I have read your call notes. I will use them to ask better questions.
+            </div>
+            <label className="mt-5 block text-sm text-zinc-300">
+              Company description from call notes
+              <textarea value={companyDescription} onChange={(event) => setCompanyDescription(event.target.value)} className="mt-2 min-h-32 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" />
+            </label>
             <div className="mt-5">
               <p className="text-sm text-zinc-300">Products/services</p>
               <div className="mt-2 flex gap-2"><input value={productInput} onChange={(event) => setProductInput(event.target.value)} placeholder="Solar panels" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" /><button onClick={() => { addTag(productInput, products, setProducts); setProductInput(""); }} className="rounded-xl bg-[#22D9A0] px-4 text-sm font-bold text-black">Add</button></div>
@@ -493,6 +538,9 @@ export function OnboardingWizard({
 
         {step === 1 ? (
           <section className="space-y-5">
+            <div className="rounded-2xl border border-[#7C6FFF]/25 bg-[#7C6FFF]/10 p-4 text-sm text-[#dedaff]">
+              Start with the owner. You already told me {lead.name} is there — I have added them. Tell me about everyone else.
+            </div>
             {employees.map((employee, index) => (
               <div key={index} className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
                 <div className="flex justify-between gap-3">
@@ -555,6 +603,21 @@ export function OnboardingWizard({
 
         {step === 4 ? (
           <section className="space-y-5">
+            <div className="rounded-2xl border border-[#22D9A0]/25 bg-[#22D9A0]/10 p-6">
+              <h3 className="font-heading text-lg font-bold text-[#22D9A0]">From your call notes</h3>
+              {lead.callNotes?.length ? (
+                <div className="mt-4 space-y-3">
+                  <textarea value={callNoteInsight} onChange={(event) => setCallNoteInsight(event.target.value)} className="min-h-24 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-sm text-white outline-none focus:border-[#22D9A0]" />
+                  <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm text-zinc-300">
+                    {lead.callNotes.map((note) => (
+                      <p key={note.id} className="mb-3 last:mb-0">{note.content}</p>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-zinc-400">No call notes were attached to this lead yet.</p>
+              )}
+            </div>
             <div className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
               <div className="flex items-center justify-between gap-4"><h2 className="font-heading text-xl font-bold">NEXA review</h2><button onClick={() => void runAnalysis()} disabled={loading === "analysis"} className="rounded-xl bg-[#7C6FFF] px-4 py-3 text-sm font-bold">{loading === "analysis" ? "Analyzing..." : "Run analysis"}</button></div>
               {analysis ? <><div className={`mt-5 inline-flex h-24 w-24 items-center justify-center rounded-full text-3xl font-bold text-black ${completionClass(analysis.score)}`}>{analysis.score}</div><div className="mt-5 grid gap-2">{analysis.checks.map((check) => <div key={check.label} className="rounded-xl border border-white/10 bg-[#0d0d12] p-3 text-sm"><span className={check.status === "ok" ? "text-[#22D9A0]" : check.status === "warning" ? "text-[#F5A623]" : "text-[#FF6B6B]"}>{check.status === "ok" ? "✓" : check.status === "warning" ? "!" : "×"}</span> <b>{check.label}</b> - {check.message}</div>)}</div></> : <p className="mt-4 text-sm text-zinc-500">Run NEXA analysis to see completeness, gaps, and suggestions.</p>}
