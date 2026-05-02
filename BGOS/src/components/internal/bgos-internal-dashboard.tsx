@@ -26,11 +26,15 @@ import {
 import { NexaPanel } from "@/components/boss/nexa-panel";
 import { MobileInternalDashboard } from "@/components/internal/mobile/mobile-internal-home";
 import { AddEmployeeForm } from "@/components/internal/add-employee-form";
+import { CustomerDrawer } from "@/components/internal/customer-drawer";
+import { CustomerTable } from "@/components/internal/customer-table";
 import {
   EmployeeList,
   type EmployeeListItem,
 } from "@/components/internal/employee-list";
+import { MetricsStrip } from "@/components/internal/metrics-strip";
 import { OnboardingPipeline } from "@/components/internal/onboarding-pipeline";
+import { TeamSection } from "@/components/internal/team-section";
 import { useDevice } from "@/hooks/use-device";
 
 type InternalUser = {
@@ -362,6 +366,8 @@ export function BgosInternalDashboard({
   const [insights, setInsights] = useState(initialInsights);
   const [employees, setEmployees] = useState(teamMembers);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const platformSummary = useMemo(
     () =>
       `${metrics.totalCustomers} customers, ${metrics.totalUsers} users, ${metrics.totalLeads} leads`,
@@ -396,10 +402,21 @@ export function BgosInternalDashboard({
         <div className="space-y-8 p-8">
           <section>
             <h2 className="font-heading text-2xl font-bold tracking-normal">
-              Overview
+              BGOS control panel
             </h2>
-            <p className="mt-1 text-sm text-zinc-500">{platformSummary}</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              NEXA brief: {platformSummary}. Every card below opens the control surface for that signal.
+            </p>
           </section>
+
+          <MetricsStrip activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+
+          <CustomerTable
+            filterKey={activeFilter}
+            onCustomerClick={setSelectedCustomer}
+          />
+
+          <TeamSection />
 
           <section className="grid gap-4 xl:grid-cols-5">
             <MetricCard
@@ -506,6 +523,11 @@ export function BgosInternalDashboard({
       <NexaPanel
         businessId={business.id}
         initialMessage="Brief me on the BGOS platform: total customers, MRR, team performance, churn risks, and the next three owner actions."
+      />
+      <CustomerDrawer
+        businessId={selectedCustomer}
+        isOpen={Boolean(selectedCustomer)}
+        onClose={() => setSelectedCustomer(null)}
       />
     </div>
   );
