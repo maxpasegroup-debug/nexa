@@ -14,6 +14,9 @@ model User {
   password          String
   role              Role      @default(BDM)
   active            Boolean   @default(true)
+  status            String    @default("ACTIVE")
+  phone             String?
+  joinedAt          DateTime?
   defaultPassword   Boolean   @default(false)
   employeeCode      String?   @unique @default(cuid())
   businessId        String?
@@ -118,6 +121,8 @@ model Business {
   teamSize     String
   goal         String
   healthScore  Int      @default(50)
+  status       String   @default("TRIAL")
+  notes        String?  @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   users        User[]
@@ -140,6 +145,17 @@ model Business {
   trialSubscription TrialSubscription?
   pipelines        Pipeline[]
   agentInstallations AgentInstallation[]
+  dataExports    CustomerDataExport[]
+}
+
+model CustomerDataExport {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  reason      String?
+  payload     Json
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
 }
 
 model MarketplaceAgent {

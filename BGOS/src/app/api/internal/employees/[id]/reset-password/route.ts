@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
-import { sendPasswordResetEmail } from "@/lib/email";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
-const DEFAULT_PASSWORD = "123456789";
+const DEFAULT_PASSWORD = "BGOS@123456";
 
 export async function POST(
   _request: Request,
@@ -42,16 +41,8 @@ export async function POST(
     }),
   ]);
 
-  const emailSent = await sendPasswordResetEmail({
-    name: employee.name,
-    email: employee.email,
-    newPassword: DEFAULT_PASSWORD,
-  });
-
   return NextResponse.json({
-    message: emailSent
-      ? "Password reset. Email sent."
-      : "Password reset. Email could not be sent.",
-    emailSent,
+    success: true,
+    message: "Password reset to BGOS@123456.",
   });
 }

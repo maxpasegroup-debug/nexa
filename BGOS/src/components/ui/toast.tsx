@@ -5,6 +5,7 @@ import {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -20,6 +21,21 @@ type Toast = {
 
 type ToastContextValue = {
   toast: (message: string, type: ToastType) => void;
+};
+
+type ToastListener = (message: string, type: ToastType) => void;
+
+const listeners = new Set<ToastListener>();
+
+function emitToast(message: string, type: ToastType) {
+  listeners.forEach((listener) => listener(message, type));
+}
+
+export const toast = {
+  success: (message: string) => emitToast(message, "success"),
+  error: (message: string) => emitToast(message, "error"),
+  warning: (message: string) => emitToast(message, "warning"),
+  info: (message: string) => emitToast(message, "warning"),
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -54,12 +70,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [removeToast],
   );
 
+  useEffect(() => {
+    const listener: ToastListener = (message, type) => toast(message, type);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, [toast]);
+
   const value = useMemo(() => ({ toast }), [toast]);
 
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed right-5 top-5 z-[100] flex w-[340px] max-w-[calc(100vw-40px)] flex-col gap-3">
+      <div className="fixed bottom-5 left-1/2 z-[100] flex w-[340px] max-w-[calc(100vw-40px)] -translate-x-1/2 flex-col gap-3">
         {toasts.map((item) => (
           <div
             key={item.id}
@@ -83,24 +107,24 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         @keyframes toastIn {
           from {
             opacity: 0;
-            transform: translateX(18px);
+            transform: translateY(18px);
           }
 
           to {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateY(0);
           }
         }
 
         @keyframes toastOut {
           from {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateY(0);
           }
 
           to {
             opacity: 0;
-            transform: translateX(18px);
+            transform: translateY(18px);
           }
         }
       `}</style>

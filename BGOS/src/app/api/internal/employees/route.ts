@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import cuid from "cuid";
 
 import { sendWelcomeEmail } from "@/lib/email";
+import { employeeStats, serializeEmployee } from "@/lib/internal-control";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
@@ -57,9 +58,19 @@ function welcomeEmailHtml(name: string, email: string) {
 
 void welcomeEmailHtml;
 
-export async function GET() {
+export async function GET(request: Request) {
   const context = await requireInternalOwnerApi();
   if ("error" in context) return context.error;
+  const { searchParams } = new URL(request.url);
+  const email = searchParams.get("email")?.trim().toLowerCase();
+
+  if (email) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true },
+    });
+    return NextResponse.json({ exists: Boolean(user), user });
+  }
 
   const employees = await prisma.user.findMany({
     where: {
@@ -68,12 +79,16 @@ export async function GET() {
     },
     orderBy: { createdAt: "desc" },
     select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        active: true,
+        status: true,
+        createdAt: true,
+        joinedAt: true,
+        updatedAt: true,
       defaultPassword: true,
       activityLogs: {
         orderBy: { createdAt: "desc" },
@@ -99,7 +114,7 @@ export async function GET() {
   });
 
   return NextResponse.json({
-    employees: employees.map((employee) => {
+    employees: await Promise.all(employees.map(async (employee) => {
       const lastLoginAt = latestDate(
         employee.activityLogs[0]?.createdAt,
         employee.leadActivities[0]?.createdAt,
@@ -108,16 +123,12 @@ export async function GET() {
         employee.updatedAt,
       );
 
+      const serialized = serializeEmployee(employee, await employeeStats(employee.id));
       return {
-        id: employee.id,
-        name: employee.name,
-        email: employee.email,
-        role: employee.role,
-        createdAt: employee.createdAt.toISOString(),
-        defaultPassword: employee.defaultPassword,
-        lastLoginAt: lastLoginAt?.toISOString() ?? null,
+        ...serialized,
+        lastLoginAt: lastLoginAt?.toISOString() ?? serialized.lastLoginAt,
       };
-    }),
+    })),
   });
 }
 
