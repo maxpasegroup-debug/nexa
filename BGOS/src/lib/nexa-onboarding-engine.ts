@@ -3,7 +3,9 @@ import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -279,7 +281,7 @@ Return only valid JSON:
 }`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o",
       max_tokens: 600,
       messages: [
@@ -370,7 +372,7 @@ Return ONLY a JSON object with these exact fields:
 }
 No other text outside the JSON.`;
 
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAI().chat.completions.create({
     model: "gpt-4o",
     max_tokens: 3000,
     messages: [{ role: "user", content: prompt }],
