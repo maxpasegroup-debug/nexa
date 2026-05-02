@@ -21,6 +21,7 @@ const leadSources: LeadSource[] = [
   "MANUAL",
   "WEBSITE",
   "REFERRAL",
+  "MARKETPLACE",
   "INSTAGRAM",
   "WHATSAPP",
   "EMAIL",

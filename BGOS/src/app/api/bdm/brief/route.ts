@@ -73,6 +73,7 @@ export async function GET() {
       dealsThisMonth,
       portfolioCounts,
       trialAtRisk,
+      marketplaceLeads,
     ] = await Promise.all([
       prisma.lead.groupBy({
         by: ["status"],
@@ -140,7 +141,23 @@ export async function GET() {
           trialEndsAt: { lte: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) },
         },
       }),
+      prisma.lead.findMany({
+        where: {
+          assignedTo: context.user.id,
+          source: "MARKETPLACE",
+          createdAt: { gte: today.start, lt: today.end },
+          status: { notIn: ["WON", "LOST"] },
+        },
+        select: { id: true, name: true, company: true, notes: true },
+        take: 20,
+      }),
     ]);
+    const marketplaceLeadLines = marketplaceLeads.map((lead) => {
+      const agentInterest =
+        lead.notes?.match(/interested in ([^.]+?)(?:\.|$)/i)?.[1]?.trim() ??
+        "a marketplace agent";
+      return `- ${lead.company ?? lead.name} wants ${agentInterest} — call within 2 hours`;
+    });
     const topLead = [...dueLeads, ...staleLeads].sort((a, b) => b.score - a.score)[0];
     const payingCount =
       portfolioCounts.find((item) => item.status === "PAYING")?._count._all ?? 0;
@@ -172,6 +189,9 @@ export async function GET() {
               hottestLead: topLead?.name ?? null,
             },
             promptContext: [
+              "MARKETPLACE LEADS TODAY:",
+              marketplaceLeadLines.length > 0 ? marketplaceLeadLines.join("\n") : "- None",
+              "Mention marketplace leads first if any exist because they are the hottest leads.",
               "COMMISSION DATA:",
               `- Earned this month: Rs ${commission.total}`,
               `- First sale: Rs ${commission.firstSale}`,

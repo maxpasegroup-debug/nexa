@@ -11,22 +11,32 @@ import {
 
 const PUBLIC_ROUTES = [
   "/",
+  "/marketplace",
+  "/marketplace/(.*)",
   "/login",
   "/register",
   "/forgot-password",
   "/reset-password",
   "/accept-invite",
+  "/workspace-preview",
+  "/activate-trial",
   "/api/auth",
   "/api/register",
   "/api/forgot-password",
   "/api/reset-password",
   "/api/onboarding",
+  "/api/onboarding/landing",
+  "/api/marketplace/agents",
+  "/api/marketplace/agents/(.*)",
+  "/api/marketplace/interest",
+  "/api/marketplace/notify",
 ];
 
 function isPublicRoute(pathname: string) {
   return PUBLIC_ROUTES.some((route) => {
     if (route === "/") return pathname === "/";
-    return pathname === route || pathname.startsWith(`${route}/`);
+    const prefix = route.endsWith("/(.*)") ? route.slice(0, -5) : route;
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
   });
 }
 

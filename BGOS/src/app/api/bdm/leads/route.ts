@@ -21,6 +21,30 @@ function daysSince(value?: Date | null) {
   return Math.floor((Date.now() - value.getTime()) / (24 * 60 * 60 * 1000));
 }
 
+function sourceFilter(value: string | null) {
+  if (!value) return {};
+  const normalized = value.toUpperCase();
+  if (normalized === "MARKETPLACE") return { source: "MARKETPLACE" as const };
+  if (normalized === "WEBSITE" || normalized === "LANDING_PAGE") return { source: "WEBSITE" as const };
+  if (normalized === "COLD_CALL") return { source: "COLD_CALL" as const };
+  return {};
+}
+
+function parseAgentInterest(notes?: string | null) {
+  if (!notes) return null;
+  const match =
+    notes.match(/interested in ([^.]+?)(?:\.|$)/i) ??
+    notes.match(/wants to add ([^.]+?)(?:\.|$)/i);
+  return match?.[1]?.trim() ?? null;
+}
+
+function agentColor(agentName?: string | null) {
+  if (!agentName) return null;
+  if (/wazzup/i.test(agentName)) return "#25D366";
+  if (/sales booster/i.test(agentName)) return "#7C6FFF";
+  return "#F5A623";
+}
+
 export async function GET(request: Request) {
   try {
     const context = await getBdmContext();
@@ -30,6 +54,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const bdmStatus = searchParams.get("bdmStatus") ?? searchParams.get("status");
     const search = searchParams.get("search");
+    const source = searchParams.get("source");
     const overdue = searchParams.get("overdue") === "true";
     const today = todayBounds();
 
@@ -48,6 +73,7 @@ export async function GET(request: Request) {
             }
           : {}),
         ...(isBdmLeadStatus(bdmStatus) ? { bdmStatus } : {}),
+        ...sourceFilter(source),
         ...(overdue ? { followUpDate: { lt: today.start } } : {}),
       },
       include: {
@@ -72,10 +98,15 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({
-      leads: sortedLeads.map((lead) => ({
-        ...lead,
-        daysSinceContact: daysSince(lead.lastContactedAt),
-      })),
+      leads: sortedLeads.map((lead) => {
+        const interest = parseAgentInterest(lead.notes);
+        return {
+          ...lead,
+          agentInterest: interest,
+          agentColor: agentColor(interest),
+          daysSinceContact: daysSince(lead.lastContactedAt),
+        };
+      }),
     });
   } catch {
     return NextResponse.json(

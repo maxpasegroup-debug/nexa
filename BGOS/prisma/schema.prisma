@@ -262,6 +262,13 @@ model AgentNotifyRequest {
   @@unique([agentId, email])
 }
 
+model RoundRobinTracker {
+  id             String   @id @default(cuid())
+  type           String
+  lastAssignedId String
+  createdAt      DateTime @default(now())
+}
+
 model Lead {
   id            String      @id @default(cuid())
   name          String
@@ -572,6 +579,7 @@ enum LeadSource {
   MANUAL
   WEBSITE
   REFERRAL
+  MARKETPLACE
   INSTAGRAM
   WHATSAPP
   EMAIL

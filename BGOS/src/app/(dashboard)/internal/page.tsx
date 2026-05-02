@@ -33,6 +33,8 @@ export default async function InternalPage() {
   const { owner, business: internalBusiness } = await requireInternalOwner();
 
   const now = new Date();
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const customerBusinessWhere = {
     id: { not: internalBusiness.id },
@@ -47,6 +49,7 @@ export default async function InternalPage() {
     teamMembers,
     savedInsights,
     commissionsThisMonth,
+    marketplaceLeadsToday,
   ] = await Promise.all([
     prisma.business.count({ where: customerBusinessWhere }),
     prisma.user.count(),
@@ -138,6 +141,9 @@ export default async function InternalPage() {
         commissionAmt: true,
       },
     }),
+    prisma.onboardingLead.count({
+      where: { source: "marketplace", createdAt: { gte: startOfToday } },
+    }),
   ]);
   const firstSaleCommissions = commissionsThisMonth
     .filter((item) => item.type === "FIRST_SALE")
@@ -216,6 +222,7 @@ export default async function InternalPage() {
         totalUsers,
         totalLeads,
         newThisMonth,
+        marketplaceLeadsToday,
       }}
       businesses={businesses}
       teamMembers={bgosTeam}

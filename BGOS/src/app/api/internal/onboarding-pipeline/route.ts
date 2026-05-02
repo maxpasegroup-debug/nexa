@@ -15,10 +15,12 @@ const statuses: OnboardingLeadStatus[] = [
   "TRIAL_ACTIVE",
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const authResult = await requireInternalOwnerApi();
     if ("error" in authResult) return authResult.error;
+    const { searchParams } = new URL(request.url);
+    const source = searchParams.get("source");
 
     const now = new Date();
     const startOfToday = new Date(now);
@@ -28,6 +30,7 @@ export async function GET() {
     const [leads, newToday, trialsActive, convertedThisMonth, team] =
       await Promise.all([
         prisma.onboardingLead.findMany({
+          where: source ? { source } : undefined,
           orderBy: { updatedAt: "desc" },
           include: {
             assignedBDM: { select: { id: true, name: true, email: true } },
@@ -93,6 +96,7 @@ export async function GET() {
             companyName: lead.companyName,
             employeeCount: lead.employeeCount,
             businessType: lead.businessType,
+            source: lead.source,
             challenge: lead.challenge,
             plan: lead.selectedPlan,
             bdmNotes: lead.bdmNotes,

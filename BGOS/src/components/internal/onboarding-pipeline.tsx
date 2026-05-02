@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Clock, RefreshCw, UserCog } from "lucide-react";
 
 type Status =
@@ -27,6 +27,7 @@ type PipelineLead = {
   companyName: string;
   employeeCount: string;
   businessType: string;
+  source: string;
   challenge: string | null;
   plan: string | null;
   bdmNotes: string | null;
@@ -131,6 +132,15 @@ function LeadCard({
         <div className="min-w-0">
           <h3 className="truncate text-sm font-bold text-white">{lead.companyName}</h3>
           <p className="mt-1 truncate text-xs text-zinc-500">{lead.name} · {lead.phone}</p>
+          <span
+            className={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+              lead.source === "marketplace"
+                ? "border-[#7C6FFF]/30 bg-[#7C6FFF]/10 text-[#c6c1ff]"
+                : "border-[#22D9A0]/30 bg-[#22D9A0]/10 text-[#22D9A0]"
+            }`}
+          >
+            {lead.source === "marketplace" ? "Marketplace" : "Website"}
+          </span>
         </div>
         <button
           type="button"
@@ -157,7 +167,11 @@ function LeadCard({
   );
 }
 
-export function OnboardingPipeline() {
+export function OnboardingPipeline({
+  initialSourceFilter,
+}: {
+  initialSourceFilter?: "marketplace";
+}) {
   const [data, setData] = useState<PipelineData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PipelineLead | null>(null);
@@ -165,17 +179,18 @@ export function OnboardingPipeline() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ assignedBDMId: "", assignedSDEId: "", status: "", note: "" });
 
-  async function load() {
+  const load = useCallback(async function load() {
     setLoading(true);
-    const response = await fetch("/api/internal/onboarding-pipeline", { cache: "no-store" });
+    const query = initialSourceFilter ? `?source=${initialSourceFilter}` : "";
+    const response = await fetch(`/api/internal/onboarding-pipeline${query}`, { cache: "no-store" });
     setLoading(false);
     if (!response.ok) return;
     setData((await response.json()) as PipelineData);
-  }
+  }, [initialSourceFilter]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const liveCount = useMemo(
     () => columns.reduce((sum, column) => sum + (data?.counts[column.status] ?? 0), 0),

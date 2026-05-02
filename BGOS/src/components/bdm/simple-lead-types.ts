@@ -18,7 +18,9 @@ export type SimpleLead = {
   phone?: string | null;
   email?: string | null;
   company?: string | null;
-  source: string;
+  source?: string | null;
+  agentInterest?: string | null;
+  agentColor?: string | null;
   status?: string;
   bdmStatus: BDMLeadStatus;
   lostReason?: string | null;

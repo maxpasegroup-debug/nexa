@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 
@@ -10,6 +10,36 @@ import { SimpleLeadCard } from "./simple-lead-card";
 import { BDMLeadStatus, bdmStatuses, LeadNoteView, SimpleLead } from "./simple-lead-types";
 
 type ActiveFilter = "ALL" | BDMLeadStatus | "COLD";
+
+type LeadListProps = {
+  sourceFilter?: "marketplace";
+  title?: string;
+  subtitle?: string;
+  bdmName?: string;
+};
+
+function normalizedSource(lead: SimpleLead) {
+  return String(lead.source ?? "").toLowerCase();
+}
+
+function SourceBadge({ lead }: { lead: SimpleLead }) {
+  const source = normalizedSource(lead);
+  if (source === "marketplace") {
+    return (
+      <span className="mt-2 inline-flex w-fit rounded-full border border-[#7C6FFF]/30 bg-[#7C6FFF]/10 px-2.5 py-1 text-[11px] font-bold text-[#c6c1ff]">
+        🛒 Marketplace{lead.agentInterest ? ` — ${lead.agentInterest}` : ""}
+      </span>
+    );
+  }
+  if (source === "landing_page" || source === "website") {
+    return (
+      <span className="mt-2 inline-flex w-fit rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-2.5 py-1 text-[11px] font-bold text-[#22D9A0]">
+        🌐 Website enquiry
+      </span>
+    );
+  }
+  return null;
+}
 
 function isCold(lead: SimpleLead) {
   return (lead.daysSinceContact ?? 0) >= 3 && lead.bdmStatus !== "LOST" && lead.bdmStatus !== "ONBOARDING";
@@ -21,7 +51,12 @@ function emptyMessage(filter: ActiveFilter) {
   return "No leads yet. Add your first lead →";
 }
 
-export function LeadList() {
+export function LeadList({
+  sourceFilter,
+  title = "My leads",
+  subtitle,
+  bdmName,
+}: LeadListProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [leads, setLeads] = useState<SimpleLead[]>([]);
@@ -32,18 +67,19 @@ export function LeadList() {
   const [lostLead, setLostLead] = useState<SimpleLead | null>(null);
   const [lostReason, setLostReason] = useState("");
 
-  async function loadLeads() {
+  const loadLeads = useCallback(async function loadLeads() {
     setLoading(true);
-    const response = await fetch("/api/bdm/leads", { cache: "no-store" });
+    const query = sourceFilter ? `?source=${sourceFilter}` : "";
+    const response = await fetch(`/api/bdm/leads${query}`, { cache: "no-store" });
     setLoading(false);
     if (!response.ok) return;
     const data = (await response.json()) as { leads: SimpleLead[] };
     setLeads(data.leads);
-  }
+  }, [sourceFilter]);
 
   useEffect(() => {
     void loadLeads();
-  }, []);
+  }, [loadLeads]);
 
   const counts = useMemo(() => {
     const values: Record<BDMLeadStatus, number> = {
@@ -160,7 +196,10 @@ export function LeadList() {
     <div className="space-y-5">
       <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="font-heading text-2xl font-bold text-white">My leads</h1>
+          <div>
+            <h1 className="font-heading text-2xl font-bold text-white">{title}</h1>
+            {subtitle ? <p className="mt-1 text-sm text-zinc-500">{subtitle}</p> : null}
+          </div>
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold text-zinc-300">
             {leads.length}
           </span>
@@ -228,6 +267,8 @@ export function LeadList() {
               onStatusChange={handleStatusChange}
               onNoteAdded={handleNoteAdded}
               onStartOnboarding={(item) => void startOnboarding(item)}
+              sourceBadge={<SourceBadge lead={lead} />}
+              bdmName={bdmName}
             />
           ))}
         </section>

@@ -10,6 +10,8 @@ type SimpleLeadCardProps = {
   onStatusChange: (lead: SimpleLead, status: BDMLeadStatus) => void;
   onNoteAdded: (leadId: string, note: LeadNoteView) => void;
   onStartOnboarding: (lead: SimpleLead) => void;
+  sourceBadge?: React.ReactNode;
+  bdmName?: string;
 };
 
 const borderColors: Record<BDMLeadStatus, string> = {
@@ -35,10 +37,10 @@ function phoneHref(phone?: string | null) {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
 
-function whatsappHref(phone?: string | null) {
+function whatsappHref(phone?: string | null, text?: string) {
   if (!phone) return "";
   const normalized = phone.replace(/[^\d]/g, "");
-  return `https://wa.me/${normalized}`;
+  return `https://wa.me/${normalized}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
 }
 
 function followUpClass(value?: string | null) {
@@ -69,6 +71,8 @@ export function SimpleLeadCard({
   onStatusChange,
   onNoteAdded,
   onStartOnboarding,
+  sourceBadge,
+  bdmName = "your Business Manager",
 }: SimpleLeadCardProps) {
   const [quickNote, setQuickNote] = useState("");
   const [callOpen, setCallOpen] = useState(false);
@@ -79,6 +83,12 @@ export function SimpleLeadCard({
   const visibleNotes = lead.callNotes.slice(0, 3);
   const companyName = lead.company || lead.name;
   const contactLine = [lead.name, lead.email].filter(Boolean).join(" · ");
+  const isMarketplaceLead = String(lead.source ?? "").toLowerCase() === "marketplace";
+  const agentInterest = lead.agentInterest ?? null;
+  const marketplaceWhatsappText =
+    isMarketplaceLead && agentInterest
+      ? `Hello ${lead.name}, I am ${bdmName} from BGOS. I saw your interest in ${agentInterest}. Is this a good time to talk?`
+      : undefined;
 
   async function addNote(content: string, noteType = "call") {
     const trimmed = content.trim();
@@ -142,6 +152,7 @@ export function SimpleLeadCard({
         <div className="min-w-0">
           <h3 className="font-heading text-[15px] font-bold text-white">{companyName}</h3>
           <p className="mt-1 text-xs text-zinc-500">{contactLine || "No contact details"}</p>
+          {sourceBadge}
         </div>
         <div className="flex shrink-0 gap-1.5">
           {bdmStatuses.map((status) => {
@@ -173,6 +184,19 @@ export function SimpleLeadCard({
           </span>
         ))}
       </div>
+
+      {isMarketplaceLead && agentInterest ? (
+        <div
+          className="mt-3 rounded-xl border px-3 py-2 text-sm font-extrabold"
+          style={{
+            borderColor: `${lead.agentColor ?? "#7C6FFF"}55`,
+            color: lead.agentColor ?? "#c6c1ff",
+            backgroundColor: `${lead.agentColor ?? "#7C6FFF"}12`,
+          }}
+        >
+          Interested in: ⚡ {agentInterest}
+        </div>
+      ) : null}
 
       {lead.bdmStatus === "LOST" && lead.lostReason ? (
         <p className="mt-2 rounded-xl border border-[#FF6B6B]/20 bg-[#FF6B6B]/10 px-3 py-2 text-xs text-red-200">
@@ -228,7 +252,7 @@ export function SimpleLeadCard({
         </button>
         {lead.phone ? (
           <a
-            href={whatsappHref(lead.phone)}
+            href={whatsappHref(lead.phone, marketplaceWhatsappText)}
             target="_blank"
             rel="noreferrer"
             className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-zinc-200 transition hover:text-white"

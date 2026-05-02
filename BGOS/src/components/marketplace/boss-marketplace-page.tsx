@@ -7,7 +7,7 @@ import { ArrowRight, BadgePercent, Bot, Clock, Sparkles } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { marketplaceStatusClass, marketplaceStatusLabel } from "@/lib/marketplace-status";
-import { InstallModal } from "./agent-landing-page";
+import { InstallModal } from "./marketplace-install-modal";
 import type { AgentInstallationView, AgentOfferView, MarketplaceAgentView } from "./types";
 import {
   categoryLabel,

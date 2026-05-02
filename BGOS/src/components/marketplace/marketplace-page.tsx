@@ -26,12 +26,17 @@ type AgentResponse = {
 declare global {
   interface Window {
     openNexaWidget?: () => void;
+    openMarketplaceWidget?: () => void;
   }
 }
 
 function openNexa() {
   if (typeof window === "undefined") return;
-  window.openNexaWidget?.();
+  if (window.openNexaWidget) {
+    window.openNexaWidget();
+    return;
+  }
+  window.openMarketplaceWidget?.();
 }
 
 function ChannelMockup() {
@@ -275,6 +280,24 @@ export function MarketplacePage({ initialAgents = [] }: MarketplacePageProps) {
           </Link>
         </section>
       ) : null}
+
+      <section className="mx-auto max-w-7xl px-5 pb-10">
+        <button
+          type="button"
+          onClick={openNexa}
+          className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-left transition hover:border-[#7C6FFF]/50 hover:bg-white/[0.06]"
+        >
+          <span>
+            <span className="block text-sm font-extrabold text-white">
+              Questions? Chat with our team →
+            </span>
+            <span className="mt-1 block text-xs text-zinc-500">
+              Tell NEXA what you need and we will route you to the right person.
+            </span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-[#7C6FFF]" />
+        </button>
+      </section>
 
       <section className="mx-auto max-w-7xl px-5 pb-20">
         {loading ? (

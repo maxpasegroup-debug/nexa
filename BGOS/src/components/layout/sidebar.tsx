@@ -58,6 +58,7 @@ const roleLinks: Record<string, NavItem[]> = {
   ],
   BDM: [
     { label: "My Leads", href: "/bdm", icon: Target },
+    { label: "🛒 Marketplace leads", href: "/bdm/marketplace-leads", icon: ShoppingCart },
     { label: "Earnings", href: "/bdm/commission", icon: DollarSign },
     { label: "Onboarding", href: "/bdm/onboarding", icon: Users },
     { label: "Tasks", href: "/bdm/tasks", icon: CheckSquare },
@@ -138,6 +139,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [earningsTotal, setEarningsTotal] = useState<number | null>(null);
   const [onboardingCount, setOnboardingCount] = useState(0);
+  const [marketplaceLeadCount, setMarketplaceLeadCount] = useState(0);
   const [pendingBuilds, setPendingBuilds] = useState(0);
   const [installedUiAgents, setInstalledUiAgents] = useState<InstalledUiAgent[]>([]);
   const marketplaceRecommendations = role === "BOSS" || role === "OWNER" ? 1 : 0;
@@ -194,6 +196,34 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
       window.removeEventListener("bgos:commission-created", refreshEarnings);
       window.clearInterval(interval);
     };
+  }, [role]);
+
+  useEffect(() => {
+    if (role !== "BDM") return;
+
+    async function fetchMarketplaceLeadCount() {
+      const response = await fetch("/api/bdm/leads?source=marketplace", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const data = (await response.json()) as {
+        leads?: Array<{ bdmStatus?: string; createdAt?: string }>;
+      };
+      const today = new Date().toDateString();
+      const count =
+        data.leads?.filter((lead) => {
+          const isNew = lead.bdmStatus === "NEW";
+          const createdToday = lead.createdAt
+            ? new Date(lead.createdAt).toDateString() === today
+            : false;
+          return isNew && createdToday;
+        }).length ?? 0;
+      setMarketplaceLeadCount(count);
+    }
+
+    void fetchMarketplaceLeadCount();
+    const interval = window.setInterval(() => void fetchMarketplaceLeadCount(), 60_000);
+    return () => window.clearInterval(interval);
   }, [role]);
 
   useEffect(() => {
@@ -286,6 +316,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
           const isInbox = item.href === "/boss/inbox";
           const isEarnings = item.href === "/bdm/commission";
           const isOnboarding = item.href === "/bdm/onboarding";
+          const isBdmMarketplaceLeads = item.href === "/bdm/marketplace-leads";
           const isWorkspaceBuilds = item.href === "/sde/workspaces";
           const isMarketplace = item.href === "/boss/marketplace";
 
@@ -315,6 +346,11 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
               {isOnboarding && onboardingCount > 0 ? (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#F5A623] px-1 text-[10px] font-bold text-black">
                   {onboardingCount > 99 ? "99+" : onboardingCount}
+                </span>
+              ) : null}
+              {isBdmMarketplaceLeads && marketplaceLeadCount > 0 ? (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#7C6FFF] px-1 text-[10px] font-bold text-white">
+                  {marketplaceLeadCount > 99 ? "99+" : marketplaceLeadCount}
                 </span>
               ) : null}
               {isWorkspaceBuilds && pendingBuilds > 0 ? (

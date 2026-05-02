@@ -49,6 +49,7 @@ type InternalMetrics = {
   totalUsers: number;
   totalLeads: number;
   newThisMonth: number;
+  marketplaceLeadsToday: number;
 };
 
 type PlatformCommissionSummary = {
@@ -385,7 +386,7 @@ export function BgosInternalDashboard({
             <p className="mt-1 text-sm text-zinc-500">{platformSummary}</p>
           </section>
 
-          <section className="grid gap-4 xl:grid-cols-4">
+          <section className="grid gap-4 xl:grid-cols-5">
             <MetricCard
               title="Total Customers"
               value={metrics.totalCustomers}
@@ -410,6 +411,14 @@ export function BgosInternalDashboard({
               subtitle="All customer pipelines"
               icon={<span className="text-base">🎯</span>}
             />
+            <Link href="#onboarding-pipeline">
+              <MetricCard
+                title="Marketplace leads today"
+                value={metrics.marketplaceLeadsToday}
+                subtitle="From public marketplace"
+                icon={<span className="text-base">🛒</span>}
+              />
+            </Link>
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
@@ -457,7 +466,9 @@ export function BgosInternalDashboard({
             />
           </section>
 
-          <OnboardingPipeline />
+          <section id="onboarding-pipeline" className="scroll-mt-24">
+            <OnboardingPipeline initialSourceFilter="marketplace" />
+          </section>
 
           <section id="nexa-insights-panel" className="scroll-mt-24">
             <NexaInsightsPanel
