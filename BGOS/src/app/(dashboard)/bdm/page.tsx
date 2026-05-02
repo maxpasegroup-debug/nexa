@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BdmDashboard } from "@/components/bdm/bdm-dashboard";
 import type { BdmMetrics } from "@/components/bdm/performance-card";
 import auth from "@/lib/auth";
+import { filterBriefTasksForBdm } from "@/lib/bdm/brief-safety";
 import { monthBounds, todayBounds } from "@/lib/bdm/server";
 import {
   calcMonthlyEarnings,
@@ -356,11 +357,13 @@ async function getOrCreateBrief(userId: string, userName: string) {
     brief = fallbackBrief(userName, dueLeads[0]?.id);
   }
 
+  const safeTasks = await filterBriefTasksForBdm(userId, brief.tasks);
+
   return prisma.dailyBrief.create({
     data: {
       userId,
       greeting: brief.greeting,
-      tasks: brief.tasks,
+      tasks: safeTasks,
       insights: brief.insights,
     },
   });
@@ -450,6 +453,7 @@ export default async function BdmPage() {
     { greeting: brief.greeting, tasks: brief.tasks, insights: brief.insights },
     user.name,
   );
+  const safeTasks = await filterBriefTasksForBdm(user.id, tasks.tasks);
 
   return (
     <BdmDashboard
@@ -464,6 +468,7 @@ export default async function BdmPage() {
       }}
       initialBrief={{
         ...tasks,
+        tasks: safeTasks,
         createdAt: brief.createdAt.toISOString(),
       }}
       initialMetrics={initialMetrics}

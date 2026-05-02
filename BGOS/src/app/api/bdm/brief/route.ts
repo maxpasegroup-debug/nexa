@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { filterBriefTasksForBdm } from "@/lib/bdm/brief-safety";
 import { getBdmContext, monthBounds, todayBounds } from "@/lib/bdm/server";
 import {
   calcMonthlyEarnings,
@@ -52,7 +53,24 @@ export async function GET() {
     });
 
     if (existingBrief) {
-      return NextResponse.json({ brief: existingBrief });
+      const safeTasks = await filterBriefTasksForBdm(
+        context.user.id,
+        existingBrief.tasks,
+      );
+
+      if (safeTasks.length !== (Array.isArray(existingBrief.tasks) ? existingBrief.tasks.length : 0)) {
+        await prisma.dailyBrief.update({
+          where: { id: existingBrief.id },
+          data: { tasks: safeTasks },
+        });
+      }
+
+      return NextResponse.json({
+        brief: {
+          ...existingBrief,
+          tasks: safeTasks,
+        },
+      });
     }
 
     const now = new Date();
@@ -215,11 +233,12 @@ export async function GET() {
           tasks: [],
           insights: [],
         };
+    const safeTasks = await filterBriefTasksForBdm(context.user.id, brief.tasks);
 
     const savedBrief = await prisma.dailyBrief.create({
       data: {
         userId: context.user.id,
-        tasks: brief.tasks,
+        tasks: safeTasks,
         insights: brief.insights,
         greeting: brief.greeting,
       },

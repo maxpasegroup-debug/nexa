@@ -5,42 +5,8 @@ import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import auth from "@/lib/auth";
+import { filterBriefTasksForBdm } from "@/lib/bdm/brief-safety";
 import { prisma } from "@/lib/prisma";
-
-type BriefTask = {
-  title: string;
-  priority: "high" | "medium" | "low";
-  leadId: string | null;
-  leadName?: string | null;
-  type: "follow_up" | "new_lead" | "demo" | "proposal" | "admin";
-};
-
-const priorities = ["high", "medium", "low"];
-const taskTypes = ["follow_up", "new_lead", "demo", "proposal", "admin"];
-
-function toBriefTasks(value: unknown): BriefTask[] {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .filter((item): item is Record<string, unknown> => {
-      return Boolean(item) && typeof item === "object" && !Array.isArray(item);
-    })
-    .map((item) => {
-      const priority = String(item.priority ?? "medium");
-      const type = String(item.type ?? "admin");
-
-      return {
-        title:
-          typeof item.title === "string" ? item.title : "Review assigned work",
-        priority: priorities.includes(priority)
-          ? (priority as BriefTask["priority"])
-          : "medium",
-        leadId: typeof item.leadId === "string" ? item.leadId : null,
-        leadName: typeof item.leadName === "string" ? item.leadName : null,
-        type: taskTypes.includes(type) ? (type as BriefTask["type"]) : "admin",
-      };
-    });
-}
 
 function toStrings(value: unknown) {
   if (!Array.isArray(value)) return [];
@@ -64,6 +30,7 @@ export default async function BdmTasksPage() {
   if (!user?.business) redirect("/onboarding");
 
   const brief = user.dailyBriefs[0];
+  const safeTasks = brief ? await filterBriefTasksForBdm(user.id, brief.tasks) : [];
 
   return (
     <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
@@ -76,7 +43,7 @@ export default async function BdmTasksPage() {
             <DailyBrief
               brief={{
                 greeting: brief.greeting,
-                tasks: toBriefTasks(brief.tasks),
+                tasks: safeTasks,
                 insights: toStrings(brief.insights),
               }}
               loading={false}
