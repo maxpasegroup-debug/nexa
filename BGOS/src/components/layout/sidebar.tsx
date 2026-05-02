@@ -421,7 +421,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
         </div>
         <button
           type="button"
-          onClick={() => void signOut({ callbackUrl: "/login" })}
+          onClick={() => void signOut({ callbackUrl: "/" })}
           className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-zinc-400 transition hover:bg-[rgba(255,255,255,0.04)] hover:text-white"
         >
           <LogOut className="h-4 w-4" />

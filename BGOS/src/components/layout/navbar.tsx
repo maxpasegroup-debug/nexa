@@ -266,7 +266,7 @@ export function Navbar({ title, userName, role }: NavbarProps) {
               </button>
               <button
                 type="button"
-                onClick={() => void signOut({ callbackUrl: "/login" })}
+                onClick={() => void signOut({ callbackUrl: "/" })}
                 className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white"
               >
                 Sign out

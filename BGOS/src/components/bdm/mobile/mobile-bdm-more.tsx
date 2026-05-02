@@ -22,7 +22,7 @@ export function MobileBDMMore() {
         ) : (
           <Link key={label} href={href} className="flex h-[52px] items-center gap-3 border-b border-white/[0.06] px-4 text-sm"><span>{icon}</span><span className="flex-1">{label}</span><span>›</span></Link>
         ))}
-        <button type="button" onClick={() => void signOut({ callbackUrl: "/login" })} className="flex h-[52px] w-full items-center gap-3 px-4 text-left text-sm text-[#FF6B6B]"><span>🚪</span><span className="flex-1">Sign out</span><span>›</span></button>
+        <button type="button" onClick={() => void signOut({ callbackUrl: "/" })} className="flex h-[52px] w-full items-center gap-3 px-4 text-left text-sm text-[#FF6B6B]"><span>🚪</span><span className="flex-1">Sign out</span><span>›</span></button>
       </div>
     </main>
   );

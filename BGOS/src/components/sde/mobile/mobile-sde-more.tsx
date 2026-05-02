@@ -27,7 +27,7 @@ export function MobileSDEMore() {
         ))}
         <button
           type="button"
-          onClick={() => void signOut({ callbackUrl: "/login" })}
+          onClick={() => void signOut({ callbackUrl: "/" })}
           className="flex h-[52px] w-full items-center gap-3 px-4 text-left"
         >
           <span>🚪</span>
