@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { OnboardingLeadStatus } from "@prisma/client";
 
+import { onboardingPipelineStatuses } from "@/lib/business-status";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
@@ -12,7 +13,6 @@ const statuses: OnboardingLeadStatus[] = [
   "BDM_SUBMITTED",
   "SDE_BUILDING",
   "BOSS_PREVIEWING",
-  "TRIAL_ACTIVE",
 ];
 
 export async function GET(request: Request) {
@@ -30,7 +30,13 @@ export async function GET(request: Request) {
     const [leads, newToday, trialsActive, convertedThisMonth, team] =
       await Promise.all([
         prisma.onboardingLead.findMany({
-          where: source ? { source } : undefined,
+          where: {
+            ...(source ? { source } : {}),
+            OR: [
+              { businessId: null },
+              { business: { status: { in: onboardingPipelineStatuses } } },
+            ],
+          },
           orderBy: { updatedAt: "desc" },
           include: {
             assignedBDM: { select: { id: true, name: true, email: true } },
@@ -50,6 +56,7 @@ export async function GET(request: Request) {
                     status: true,
                   },
                 },
+                status: true,
               },
             },
           },

@@ -92,6 +92,10 @@ export async function POST(request: Request) {
         teamSize: lead.employeeCount,
         goal: lead.challenge ?? "Configured onboarding workspace",
         healthScore: 65,
+        status: "PREVIEW",
+        statusUpdatedAt: new Date(),
+        razorpayMandateId: lead.razorpayMandateId,
+        razorpayCustomerId: lead.razorpayCustomerId,
       },
     });
 

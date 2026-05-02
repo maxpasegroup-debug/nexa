@@ -1,5 +1,6 @@
-import type { Business, Prisma, Role, User } from "@prisma/client";
+import type { Business, BusinessStatus, Prisma, Role, User } from "@prisma/client";
 
+import { customerListStatuses } from "@/lib/business-status";
 import { planMonthlyAmount } from "@/lib/onboarding-flow";
 import { prisma } from "@/lib/prisma";
 
@@ -32,16 +33,9 @@ export function csvEscape(value: unknown) {
 }
 
 export function normalizeCustomerStatus(
-  business: Pick<Business, "status"> & {
-    trialSubscription?: { status: string; trialEndsAt: Date | null } | null;
-  },
+  business: Pick<Business, "status">,
 ) {
-  if (business.status === "SUSPENDED" || business.status === "OFFBOARDED") {
-    return business.status;
-  }
-  if (business.trialSubscription?.status === "ACTIVE") return "ACTIVE";
-  if (business.trialSubscription?.status === "TRIAL") return "TRIAL";
-  return business.status || "TRIAL";
+  return business.status;
 }
 
 export function planForBusiness(
@@ -135,6 +129,12 @@ export async function getCustomerRows(internalBusinessId: string, filters: URLSe
   const businesses = await prisma.business.findMany({
     where: {
       ...ownerWhere(internalBusinessId),
+      status: {
+        in:
+          status && customerListStatuses.includes(status as BusinessStatus)
+            ? [status as BusinessStatus]
+            : customerListStatuses,
+      },
       ...(search
         ? {
             OR: [
@@ -165,7 +165,7 @@ export async function getCustomerRows(internalBusinessId: string, filters: URLSe
   const rows = businesses.map((business) => {
     const customerStatus = normalizeCustomerStatus(business);
     const customerPlan = planForBusiness(business);
-    const mrr = customerStatus === "ACTIVE" || customerStatus === "TRIAL"
+    const mrr = customerStatus === "ACTIVE"
       ? mrrForPlan(customerPlan, business.trialSubscription?.monthlyAmount)
       : 0;
     const lastLoginAt = latestDate(...business.users.map((user) => user.updatedAt));
@@ -182,11 +182,11 @@ export async function getCustomerRows(internalBusinessId: string, filters: URLSe
       clientId: business.clientId ?? business.id.slice(0, 8).toUpperCase(),
       name: business.name,
       plan: customerPlan,
-      status: customerStatus as "TRIAL" | "ACTIVE" | "SUSPENDED" | "OFFBOARDED",
+      status: customerStatus as "TRIAL" | "ACTIVE" | "RENEWAL_FAILED" | "SUSPENDED",
       healthScore: business.healthScore,
       mrr,
-      trialEndsAt: business.trialSubscription?.trialEndsAt ?? null,
-      daysUntilTrialExpiry: daysBetweenNow(business.trialSubscription?.trialEndsAt),
+      trialEndsAt: business.trialEndsAt ?? business.trialSubscription?.trialEndsAt ?? null,
+      daysUntilTrialExpiry: daysBetweenNow(business.trialEndsAt ?? business.trialSubscription?.trialEndsAt),
       lastLoginAt,
       daysSinceLastLogin,
       totalUsers: business.users.length,
@@ -201,7 +201,6 @@ export async function getCustomerRows(internalBusinessId: string, filters: URLSe
   });
 
   return rows.filter((row) => {
-    if (status && row.status !== status) return false;
     if (plan && row.plan !== plan) return false;
     if (bdmId && row.bdmId !== bdmId) return false;
     if (churnRiskOnly && !row.isChurnRisk) return false;

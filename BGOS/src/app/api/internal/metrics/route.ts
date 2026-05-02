@@ -27,6 +27,7 @@ export async function GET(request: Request) {
     onboardingReady,
     deliveredThisMonth,
     failedPayments,
+    renewalFailed,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { active: true } }),
@@ -40,7 +41,8 @@ export async function GET(request: Request) {
     prisma.onboardingSession.count({ where: { status: "SDE_BUILDING" } }),
     prisma.onboardingSession.count({ where: { status: "SDE_APPROVED" } }),
     prisma.workspaceConfig.count({ where: { deliveredAt: { gte: monthStart } } }),
-    prisma.trialSubscription.count({ where: { status: "FAILED" } }),
+    prisma.business.count({ where: { status: "RENEWAL_FAILED" } }),
+    prisma.business.count({ where: { status: "RENEWAL_FAILED" } }),
   ]);
 
   const newMRRThisMonth = rows
@@ -53,7 +55,8 @@ export async function GET(request: Request) {
       active: summary.active,
       trial: summary.trial,
       suspended: summary.suspended,
-      offboarded: rows.filter((row) => row.status === "OFFBOARDED").length,
+      offboarded: 0,
+      renewalFailed,
       newThisMonth: rows.filter((row) => row.joinedAt >= monthStart).length,
     },
     users: {

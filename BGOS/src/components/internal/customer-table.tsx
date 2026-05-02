@@ -9,7 +9,7 @@ export type CustomerRow = {
   clientId: string;
   name: string;
   plan: string;
-  status: "TRIAL" | "ACTIVE" | "SUSPENDED" | "OFFBOARDED";
+  status: "TRIAL" | "ACTIVE" | "RENEWAL_FAILED" | "SUSPENDED";
   healthScore: number;
   mrr: number;
   bdmName: string;
@@ -20,15 +20,21 @@ export type CustomerRow = {
 function queryForFilter(filterKey: string) {
   if (filterKey === "trial") return "status=TRIAL";
   if (filterKey === "churnRisk") return "churnRiskOnly=true";
-  if (filterKey === "failedPayment") return "status=FAILED";
+  if (filterKey === "failedPayment") return "status=RENEWAL_FAILED";
   return "";
 }
 
 function statusClass(status: string) {
   if (status === "ACTIVE") return "bg-[#22D9A0]/10 text-[#22D9A0]";
   if (status === "TRIAL") return "bg-[#F5A623]/10 text-[#F5A623]";
-  if (status === "SUSPENDED") return "bg-[#FF6B6B]/10 text-[#FF6B6B]";
+  if (status === "RENEWAL_FAILED") return "bg-[#FF6B6B]/10 text-[#FF6B6B]";
+  if (status === "SUSPENDED") return "bg-zinc-500/10 text-zinc-400";
   return "bg-zinc-500/10 text-zinc-400";
+}
+
+function statusLabel(status: CustomerRow["status"]) {
+  if (status === "RENEWAL_FAILED") return "Payment failed";
+  return status;
 }
 
 function planClass(plan: string) {
@@ -118,8 +124,8 @@ export function CustomerTable({
             <option value="">All status</option>
             <option value="TRIAL">Trial</option>
             <option value="ACTIVE">Active</option>
+            <option value="RENEWAL_FAILED">Payment failed</option>
             <option value="SUSPENDED">Suspended</option>
-            <option value="OFFBOARDED">Offboarded</option>
           </select>
           <a href={`/api/internal/customers/export?${queryForFilter(filterKey)}`} className="rounded-xl bg-white px-3 py-2 text-sm font-bold text-black">
             Export CSV
@@ -159,7 +165,7 @@ export function CustomerTable({
                     <span>{customer.healthScore}</span>
                   </div>
                 </td>
-                <td><span className={`rounded-full px-2 py-1 text-[11px] font-bold ${statusClass(customer.status)}`}>{customer.status}</span></td>
+                <td><span className={`rounded-full px-2 py-1 text-[11px] font-bold ${statusClass(customer.status)}`}>{statusLabel(customer.status)}</span></td>
                 <td>₹{Math.round(customer.mrr).toLocaleString("en-IN")}</td>
                 <td className="text-zinc-400">{customer.bdmName}</td>
                 <td className="text-zinc-500">{new Date(customer.joinedAt).toLocaleDateString("en-IN")}</td>
@@ -171,6 +177,8 @@ export function CustomerTable({
                         <button onClick={() => void action(customer.id, "convert-trial")} className="rounded-lg bg-[#22D9A0]/20 px-2 py-1 text-xs text-[#22D9A0]">Convert</button>
                         <button onClick={() => void action(customer.id, "extend-trial", { days: 7 })} className="rounded-lg bg-[#F5A623]/20 px-2 py-1 text-xs text-[#F5A623]">Extend</button>
                       </>
+                    ) : customer.status === "RENEWAL_FAILED" ? (
+                      <button onClick={() => void action(customer.id, "retry-payment")} className="rounded-lg bg-[#FF6B6B]/20 px-2 py-1 text-xs font-bold text-[#FF6B6B]">Retry payment</button>
                     ) : customer.status === "SUSPENDED" ? (
                       <button onClick={() => void fetch(`/api/internal/customers/${customer.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "ACTIVE" }) }).then(load)} className="rounded-lg bg-[#22D9A0]/20 px-2 py-1 text-xs text-[#22D9A0]">Reinstate</button>
                     ) : (

@@ -1,5 +1,7 @@
+import { BusinessStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import { transitionBusinessStatus } from "@/lib/business-status";
 import { mrrForPlan, normalizeCustomerStatus, planForBusiness } from "@/lib/internal-control";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
@@ -97,15 +99,23 @@ export async function PATCH(
   const status = str(body.status);
   const trialEndsAt = str(body.trialEndsAt);
 
+  const statusUpdate =
+    status && Object.values(BusinessStatus).includes(status as BusinessStatus)
+      ? (status as BusinessStatus)
+      : undefined;
+
   const business = await prisma.business.update({
     where: { id: params.id },
     data: {
       ...(str(body.name) ? { name: str(body.name) } : {}),
-      ...(status ? { status } : {}),
       ...(str(body.notes) !== undefined ? { notes: str(body.notes) } : {}),
     },
     include: { trialSubscription: true },
   });
+
+  if (statusUpdate && statusUpdate !== business.status) {
+    await transitionBusinessStatus(params.id, statusUpdate, "Owner updated customer status");
+  }
 
   if (plan || trialEndsAt) {
     await prisma.trialSubscription.upsert({

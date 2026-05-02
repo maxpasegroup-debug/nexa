@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { transitionBusinessStatus } from "@/lib/business-status";
 import { sendEmail } from "@/lib/email";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
@@ -19,7 +20,6 @@ export async function POST(_request: Request, { params }: { params: { id: string
   if (!business) return NextResponse.json({ error: "Customer not found." }, { status: 404 });
 
   await prisma.$transaction([
-    prisma.business.update({ where: { id: params.id }, data: { status: "ACTIVE" } }),
     prisma.trialSubscription.upsert({
       where: { businessId: params.id },
       create: {
@@ -34,6 +34,7 @@ export async function POST(_request: Request, { params }: { params: { id: string
       update: { status: "ACTIVE", chargedAt: new Date(), trialEndsAt: new Date() },
     }),
   ]);
+  await transitionBusinessStatus(params.id, "ACTIVE", "Owner converted trial");
 
   const bdm = business.onboardingLead?.assignedBDM;
   if (bdm) {

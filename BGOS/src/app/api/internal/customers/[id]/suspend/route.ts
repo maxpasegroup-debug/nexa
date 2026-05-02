@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { transitionBusinessStatus } from "@/lib/business-status";
 import { sendEmail } from "@/lib/email";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
@@ -17,7 +18,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   if (!business) return NextResponse.json({ error: "Customer not found." }, { status: 404 });
 
   await prisma.$transaction([
-    prisma.business.update({ where: { id: params.id }, data: { status: "SUSPENDED", notes: reason } }),
+    prisma.business.update({ where: { id: params.id }, data: { notes: reason } }),
     prisma.user.updateMany({ where: { businessId: params.id }, data: { active: false, status: "SUSPENDED" } }),
     prisma.nexaInsight.create({
       data: {
@@ -28,6 +29,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       },
     }),
   ]);
+  await transitionBusinessStatus(params.id, "SUSPENDED", reason);
 
   const boss = business.users.find((user) => user.role === "BOSS");
   if (boss) {

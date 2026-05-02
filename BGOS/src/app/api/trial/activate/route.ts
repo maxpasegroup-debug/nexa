@@ -1,6 +1,7 @@
 import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
+import { transitionBusinessStatus } from "@/lib/business-status";
 import { calcFirstSale } from "@/lib/commission";
 import { sendEmail } from "@/lib/email";
 import { addDays, getInternalBusiness, getString, planMonthlyAmount } from "@/lib/onboarding-flow";
@@ -92,6 +93,17 @@ export async function POST(request: Request) {
           active: true,
         },
       }),
+      prisma.business.update({
+        where: { id: businessId },
+        data: {
+          status: "TRIAL",
+          statusUpdatedAt: trialStartedAt,
+          trialStartedAt,
+          trialEndsAt,
+          razorpayMandateId,
+          razorpayCustomerId,
+        },
+      }),
       ...(business.onboardingLead
         ? [
             prisma.onboardingLead.update({
@@ -109,6 +121,7 @@ export async function POST(request: Request) {
           ]
         : []),
     ]);
+    await transitionBusinessStatus(businessId, "TRIAL", "Boss activated trial");
 
     const template = await prisma.workspaceTemplate.findFirst({
       where: { name: { startsWith: business.name } },

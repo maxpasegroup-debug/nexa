@@ -69,6 +69,18 @@ enum Role {
   ADMIN
 }
 
+enum BusinessStatus {
+  LEAD
+  ONBOARDING
+  BUILDING
+  PREVIEW
+  TRIAL
+  ACTIVE
+  RENEWAL_FAILED
+  SUSPENDED
+  OFFBOARDED
+}
+
 model PasswordResetRequest {
   id          String   @id @default(cuid())
   userId      String
@@ -121,7 +133,24 @@ model Business {
   teamSize     String
   goal         String
   healthScore  Int      @default(50)
-  status       String   @default("TRIAL")
+  status       BusinessStatus @default(LEAD)
+  statusUpdatedAt DateTime?
+  trialStartedAt DateTime?
+  trialEndsAt DateTime?
+  firstPaymentAt DateTime?
+  lastPaymentAt DateTime?
+  nextBillingDate DateTime?
+  gracePeriodEndsAt DateTime?
+  suspendedAt DateTime?
+  offboardedAt DateTime?
+  razorpayCustomerId String?
+  razorpaySubscriptionId String?
+  razorpayMandateId String?
+  churnRiskAlertedAt DateTime?
+  renewalFailedAt DateTime?
+  bdmNotifiedAt DateTime?
+  bossEscalatedAt DateTime?
+  dataPreservedUntil DateTime?
   notes        String?  @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -146,6 +175,16 @@ model Business {
   pipelines        Pipeline[]
   agentInstallations AgentInstallation[]
   dataExports    CustomerDataExport[]
+}
+
+model WebhookLog {
+  id        String   @id @default(cuid())
+  source    String
+  event     String
+  payload   Json
+  processed Boolean  @default(false)
+  error     String?
+  createdAt DateTime @default(now())
 }
 
 model CustomerDataExport {

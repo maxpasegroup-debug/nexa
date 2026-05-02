@@ -1,4 +1,9 @@
 import { sendEmail } from "@/lib/mail";
+import { transitionBusinessStatus } from "@/lib/business-status";
+import {
+  escalateToOwner,
+  notifyLowEngagement,
+} from "@/lib/churn-notifications";
 import {
   calculateHealthScore,
   getBusinessContext,
@@ -22,6 +27,7 @@ function daysAgo(days: number) {
 }
 
 export async function runMorningBriefingCron() {
+  const lifecycle = await runLifecycleStatusCron();
   const businesses = await prisma.business.findMany({ select: { id: true } });
   const results = await Promise.allSettled(
     businesses.map((business) => runMorningBriefing(business.id)),
@@ -40,7 +46,94 @@ export async function runMorningBriefingCron() {
     processed: businesses.length,
     successes: results.filter((result) => result.status === "fulfilled").length,
     failures: results.filter((result) => result.status === "rejected").length,
+    lifecycle,
     timestamp: new Date().toISOString(),
+  };
+}
+
+export async function runLifecycleStatusCron() {
+  const now = new Date();
+  const [gracePeriodExpired, needsEscalation, activeBusinesses, upcomingRenewals] =
+    await Promise.all([
+      prisma.business.findMany({
+        where: { status: "RENEWAL_FAILED", gracePeriodEndsAt: { lt: now } },
+      }),
+      prisma.business.findMany({
+        where: {
+          status: "RENEWAL_FAILED",
+          renewalFailedAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          bossEscalatedAt: null,
+        },
+      }),
+      prisma.business.findMany({
+        where: { status: { in: ["ACTIVE", "TRIAL"] } },
+        include: {
+          users: {
+            where: { role: "BOSS" },
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+          },
+        },
+      }),
+      prisma.business.findMany({
+        where: {
+          status: "ACTIVE",
+          nextBillingDate: {
+            gte: now,
+            lte: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          },
+        },
+      }),
+    ]);
+
+  for (const business of gracePeriodExpired) {
+    await transitionBusinessStatus(business.id, "SUSPENDED", "Grace period expired");
+    await prisma.user.updateMany({
+      where: { businessId: business.id, role: { not: "BOSS" } },
+      data: { active: false, status: "SUSPENDED" },
+    });
+  }
+
+  for (const business of needsEscalation) {
+    await escalateToOwner(business.id);
+  }
+
+  for (const business of activeBusinesses) {
+    const lastLogin = business.users[0]?.updatedAt;
+    if (!lastLogin) continue;
+    const daysSinceLogin = Math.floor(
+      (Date.now() - lastLogin.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    const alreadyAlerted = business.churnRiskAlertedAt
+      ? Math.floor(
+          (business.churnRiskAlertedAt.getTime() - lastLogin.getTime()) /
+            (1000 * 60 * 60 * 24),
+        )
+      : 0;
+    if (
+      (daysSinceLogin === 7 || daysSinceLogin === 14) &&
+      alreadyAlerted < daysSinceLogin
+    ) {
+      await notifyLowEngagement(business.id, daysSinceLogin);
+    }
+  }
+
+  for (const business of upcomingRenewals) {
+    await prisma.nexaInsight.create({
+      data: {
+        businessId: business.id,
+        type: "RENEWAL_REMINDER",
+        message: `Your BGOS subscription renews on ${business.nextBillingDate?.toLocaleDateString("en-IN")}. The monthly amount will be charged automatically.`,
+        action: "Review billing",
+      },
+    });
+  }
+
+  return {
+    suspended: gracePeriodExpired.length,
+    escalated: needsEscalation.length,
+    activeChecked: activeBusinesses.length,
+    renewalReminders: upcomingRenewals.length,
   };
 }
 

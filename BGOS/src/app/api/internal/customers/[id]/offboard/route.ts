@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { transitionBusinessStatus } from "@/lib/business-status";
 import { sendEmail } from "@/lib/email";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
@@ -39,7 +40,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   });
 
   await prisma.$transaction([
-    prisma.business.update({ where: { id: params.id }, data: { status: "OFFBOARDED", notes: reason } }),
+    prisma.business.update({ where: { id: params.id }, data: { notes: reason } }),
     prisma.user.updateMany({ where: { businessId: params.id }, data: { active: false, status: "ARCHIVED" } }),
     prisma.trialSubscription.updateMany({ where: { businessId: params.id }, data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: reason } }),
     prisma.nexaInsight.create({
@@ -51,6 +52,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       },
     }),
   ]);
+  await transitionBusinessStatus(params.id, "OFFBOARDED", reason);
 
   const boss = business.users.find((user) => user.role === "BOSS");
   if (boss) {
