@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { LeadList } from "@/components/bdm/lead-list";
+import { MobileBDMLeads } from "@/components/bdm/mobile/mobile-bdm-leads";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import auth from "@/lib/auth";
@@ -26,7 +27,11 @@ export default async function BdmLeadsRoute() {
   if (user.role !== "BDM") redirect("/");
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <>
+    <div className="show-mobile hidden">
+      <MobileBDMLeads user={{ name: user.name }} />
+    </div>
+    <div className="hide-mobile min-h-screen bg-[#070709] pl-[240px] text-white">
       <Sidebar role="BDM" userName={user.name} businessName={user.business.name} />
       <Navbar title="My Leads" userName={user.name} />
       <main className="pt-[60px]">
@@ -35,5 +40,6 @@ export default async function BdmLeadsRoute() {
         </div>
       </main>
     </div>
+    </>
   );
 }

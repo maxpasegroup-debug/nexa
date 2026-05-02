@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { MobileSDEBugs } from "@/components/sde/mobile/mobile-sde-bugs";
 import { SdeBugsPage } from "@/components/sde/sde-bugs-page";
 import auth from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -19,5 +20,15 @@ export default async function SdeBugsRoute() {
     prisma.bug.count({ where: { businessId: user.businessId, severity: "HIGH", status: { in: ["OPEN", "IN_PROGRESS"] } } }),
     prisma.bug.count({ where: { businessId: user.businessId, status: "RESOLVED", resolvedAt: { gte: week.start, lt: week.end } } }),
   ]);
-  return <SdeBugsPage user={{ id: user.id, name: user.name, role: user.role, email: user.email, businessId: user.businessId, businessName: user.business.name }} initialBugs={bugs.map((bug) => ({ ...bug, createdAt: bug.createdAt.toISOString(), updatedAt: bug.updatedAt.toISOString(), resolvedAt: bug.resolvedAt?.toISOString() ?? null }))} teamMembers={teamMembers} metrics={{ totalOpen, critical, high, resolvedThisWeek }} />;
+  const serializedBugs = bugs.map((bug) => ({ ...bug, createdAt: bug.createdAt.toISOString(), updatedAt: bug.updatedAt.toISOString(), resolvedAt: bug.resolvedAt?.toISOString() ?? null }));
+  return (
+    <>
+      <div className="show-mobile hidden">
+        <MobileSDEBugs bugs={serializedBugs} />
+      </div>
+      <div className="hide-mobile">
+        <SdeBugsPage user={{ id: user.id, name: user.name, role: user.role, email: user.email, businessId: user.businessId, businessName: user.business.name }} initialBugs={serializedBugs} teamMembers={teamMembers} metrics={{ totalOpen, critical, high, resolvedThisWeek }} />
+      </div>
+    </>
+  );
 }

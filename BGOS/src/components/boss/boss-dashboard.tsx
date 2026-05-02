@@ -21,8 +21,10 @@ import { NexaPanel } from "@/components/boss/nexa-panel";
 import { TeamPerformance } from "@/components/boss/team-performance";
 import { SystemHealth } from "@/components/boss/system-health";
 import { TrialActivationBanner } from "@/components/boss/trial-activation-banner";
+import { MobileBossDashboard } from "@/components/boss/mobile/mobile-boss-home";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { useDevice } from "@/hooks/use-device";
 
 type DashboardUser = {
   id: string;
@@ -86,6 +88,7 @@ export function BossDashboard({
   initialInsights,
   trialSubscription,
 }: BossDashboardProps) {
+  const device = useDevice();
   const [metrics, setMetrics] = useState(initialMetrics);
   const [activity, setActivity] = useState(initialActivity);
   const [insights, setInsights] = useState(initialInsights);
@@ -196,6 +199,27 @@ export function BossDashboard({
       trend: { direction: "up" as const, value: metrics.conversionRate },
     },
   ];
+
+  if (device === "mobile") {
+    const planName =
+      trialSubscription?.status === "TRIAL"
+        ? "Trial"
+        : trialSubscription?.monthlyAmount
+          ? `₹${trialSubscription.monthlyAmount.toLocaleString("en-IN")}`
+          : "Growth";
+
+    return (
+      <MobileBossDashboard
+        user={user}
+        business={business}
+        metrics={metrics}
+        activity={activity}
+        insights={insights}
+        planName={planName}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
       <Sidebar

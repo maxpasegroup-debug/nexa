@@ -32,6 +32,10 @@ declare global {
 
 function openNexa() {
   if (typeof window === "undefined") return;
+  if (window.innerWidth < 768 && window.openMobileNexaChat) {
+    window.openMobileNexaChat();
+    return;
+  }
   if (window.openNexaWidget) {
     window.openNexaWidget();
     return;
@@ -85,7 +89,7 @@ function AgentCard({ agent }: { agent: MarketplaceAgentView }) {
   return (
     <Link
       href={`/marketplace/${agent.slug}`}
-      className="group flex min-h-[236px] flex-col rounded-2xl border border-white/10 p-5 transition hover:-translate-y-1 hover:border-white/20"
+      className="group flex min-h-[210px] flex-col rounded-2xl border border-white/10 p-4 transition hover:-translate-y-1 hover:border-white/20 md:min-h-[236px] md:p-5"
       style={{
         background:
           agent.gradient ||
@@ -100,7 +104,7 @@ function AgentCard({ agent }: { agent: MarketplaceAgentView }) {
           >
             {categoryLabel(agent.category)}
           </p>
-          <div className="mt-4 text-[28px] leading-none">{agent.icon}</div>
+          <div className="mt-4 text-2xl leading-none md:text-[28px]">{agent.icon}</div>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold text-zinc-200">
@@ -115,7 +119,7 @@ function AgentCard({ agent }: { agent: MarketplaceAgentView }) {
       </div>
 
       <div className="mt-5 min-h-0 flex-1">
-        <h3 className="font-heading text-lg font-extrabold tracking-normal text-white">
+        <h3 className="font-heading text-[15px] font-extrabold tracking-normal text-white md:text-lg">
           {agent.name}
         </h3>
         <p className="mt-1 text-xs font-bold" style={{ color: agent.colorPrimary }}>
@@ -202,26 +206,26 @@ export function MarketplacePage({ initialAgents = [] }: MarketplacePageProps) {
         </div>
       </nav>
 
-      <section className="mx-auto max-w-7xl px-5 pb-12 pt-20 md:pb-16 md:pt-24">
+      <section className="mx-auto max-w-7xl px-4 pb-10 pt-12 md:px-5 md:pb-16 md:pt-24">
         <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#7C6FFF]">
           BGOS MARKETPLACE
         </p>
         <div className="mt-5 max-w-4xl">
-          <h1 className="font-heading text-5xl font-extrabold leading-[0.95] tracking-[-2px] text-white md:text-[56px]">
+          <h1 className="font-heading text-[28px] font-extrabold leading-[1.05] tracking-normal text-white md:text-[56px]">
             AI agents for your business
           </h1>
-          <p className="mt-5 max-w-2xl text-base font-light leading-7 text-zinc-400">
+          <p className="mt-4 line-clamp-2 max-w-2xl text-sm font-light leading-6 text-zinc-400 md:mt-5 md:text-base md:leading-7">
             Plug-and-play agents built for your industry. Our team sets up every agent in 24 hours. Autopay - cancel anytime.
           </p>
         </div>
 
-        <div className="mt-9 flex flex-wrap gap-2">
+        <div className="mt-7 flex gap-2 overflow-x-auto scroll-x-hidden md:mt-9 md:flex-wrap md:overflow-visible">
           {filters.map((filter) => (
             <button
               key={filter.value}
               type="button"
               onClick={() => setActiveFilter(filter.value)}
-              className={`rounded-full border px-4 py-2 text-sm font-bold transition ${
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition ${
                 activeFilter === filter.value
                   ? "border-[#7C6FFF] bg-[#7C6FFF] text-white"
                   : "border-white/10 bg-white/[0.03] text-zinc-400 hover:text-white"
@@ -237,14 +241,14 @@ export function MarketplacePage({ initialAgents = [] }: MarketplacePageProps) {
         <section className="mx-auto max-w-7xl px-5 pb-10">
           <Link
             href={`/marketplace/${featured.slug}`}
-            className="grid overflow-hidden rounded-3xl border border-white/10 p-6 transition hover:border-[#7C6FFF]/50 md:grid-cols-[1.1fr_0.9fr] md:p-8"
+            className="grid overflow-hidden rounded-3xl border border-white/10 p-5 transition hover:border-[#7C6FFF]/50 md:grid-cols-[1.1fr_0.9fr] md:p-8"
             style={{ background: featured.gradient }}
           >
             <div className="flex flex-col justify-center">
               <span className="mb-5 w-fit rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#22D9A0]">
                 Recommended
               </span>
-              <h2 className="font-heading text-4xl font-extrabold tracking-[-1px] text-transparent md:text-5xl" style={{ backgroundImage: `linear-gradient(135deg, ${featured.colorPrimary}, ${featured.colorSecondary})`, WebkitBackgroundClip: "text" }}>
+              <h2 className="font-heading text-[28px] font-extrabold tracking-normal text-transparent md:text-5xl" style={{ backgroundImage: `linear-gradient(135deg, ${featured.colorPrimary}, ${featured.colorSecondary})`, WebkitBackgroundClip: "text" }}>
                 {featured.name}
               </h2>
               <p className="mt-3 text-xl font-semibold text-white">
@@ -270,7 +274,7 @@ export function MarketplacePage({ initialAgents = [] }: MarketplacePageProps) {
                   <p className="font-heading text-2xl font-extrabold text-[#22D9A0]">{money(featured.monthlyFee)}/mo</p>
                 </div>
               </div>
-              <span className="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-extrabold text-black">
+              <span className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-extrabold text-black md:w-fit">
                 View Sales Booster <ArrowRight className="h-4 w-4" />
               </span>
             </div>
@@ -305,7 +309,7 @@ export function MarketplacePage({ initialAgents = [] }: MarketplacePageProps) {
             Loading marketplace agents...
           </div>
         ) : (
-          <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="marketplace-agent-grid grid grid-cols-2 gap-3.5 max-[400px]:grid-cols-1 xl:grid-cols-3">
             {filteredAgents.map((agent) => (
               <AgentCard key={agent.id} agent={agent} />
             ))}

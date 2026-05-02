@@ -15,6 +15,7 @@ import {
 import { BdeOnboarding } from "@/components/bde/bde-onboarding";
 import { CallLogHistory, type CallLog } from "@/components/bdm/call-log-history";
 import { DailyBrief } from "@/components/bdm/daily-brief";
+import { MobileBDMHome } from "@/components/bdm/mobile/mobile-bdm-home";
 import { MyPipeline, type BdmLead } from "@/components/bdm/my-pipeline";
 import { NexaBDMAnalysis } from "@/components/bdm/nexa-bdm-analysis";
 import { NewLeadForm } from "@/components/bdm/new-lead-form";
@@ -27,6 +28,7 @@ import type { CrmLead, LeadStatus, TeamMember } from "@/components/crm/types";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { useToast } from "@/components/ui/toast";
+import { useDevice } from "@/hooks/use-device";
 
 type BdmUser = {
   id: string;
@@ -131,6 +133,7 @@ export function BdmDashboard({
   initialCommission,
   showBdeOnboarding,
 }: BdmDashboardProps) {
+  const device = useDevice();
   const { toast } = useToast();
   const [metrics, setMetrics] = useState(initialMetrics);
   const [leads, setLeads] = useState(initialLeads);
@@ -260,6 +263,19 @@ export function BdmDashboard({
       icon: <PhoneCall className="h-4 w-4" />,
     },
   ];
+
+  if (device === "mobile") {
+    return (
+      <MobileBDMHome
+        user={user}
+        metrics={metrics}
+        brief={initialBrief}
+        leads={leads}
+        target={initialTarget}
+        commission={initialCommission}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">

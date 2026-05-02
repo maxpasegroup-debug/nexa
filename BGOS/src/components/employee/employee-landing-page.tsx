@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { getSession, signIn, signOut } from "next-auth/react";
 
 import { getRedirectForRole, isBossRole, isEmployeeRole } from "@/lib/domain";
+import { useIsMobile } from "@/hooks/use-device";
+import MobileIceLanding from "./mobile-ice-landing";
 
 const features = [
   {
@@ -51,6 +53,7 @@ const sdeItems = [
 ];
 
 export default function EmployeeLandingPage() {
+  const isMobile = useIsMobile();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [email, setEmail] = useState("");
@@ -104,6 +107,8 @@ export default function EmployeeLandingPage() {
     setLoading(false);
     setError("Unable to verify your workspace access. Please try again.");
   }
+
+  if (isMobile) return <MobileIceLanding />;
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#0A0F0D] font-sans text-[#EFF5F0]">

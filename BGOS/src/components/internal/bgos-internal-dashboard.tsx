@@ -24,12 +24,14 @@ import {
   NexaInsightsPanel,
 } from "@/components/boss/nexa-insights-panel";
 import { NexaPanel } from "@/components/boss/nexa-panel";
+import { MobileInternalDashboard } from "@/components/internal/mobile/mobile-internal-home";
 import { AddEmployeeForm } from "@/components/internal/add-employee-form";
 import {
   EmployeeList,
   type EmployeeListItem,
 } from "@/components/internal/employee-list";
 import { OnboardingPipeline } from "@/components/internal/onboarding-pipeline";
+import { useDevice } from "@/hooks/use-device";
 
 type InternalUser = {
   id: string;
@@ -355,6 +357,7 @@ export function BgosInternalDashboard({
   insights: initialInsights,
   commissionSummary,
 }: BgosInternalDashboardProps) {
+  const device = useDevice();
   const [insights, setInsights] = useState(initialInsights);
   const [employees, setEmployees] = useState(teamMembers);
   const [insightsLoading, setInsightsLoading] = useState(false);
@@ -370,6 +373,17 @@ export function BgosInternalDashboard({
       setInsights((current) => [...current]);
       setInsightsLoading(false);
     }, 400);
+  }
+
+  if (device === "mobile") {
+    return (
+      <MobileInternalDashboard
+        metrics={metrics}
+        businesses={businesses}
+        teamMembers={employees}
+        insights={insights}
+      />
+    );
   }
 
   return (

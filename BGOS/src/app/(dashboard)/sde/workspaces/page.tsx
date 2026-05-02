@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { MobileSDEBuilds } from "@/components/sde/mobile/mobile-sde-builds";
 import { WorkspaceBuildsPage } from "@/components/sde/workspace-builds-page";
 import auth from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -55,28 +56,37 @@ export default async function SdeWorkspacesPage() {
     orderBy: { updatedAt: "desc" },
   });
 
+  const serializedBuilds = builds.map((build) => ({
+    id: build.id,
+    companyName: companyNameFrom(build.companyData),
+    bdmName: build.bdm?.name ?? null,
+    plan: build.selectedPlan,
+    status: build.status,
+    submittedAt: (build.submittedAt ?? build.updatedAt).toISOString(),
+    completenessScore: build.completenessScore,
+    summaryText: build.summaryText,
+    summaryJson: build.summaryJson,
+    callNotes: build.lead?.callNotes.map((note) => ({
+      content: note.content,
+      createdAt: note.createdAt.toISOString(),
+      author: { name: note.author.name },
+    })) ?? [],
+    bdmAnalysis: build.bdm?.bdmAnalysis ?? null,
+    employeeCount: build.employees.length,
+    pipelineCount: Array.isArray(build.pipelineData) ? build.pipelineData.length : 0,
+  }));
+
   return (
-    <WorkspaceBuildsPage
+    <>
+      <div className="show-mobile hidden">
+        <MobileSDEBuilds builds={serializedBuilds} />
+      </div>
+      <div className="hide-mobile">
+        <WorkspaceBuildsPage
       user={{ name: user.name, role: user.role, businessName: user.business.name }}
-      builds={builds.map((build) => ({
-        id: build.id,
-        companyName: companyNameFrom(build.companyData),
-        bdmName: build.bdm?.name ?? null,
-        plan: build.selectedPlan,
-        status: build.status,
-        submittedAt: (build.submittedAt ?? build.updatedAt).toISOString(),
-        completenessScore: build.completenessScore,
-        summaryText: build.summaryText,
-        summaryJson: build.summaryJson,
-        callNotes: build.lead?.callNotes.map((note) => ({
-          content: note.content,
-          createdAt: note.createdAt.toISOString(),
-          author: { name: note.author.name },
-        })) ?? [],
-        bdmAnalysis: build.bdm?.bdmAnalysis ?? null,
-        employeeCount: build.employees.length,
-        pipelineCount: Array.isArray(build.pipelineData) ? build.pipelineData.length : 0,
-      }))}
-    />
+      builds={serializedBuilds}
+        />
+      </div>
+    </>
   );
 }

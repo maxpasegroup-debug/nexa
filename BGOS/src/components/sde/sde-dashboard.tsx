@@ -9,6 +9,7 @@ import { MetricCard } from "@/components/boss/metric-card";
 import { NexaPanel } from "@/components/boss/nexa-panel";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { MobileSDEDashboard } from "@/components/sde/mobile/mobile-sde-home";
 import { BugTracker } from "@/components/sde/bug-tracker";
 import { EscalationFeed } from "@/components/sde/escalation-feed";
 import { IntegrationHealth } from "@/components/sde/integration-health";
@@ -16,6 +17,7 @@ import { SprintPanel } from "@/components/sde/sprint-panel";
 import { TaskBoard } from "@/components/sde/task-board";
 import { TaskDrawer } from "@/components/sde/task-drawer";
 import type { IntegrationHealthItem, SdeBug, SdeEscalation, SdeSprint, SdeTask, SdeUser } from "@/components/sde/types";
+import { useDevice } from "@/hooks/use-device";
 
 type Metrics = {
   openTasks: number;
@@ -43,6 +45,7 @@ type Props = {
 };
 
 export function SdeDashboard({ user, initialMetrics, initialTasks, initialBugs, activeSprint, initialSprints = [], initialEscalations, initialIntegrations, teamMembers = [] }: Props) {
+  const device = useDevice();
   const [metrics, setMetrics] = useState(initialMetrics);
   const [tasks, setTasks] = useState(initialTasks);
   const [bugs, setBugs] = useState(initialBugs);
@@ -93,6 +96,18 @@ export function SdeDashboard({ user, initialMetrics, initialTasks, initialBugs, 
     { title: "Open Escalations", value: metrics.openEscalations, icon: <AlertTriangle className="h-4 w-4" /> },
     { title: "Sprint Progress", value: `${metrics.activeSprintProgress}%`, icon: <CheckCircle2 className="h-4 w-4" /> },
   ] as const;
+
+  if (device === "mobile") {
+    return (
+      <MobileSDEDashboard
+        user={user}
+        metrics={metrics}
+        tasks={tasks}
+        bugs={bugs}
+        escalations={escalations}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
