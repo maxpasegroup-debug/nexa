@@ -17,6 +17,13 @@ type Analysis = {
   urgentAlerts: string[];
   topHooks: string[];
   commonPains: string[];
+  platformLeads: number;
+  managementLeads: number;
+  selfLeads: number;
+  platformConvRate: number;
+  managementConvRate: number;
+  selfConvRate: number;
+  selfLeadTarget: number;
   lastAnalysedAt: string;
 };
 
@@ -116,6 +123,20 @@ export function NexaBDMAnalysis({ onPainClick }: { onPainClick?: (pain: string) 
                 <p className={`mt-2 font-heading text-2xl font-bold ${label === "Note quality score" ? scoreClass(Number(value)) : "text-white"}`}>
                   {value}
                 </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            {[
+              ["Platform", analysis.platformLeads, analysis.platformConvRate, "text-[#7C6FFF]"],
+              ["Management", analysis.managementLeads, analysis.managementConvRate, "text-[#22D9A0]"],
+              ["Self-generated", analysis.selfLeads, analysis.selfConvRate, "text-[#F5A623]"],
+            ].map(([label, total, rateValue, tone]) => (
+              <div key={String(label)} className="rounded-2xl border border-white/10 bg-[#0e0e13] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{label} leads</p>
+                <p className={`mt-2 font-heading text-2xl font-bold ${tone}`}>{total}</p>
+                <p className="mt-1 text-xs text-zinc-500">{rateValue}% conversion</p>
               </div>
             ))}
           </div>

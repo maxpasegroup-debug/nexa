@@ -6,9 +6,18 @@ import {
   isLeadStatus,
   scoreLead,
 } from "@/lib/leads/server";
+import {
+  getIntelligentAssignment,
+  getNextBDM,
+} from "@/lib/nexa-lead-assignment";
 import { prisma } from "@/lib/prisma";
 
 const bdmLeadStatuses = ["NEW", "CONTACTED", "FOLLOW_UP", "ONBOARDING", "LOST"] as const;
+const leadTypes = ["PLATFORM", "MANAGEMENT", "SELF"] as const;
+
+function isLeadType(value: unknown): value is (typeof leadTypes)[number] {
+  return typeof value === "string" && leadTypes.includes(value as (typeof leadTypes)[number]);
+}
 
 function isBdmLeadStatus(value: unknown): value is (typeof bdmLeadStatuses)[number] {
   return typeof value === "string" && bdmLeadStatuses.includes(value as (typeof bdmLeadStatuses)[number]);
@@ -30,6 +39,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const assignedTo = searchParams.get("assignedTo");
+    const leadType = searchParams.get("leadType");
     const search = searchParams.get("search");
     const page = Math.max(1, Number(searchParams.get("page") ?? 1));
     const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit") ?? 50)));
@@ -39,6 +49,7 @@ export async function GET(request: Request) {
       businessId: context.businessId,
       ...(isLeadStatus(status) ? { status } : {}),
       ...(assignedTo ? { assignedTo } : {}),
+      ...(isLeadType(leadType) ? { leadType } : {}),
       ...(search
         ? {
             OR: [
@@ -113,12 +124,55 @@ export async function POST(request: Request) {
       typeof body.followUpDate === "string"
         ? new Date(body.followUpDate)
         : undefined;
-    const assignedTo =
+    const requestedLeadType = isLeadType(body.leadType) ? body.leadType : "SELF";
+    const leadType =
+      context.user.role === "BDM" && requestedLeadType !== "PLATFORM"
+        ? "SELF"
+        : requestedLeadType;
+    const source = isLeadSource(body.leadSource)
+      ? body.leadSource
+      : isLeadSource(body.source)
+        ? body.source
+        : leadType === "MANAGEMENT"
+          ? "MANAGEMENT_NETWORK"
+          : leadType === "PLATFORM"
+            ? "LANDING_PAGE"
+            : "COLD_CALL";
+    const slaHours = leadType === "MANAGEMENT" ? 1 : leadType === "PLATFORM" ? 2 : null;
+    const commissionMultiplier =
+      leadType === "MANAGEMENT" ? 0.7 : leadType === "SELF" ? 1.1 : 1.0;
+    const ownerVisible = leadType === "MANAGEMENT";
+    let assignedTo =
       context.user.role === "BDM"
         ? context.user.id
         : typeof body.assignedTo === "string"
           ? body.assignedTo
           : undefined;
+    let assignmentDecision: { bdmId: string; bdmName: string; reason: string } | null = null;
+
+    if (leadType === "PLATFORM") {
+      const nextBDM = await getNextBDM(context.businessId);
+      assignedTo = nextBDM.id;
+      assignmentDecision = {
+        bdmId: nextBDM.id,
+        bdmName: nextBDM.name,
+        reason: "Round-robin platform lead assignment by current active lead load.",
+      };
+    } else if (leadType === "SELF") {
+      assignedTo = context.user.id;
+    } else if (leadType === "MANAGEMENT" && !assignedTo) {
+      assignmentDecision = await getIntelligentAssignment(context.businessId, {
+        industry:
+          typeof body.industry === "string"
+            ? body.industry
+            : typeof body.companyType === "string"
+              ? body.companyType
+              : undefined,
+        location: typeof body.location === "string" ? body.location : undefined,
+        companySize: typeof body.companySize === "string" ? body.companySize : undefined,
+      });
+      assignedTo = assignmentDecision.bdmId;
+    }
 
     const lead = await prisma.lead.create({
       data: {
@@ -127,12 +181,29 @@ export async function POST(request: Request) {
         email:
           typeof body.email === "string" ? body.email.toLowerCase() : undefined,
         company: typeof body.company === "string" ? body.company : undefined,
-        source: isLeadSource(body.source) ? body.source : "MANUAL",
+        source,
+        leadSource: source,
+        leadType,
+        createdByType:
+          typeof body.createdByType === "string"
+            ? body.createdByType
+            : context.user.role === "OWNER"
+              ? "OWNER"
+              : "BDM",
         bdmStatus: isBdmLeadStatus(body.bdmStatus) ? body.bdmStatus : "NEW",
         value: typeof body.value === "number" ? body.value : Number(body.value ?? 0) || 0,
         notes: typeof body.notes === "string" ? body.notes : undefined,
-        lastContactedAt: new Date(),
+        lastContactedAt: leadType === "SELF" ? new Date() : undefined,
         createdBy: context.user.id,
+        managementNotes:
+          typeof body.managementNotes === "string" ? body.managementNotes : undefined,
+        ownerVisible,
+        slaDeadline: slaHours
+          ? new Date(Date.now() + slaHours * 60 * 60 * 1000)
+          : undefined,
+        commissionMultiplier,
+        agentInterest:
+          typeof body.agentInterest === "string" ? body.agentInterest : undefined,
         pipelineId,
         assignedTo,
         followUpDate,
@@ -227,7 +298,10 @@ export async function POST(request: Request) {
         },
       });
 
-      return NextResponse.json({ lead: leadWithNotes, score: null }, { status: 201 });
+      return NextResponse.json(
+        { lead: leadWithNotes, score: null, assignmentDecision },
+        { status: 201 },
+      );
     }
 
     const score = await scoreLead(lead.id);
@@ -248,7 +322,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ lead: scoredLead, score }, { status: 201 });
+    return NextResponse.json({ lead: scoredLead, score, assignmentDecision }, { status: 201 });
   } catch {
     return NextResponse.json(
       { error: "Unable to create lead." },

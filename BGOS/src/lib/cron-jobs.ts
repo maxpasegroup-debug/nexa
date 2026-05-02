@@ -4,6 +4,7 @@ import {
   escalateToOwner,
   notifyLowEngagement,
 } from "@/lib/churn-notifications";
+import { getNextBDM } from "@/lib/nexa-lead-assignment";
 import {
   calculateHealthScore,
   getBusinessContext,
@@ -129,11 +130,101 @@ export async function runLifecycleStatusCron() {
     });
   }
 
+  const [platformSLABreaches, managementSLABreaches, coldSelfLeads] =
+    await Promise.all([
+      prisma.lead.findMany({
+        where: {
+          leadType: "PLATFORM",
+          slaBreached: false,
+          slaDeadline: { lt: new Date() },
+          lastContactedAt: null,
+          bdmStatus: "NEW",
+        },
+        include: { assignee: true, business: true },
+      }),
+      prisma.lead.findMany({
+        where: {
+          leadType: "MANAGEMENT",
+          slaBreached: false,
+          slaDeadline: { lt: new Date() },
+          lastContactedAt: null,
+          bdmStatus: "NEW",
+        },
+        include: { assignee: true, creator: true, business: true },
+      }),
+      prisma.lead.findMany({
+        where: {
+          leadType: "SELF",
+          bdmStatus: "NEW",
+          createdAt: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+          lastContactedAt: null,
+        },
+        include: { assignee: true, business: true },
+      }),
+    ]);
+
+  for (const lead of platformSLABreaches) {
+    const nextBDM = await getNextBDM(lead.businessId);
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: {
+        assignedTo: nextBDM.id,
+        slaBreached: true,
+        slaBreachedAt: new Date(),
+        reassignedFrom: lead.assignedTo,
+        reassignedAt: new Date(),
+        reassignReason: "Platform SLA breach - not contacted within 2 hours",
+        slaDeadline: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      },
+    });
+    await prisma.nexaInsight.create({
+      data: {
+        businessId: lead.businessId,
+        type: "SLA_BREACH",
+        message: `${lead.assignee?.name ?? "Assigned BDM"} did not contact ${
+          lead.company ?? lead.name
+        } within 2 hours. Lead reassigned to ${nextBDM.name}.`,
+        action: "Review platform lead SLA",
+      },
+    });
+  }
+
+  for (const lead of managementSLABreaches) {
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: { slaBreached: true, slaBreachedAt: new Date() },
+    });
+    await prisma.nexaInsight.create({
+      data: {
+        businessId: lead.businessId,
+        type: "SLA_BREACH",
+        message: `${lead.assignee?.name ?? "Assigned BDM"} has not acknowledged ${
+          lead.company ?? lead.name
+        } after 1 hour. This was a management-supplied lead.`,
+        action: "Escalate management lead",
+      },
+    });
+  }
+
+  for (const lead of coldSelfLeads) {
+    await prisma.nexaInsight.create({
+      data: {
+        businessId: lead.businessId,
+        type: "COACHING",
+        message: `You added ${lead.company ?? lead.name} 7 days ago but have not logged a call. Mark lost or set a follow-up reminder.`,
+        action: "Coach BDM follow-up",
+      },
+    });
+  }
+
   return {
     suspended: gracePeriodExpired.length,
     escalated: needsEscalation.length,
     activeChecked: activeBusinesses.length,
     renewalReminders: upcomingRenewals.length,
+    platformSLABreaches: platformSLABreaches.length,
+    managementSLABreaches: managementSLABreaches.length,
+    coldSelfLeadCoaching: coldSelfLeads.length,
   };
 }
 

@@ -33,6 +33,7 @@ import {
   type EmployeeListItem,
 } from "@/components/internal/employee-list";
 import { MetricsStrip } from "@/components/internal/metrics-strip";
+import { ManagementLeadsSection } from "@/components/internal/management-leads-section";
 import { OnboardingPipeline } from "@/components/internal/onboarding-pipeline";
 import { TeamSection } from "@/components/internal/team-section";
 import { useDevice } from "@/hooks/use-device";
@@ -417,6 +418,8 @@ export function BgosInternalDashboard({
           />
 
           <TeamSection />
+
+          <ManagementLeadsSection />
 
           <section className="grid gap-4 xl:grid-cols-5">
             <MetricCard

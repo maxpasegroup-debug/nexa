@@ -32,6 +32,7 @@ type CommissionSummary = {
   daysElapsed: number;
   daysRemaining: number;
   dealsThisMonth: number;
+  leadTypeBreakdown?: Record<"platform" | "management" | "self", { closed: number; amount: number; base: number }>;
   commissions: unknown[];
 };
 

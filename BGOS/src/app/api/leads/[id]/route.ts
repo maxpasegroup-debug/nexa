@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
-  calcFirstSale,
+  calculateFirstSaleCommission,
   checkAndAwardSlab,
   detectPlanType,
 } from "@/lib/commission";
@@ -170,7 +170,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
     if (statusChanged && body.status === "WON" && updatedLead.assignedTo) {
       const planType = detectPlanType(updatedLead.value);
-      const commissionAmt = calcFirstSale(planType);
+      const commission = calculateFirstSaleCommission(planType, updatedLead);
+      const commissionAmt = commission.final;
       const { month, year } = monthYear();
 
       await prisma.commission.upsert({
@@ -182,6 +183,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
           type: "FIRST_SALE",
           planType,
           dealValue: updatedLead.value,
+          baseCommission: commission.base,
+          multiplier: commission.multiplier,
           commissionAmt,
           status: "PENDING",
           month,
@@ -193,6 +196,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
           type: "FIRST_SALE",
           planType,
           dealValue: updatedLead.value,
+          baseCommission: commission.base,
+          multiplier: commission.multiplier,
           commissionAmt,
           status: "PENDING",
           paidAt: null,

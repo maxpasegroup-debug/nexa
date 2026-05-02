@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { calcFirstSale } from "@/lib/commission";
+import { calculateFirstSaleCommission } from "@/lib/commission";
 import { verifyCronSecret } from "@/lib/cron-guard";
 import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
@@ -138,7 +138,10 @@ export async function GET(request: NextRequest) {
         const nowForCommission = new Date();
         const month = nowForCommission.getMonth() + 1;
         const year = nowForCommission.getFullYear();
-        const firstSaleCommission = calcFirstSale(trial.plan);
+        const commission = calculateFirstSaleCommission(trial.plan, {
+          commissionMultiplier: 1,
+        });
+        const firstSaleCommission = commission.final;
 
         await prisma.$transaction([
           prisma.trialSubscription.update({
@@ -162,6 +165,8 @@ export async function GET(request: NextRequest) {
                     type: "FIRST_SALE",
                     planType: trial.plan,
                     dealValue: trial.monthlyAmount,
+                    baseCommission: commission.base,
+                    multiplier: commission.multiplier,
                     commissionAmt: firstSaleCommission,
                     status: "PAID",
                     paidAt: nowForCommission,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { transitionBusinessStatus } from "@/lib/business-status";
+import { calculateFirstSaleCommission } from "@/lib/commission";
 import { sendEmail } from "@/lib/email";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
@@ -39,14 +40,20 @@ export async function POST(_request: Request, { params }: { params: { id: string
   const bdm = business.onboardingLead?.assignedBDM;
   if (bdm) {
     const now = new Date();
+    const planType = business.trialSubscription?.plan ?? "GROWTH";
+    const commission = calculateFirstSaleCommission(planType, {
+      commissionMultiplier: 1,
+    });
     await prisma.commission.create({
       data: {
         userId: bdm.id,
         businessId: business.id,
         type: "FIRST_SALE",
-        planType: business.trialSubscription?.plan ?? "GROWTH",
+        planType,
         dealValue: business.trialSubscription?.monthlyAmount ?? 2499,
-        commissionAmt: Math.round((business.trialSubscription?.monthlyAmount ?? 2499) * 0.2),
+        baseCommission: commission.base,
+        multiplier: commission.multiplier,
+        commissionAmt: commission.final,
         month: now.getMonth() + 1,
         year: now.getFullYear(),
       },

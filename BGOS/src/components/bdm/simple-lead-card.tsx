@@ -22,6 +22,12 @@ const borderColors: Record<BDMLeadStatus, string> = {
   LOST: "#FF6B6B",
 };
 
+const leadTypeBadges = {
+  PLATFORM: { label: "⚡ Platform lead", color: "#7C6FFF", bg: "rgba(124,111,255,0.1)" },
+  MANAGEMENT: { label: "🎯 Management lead", color: "#22D9A0", bg: "rgba(34,217,160,0.08)" },
+  SELF: { label: "💪 Self-generated", color: "#F5A623", bg: "rgba(245,166,35,0.08)" },
+};
+
 function timeAgo(value: string) {
   const diff = Date.now() - new Date(value).getTime();
   const minutes = Math.max(0, Math.floor(diff / 60_000));
@@ -84,6 +90,8 @@ export function SimpleLeadCard({
   const companyName = lead.company || lead.name;
   const contactLine = [lead.name, lead.email].filter(Boolean).join(" · ");
   const isMarketplaceLead = String(lead.source ?? "").toLowerCase() === "marketplace";
+  const leadType = lead.leadType ?? "SELF";
+  const leadTypeBadge = leadTypeBadges[leadType];
   const agentInterest = lead.agentInterest ?? null;
   const marketplaceWhatsappText =
     isMarketplaceLead && agentInterest
@@ -152,6 +160,12 @@ export function SimpleLeadCard({
         <div className="min-w-0">
           <h3 className="font-heading text-[15px] font-bold text-white">{companyName}</h3>
           <p className="mt-1 text-xs text-zinc-500">{contactLine || "No contact details"}</p>
+          <span
+            className="mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-extrabold"
+            style={{ color: leadTypeBadge.color, backgroundColor: leadTypeBadge.bg }}
+          >
+            {leadTypeBadge.label}
+          </span>
           {sourceBadge}
         </div>
         <div className="flex shrink-0 gap-1.5">
@@ -184,6 +198,19 @@ export function SimpleLeadCard({
           </span>
         ))}
       </div>
+
+      {leadType === "MANAGEMENT" && lead.managementNotes ? (
+        <div className="mt-3 rounded-xl border border-[#22D9A0]/25 bg-[#22D9A0]/10 px-3 py-2 text-xs leading-5 text-[#bfffe8]">
+          <strong className="text-[#22D9A0]">Context from management:</strong>{" "}
+          {lead.managementNotes}
+        </div>
+      ) : null}
+
+      {leadType === "PLATFORM" ? (
+        <div className="mt-3 rounded-xl border border-[#7C6FFF]/25 bg-[#7C6FFF]/10 px-3 py-2 text-xs text-[#c8c2ff]">
+          📍 From: {agentInterest ? `${agentInterest} marketplace` : lead.leadSource ?? lead.source ?? "Platform"}
+        </div>
+      ) : null}
 
       {isMarketplaceLead && agentInterest ? (
         <div

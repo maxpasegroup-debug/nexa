@@ -4,6 +4,7 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 type MobileBDMEarningsProps = {
   earnings?: { firstSale: number; renewal: number; slabBonus: number; total: number };
+  leadTypeBreakdown?: Record<"platform" | "management" | "self", { closed: number; amount: number; base: number }>;
   target?: number;
   leaderboard?: Array<{ id: string; name: string; total: number; current?: boolean }>;
   history?: Array<{ month: string; firstSale: number; renewal: number; slabBonus: number }>;
@@ -15,6 +16,7 @@ function money(value: number) {
 
 export function MobileBDMEarnings({
   earnings = { firstSale: 0, renewal: 0, slabBonus: 0, total: 0 },
+  leadTypeBreakdown,
   target = 30000,
   leaderboard = [],
   history = [],
@@ -31,6 +33,19 @@ export function MobileBDMEarnings({
       <section className="mt-4 rounded-2xl border border-white/[0.08] bg-[#13131c] p-4">
         {[["First sale", earnings.firstSale, "#22D9A0"], ["Renewal", earnings.renewal, "#7C6FFF"], ["Slab bonus", earnings.slabBonus, "#F5A623"]].map(([label, value, color]) => <div key={String(label)} className="flex justify-between border-b border-white/[0.06] py-3 text-sm"><span className="text-[#6B6878]">{label}</span><span style={{ color: String(color) }} className="font-bold">{money(Number(value))}</span></div>)}
         <div className="flex justify-between pt-4"><span>Total</span><span className="font-heading text-xl font-extrabold text-[#22D9A0]">{money(earnings.total)}</span></div>
+        {leadTypeBreakdown ? (
+          <div className="mt-4 rounded-xl border border-white/[0.08] bg-black/20 p-3 text-left text-xs">
+            {[
+              ["⚡ Platform", leadTypeBreakdown.platform, "standard"],
+              ["🎯 Management", leadTypeBreakdown.management, "70%"],
+              ["💪 Self", leadTypeBreakdown.self, "10% bonus"],
+            ].map(([label, row, note]) => {
+              const item = row as { closed: number; amount: number };
+              return <div key={String(label)} className="flex justify-between border-b border-white/[0.05] py-2"><span>{String(label)} ({item.closed})</span><b>{money(item.amount)} <em className="font-normal text-[#6B6878]">{String(note)}</em></b></div>;
+            })}
+            <p className="mt-2 text-[#6B6878]">Self-generated leads earn 10% bonus. Management leads earn 70% of standard rate.</p>
+          </div>
+        ) : null}
         <button type="button" className="mt-4 w-full rounded-xl border border-white/[0.08] py-3 text-sm text-[#6B6878]">Target: {money(target)}/month ✎</button>
       </section>
       <section className="mt-4 rounded-2xl border border-white/[0.08] bg-[#13131c] p-4">

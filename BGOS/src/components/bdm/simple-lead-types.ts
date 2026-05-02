@@ -19,6 +19,13 @@ export type SimpleLead = {
   email?: string | null;
   company?: string | null;
   source?: string | null;
+  leadType?: "PLATFORM" | "MANAGEMENT" | "SELF";
+  leadSource?: string | null;
+  managementNotes?: string | null;
+  ownerVisible?: boolean;
+  slaDeadline?: string | null;
+  slaBreached?: boolean;
+  commissionMultiplier?: number;
   agentInterest?: string | null;
   agentColor?: string | null;
   status?: string;

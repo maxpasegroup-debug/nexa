@@ -42,10 +42,32 @@ export async function GET() {
           },
           orderBy: { createdAt: "desc" },
           include: {
-            lead: { select: { id: true, name: true, phone: true, company: true } },
+            lead: { select: { id: true, name: true, phone: true, company: true, leadType: true } },
           },
         }),
       ]);
+    const byLeadType = {
+      platform: commissions.filter((item) => item.type === "FIRST_SALE" && item.lead?.leadType === "PLATFORM"),
+      management: commissions.filter((item) => item.type === "FIRST_SALE" && item.lead?.leadType === "MANAGEMENT"),
+      self: commissions.filter((item) => item.type === "FIRST_SALE" && item.lead?.leadType === "SELF"),
+    };
+    const breakdown = {
+      platform: {
+        closed: byLeadType.platform.length,
+        amount: byLeadType.platform.reduce((sum, item) => sum + item.commissionAmt, 0),
+        base: byLeadType.platform.reduce((sum, item) => sum + item.baseCommission, 0),
+      },
+      management: {
+        closed: byLeadType.management.length,
+        amount: byLeadType.management.reduce((sum, item) => sum + item.commissionAmt, 0),
+        base: byLeadType.management.reduce((sum, item) => sum + item.baseCommission, 0),
+      },
+      self: {
+        closed: byLeadType.self.length,
+        amount: byLeadType.self.reduce((sum, item) => sum + item.commissionAmt, 0),
+        base: byLeadType.self.reduce((sum, item) => sum + item.baseCommission, 0),
+      },
+    };
 
     return NextResponse.json({
       firstSale: earnings.firstSale,
@@ -60,6 +82,7 @@ export async function GET() {
       daysElapsed,
       daysRemaining,
       dealsThisMonth,
+      leadTypeBreakdown: breakdown,
       commissions,
     });
   } catch {

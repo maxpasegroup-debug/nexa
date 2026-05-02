@@ -18,6 +18,20 @@ const leadStatuses: LeadStatus[] = [
 ];
 
 const leadSources: LeadSource[] = [
+  "LANDING_PAGE",
+  "SALES_BOOSTER",
+  "INSTAGRAM_AD",
+  "FACEBOOK_AD",
+  "GOOGLE_AD",
+  "MANAGEMENT_NETWORK",
+  "MANAGEMENT_REFERRAL",
+  "MANAGEMENT_PARTNER",
+  "COLD_WHATSAPP",
+  "LINKEDIN",
+  "PERSONAL_REFERRAL",
+  "FIELD_VISIT",
+  "EVENT",
+  "SOCIAL_MEDIA",
   "MANUAL",
   "WEBSITE",
   "REFERRAL",
@@ -156,6 +170,9 @@ export function buildLeadUpdateData(
     data.lastContactAt = body.lastContactAt ? new Date(body.lastContactAt) : null;
   }
   if (typeof body.lostReason === "string" || body.lostReason === null) data.lostReason = body.lostReason;
+  if (isLeadSource(body.leadSource)) data.leadSource = body.leadSource;
+  if (typeof body.managementNotes === "string" || body.managementNotes === null) data.managementNotes = body.managementNotes;
+  if (typeof body.agentInterest === "string" || body.agentInterest === null) data.agentInterest = body.agentInterest;
 
   return data;
 }

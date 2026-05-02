@@ -62,6 +62,35 @@ export async function analyseNotes(userId: string): Promise<void> {
   }
 
   const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  const byType = {
+    platform: leads.filter((lead) => lead.leadType === "PLATFORM"),
+    management: leads.filter((lead) => lead.leadType === "MANAGEMENT"),
+    self: leads.filter((lead) => lead.leadType === "SELF"),
+  };
+  const converted = {
+    platform: byType.platform.filter((lead) => lead.status === "WON").length,
+    management: byType.management.filter((lead) => lead.status === "WON").length,
+    self: byType.self.filter((lead) => lead.status === "WON").length,
+  };
+  const rate = (won: number, total: number) =>
+    total > 0 ? Math.round((won / total) * 1000) / 10 : 0;
+  const leadStats = {
+    platform: {
+      total: byType.platform.length,
+      converted: converted.platform,
+      rate: rate(converted.platform, byType.platform.length),
+    },
+    management: {
+      total: byType.management.length,
+      converted: converted.management,
+      rate: rate(converted.management, byType.management.length),
+    },
+    self: {
+      total: byType.self.length,
+      converted: converted.self,
+      rate: rate(converted.self, byType.self.length),
+    },
+  };
   const coldLeads = leads.filter(
     (lead) =>
       lead.bdmStatus !== "LOST" &&
@@ -76,6 +105,13 @@ BDM's leads and notes:
 ${JSON.stringify(allNotes.slice(0, 30), null, 2)}
 
 Cold leads (no contact 48+ hours): ${coldLeads.map(companyLabel).join(", ")}
+
+LEAD TYPE PERFORMANCE:
+Platform leads: ${leadStats.platform.total} total, ${leadStats.platform.converted} converted (${leadStats.platform.rate}%)
+Management leads: ${leadStats.management.total} total, ${leadStats.management.converted} converted (${leadStats.management.rate}%)
+Self-generated leads: ${leadStats.self.total} total, ${leadStats.self.converted} converted (${leadStats.self.rate}%)
+
+Analyse the BDM's performance by lead type. Are they better at closing warm leads or cold leads? Are they generating enough self-leads? Give specific coaching advice based on these numbers.
 
 Analyse and return a JSON object with exactly these fields:
 {
@@ -121,6 +157,12 @@ Return only valid JSON. No other text.`;
         urgentAlerts: analysis.urgentAlerts ?? alerts,
         topHooks: analysis.topHooks ?? [],
         commonPains: analysis.commonPains ?? [],
+        platformLeads: leadStats.platform.total,
+        managementLeads: leadStats.management.total,
+        selfLeads: leadStats.self.total,
+        platformConvRate: leadStats.platform.rate,
+        managementConvRate: leadStats.management.rate,
+        selfConvRate: leadStats.self.rate,
         lastAnalysedAt: now,
       },
       update: {
@@ -134,6 +176,12 @@ Return only valid JSON. No other text.`;
         urgentAlerts: analysis.urgentAlerts ?? alerts,
         topHooks: analysis.topHooks ?? [],
         commonPains: analysis.commonPains ?? [],
+        platformLeads: leadStats.platform.total,
+        managementLeads: leadStats.management.total,
+        selfLeads: leadStats.self.total,
+        platformConvRate: leadStats.platform.rate,
+        managementConvRate: leadStats.management.rate,
+        selfConvRate: leadStats.self.rate,
         lastAnalysedAt: now,
       },
     });

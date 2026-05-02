@@ -37,6 +37,19 @@ export function calcFirstSale(planType: string): number {
   );
 }
 
+export function calculateFirstSaleCommission(
+  planType: string,
+  lead: { commissionMultiplier?: number | null },
+): { base: number; multiplier: number; final: number } {
+  const base = calcFirstSale(planType);
+  const multiplier = lead.commissionMultiplier ?? 1;
+  return {
+    base,
+    multiplier,
+    final: Math.round(base * multiplier),
+  };
+}
+
 // Calculate renewal commission
 export function calcRenewal(planType: string): number {
   return (

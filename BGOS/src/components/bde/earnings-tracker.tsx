@@ -22,6 +22,7 @@ type CommissionSummary = {
   projectedTotal: number;
   daysRemaining: number;
   dealsThisMonth: number;
+  leadTypeBreakdown?: Record<"platform" | "management" | "self", { closed: number; amount: number; base: number }>;
 };
 
 type EarningsTrackerProps = {
@@ -119,6 +120,29 @@ export function EarningsTracker({ data }: EarningsTrackerProps) {
             <BreakdownPill color="#7C6FFF" label={`${money(data.renewal)} renewal`} />
             <BreakdownPill color="#F5A623" label={`${money(data.slab)} slab bonus`} />
           </div>
+          {data.leadTypeBreakdown ? (
+            <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+                Commission breakdown this month
+              </p>
+              {[
+                ["⚡ Platform leads", data.leadTypeBreakdown.platform, "standard rate"],
+                ["🎯 Management leads", data.leadTypeBreakdown.management, "70% rate"],
+                ["💪 Self-generated", data.leadTypeBreakdown.self, "10% bonus"],
+              ].map(([label, row, note]) => {
+                const item = row as { closed: number; amount: number; base: number };
+                return (
+                  <div key={String(label)} className="flex items-center justify-between border-b border-white/5 py-2">
+                    <span className="text-zinc-300">{String(label)} ({item.closed} closed)</span>
+                    <span className="font-bold text-white">{money(item.amount)} <em className="ml-2 text-xs font-normal text-zinc-500">{String(note)}</em></span>
+                  </div>
+                );
+              })}
+              <p className="mt-3 text-xs text-zinc-500">
+                Self-generated leads earn 10% bonus. Management leads earn 70% of standard rate.
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-6 space-y-4">

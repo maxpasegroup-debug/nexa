@@ -2,7 +2,10 @@ import type { BusinessStatus, CommissionType } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { notifyRenewalFailed } from "@/lib/churn-notifications";
-import { calcFirstSale, calcRenewal } from "@/lib/commission";
+import {
+  calcRenewal,
+  calculateFirstSaleCommission,
+} from "@/lib/commission";
 import { sendEmployeeWelcomeEmails } from "@/lib/welcome-emails";
 import { prisma } from "@/lib/prisma";
 import { verifyRazorpayWebhookSignature } from "@/lib/marketplace";
@@ -83,6 +86,12 @@ async function createCommissionForPayment({
 }) {
   if (!bdmId) return;
   const now = new Date();
+  const firstSale = calculateFirstSaleCommission(plan, {
+    commissionMultiplier: type === "FIRST_SALE" ? 1 : undefined,
+  });
+  const baseCommission = type === "FIRST_SALE" ? firstSale.base : calcRenewal(plan);
+  const multiplier = type === "FIRST_SALE" ? firstSale.multiplier : 1;
+  const commissionAmt = type === "FIRST_SALE" ? firstSale.final : calcRenewal(plan);
   await prisma.commission.create({
     data: {
       userId: bdmId,
@@ -90,7 +99,9 @@ async function createCommissionForPayment({
       type,
       planType: plan,
       dealValue: amount,
-      commissionAmt: type === "FIRST_SALE" ? calcFirstSale(plan) : calcRenewal(plan),
+      baseCommission,
+      multiplier,
+      commissionAmt,
       month: now.getMonth() + 1,
       year: now.getFullYear(),
       status: "PENDING",

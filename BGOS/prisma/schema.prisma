@@ -332,6 +332,9 @@ model Lead {
   email         String?
   company       String?
   source        LeadSource  @default(MANUAL)
+  leadType      LeadType    @default(SELF)
+  leadSource    LeadSource  @default(COLD_CALL)
+  createdByType String      @default("BDM")
   status        LeadStatus  @default(NEW)
   bdmStatus     BDMLeadStatus @default(NEW)
   score         Int         @default(0)
@@ -349,6 +352,16 @@ model Lead {
   lastContactAt DateTime?
   lastContactedAt DateTime?
   daysSinceContact Int?
+  managementNotes String?   @db.Text
+  ownerVisible  Boolean     @default(false)
+  slaDeadline   DateTime?
+  slaBreached   Boolean     @default(false)
+  slaBreachedAt DateTime?
+  reassignedFrom String?
+  reassignedAt  DateTime?
+  reassignReason String?
+  commissionMultiplier Float @default(1.0)
+  agentInterest String?
   wonAt         DateTime?
   lostAt        DateTime?
   lostReason    String?
@@ -366,6 +379,12 @@ model Lead {
   customerPortfolio CustomerPortfolio? @relation("PortfolioLead")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+enum LeadType {
+  PLATFORM
+  MANAGEMENT
+  SELF
 }
 
 enum BDMLeadStatus {
@@ -403,6 +422,13 @@ model NexaBDMAnalysis {
   urgentAlerts     Json     @default("[]")
   topHooks         Json     @default("[]")
   commonPains      Json     @default("[]")
+  platformLeads    Int      @default(0)
+  managementLeads  Int      @default(0)
+  selfLeads        Int      @default(0)
+  platformConvRate Float    @default(0)
+  managementConvRate Float  @default(0)
+  selfConvRate     Float    @default(0)
+  selfLeadTarget   Int      @default(10)
   lastAnalysedAt   DateTime @default(now())
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -419,6 +445,8 @@ model Commission {
   type            CommissionType
   planType        String
   dealValue       Float     @default(0)
+  baseCommission  Float     @default(0)
+  multiplier      Float     @default(1.0)
   commissionAmt   Float
   status          CommissionStatus @default(PENDING)
   month           Int
@@ -632,6 +660,20 @@ model Pipeline {
 }
 
 enum LeadSource {
+  LANDING_PAGE
+  SALES_BOOSTER
+  INSTAGRAM_AD
+  FACEBOOK_AD
+  GOOGLE_AD
+  MANAGEMENT_NETWORK
+  MANAGEMENT_REFERRAL
+  MANAGEMENT_PARTNER
+  COLD_WHATSAPP
+  LINKEDIN
+  PERSONAL_REFERRAL
+  FIELD_VISIT
+  EVENT
+  SOCIAL_MEDIA
   MANUAL
   WEBSITE
   REFERRAL

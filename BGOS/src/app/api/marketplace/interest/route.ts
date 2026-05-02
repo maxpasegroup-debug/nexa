@@ -82,12 +82,17 @@ async function createPipelineLead({
       email,
       company: companyName,
       source: "MARKETPLACE",
+      leadType: "PLATFORM",
+      leadSource: "MARKETPLACE",
+      createdByType: "SYSTEM",
       bdmStatus: "NEW",
       notes,
+      slaDeadline: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      commissionMultiplier: 1,
+      agentInterest: notes.match(/interested in ([^.]+?)(?:\.|$)/i)?.[1]?.trim(),
       businessId,
       assignedTo: bdmId,
       createdBy: bdmId,
-      lastContactedAt: new Date(),
     },
   });
 

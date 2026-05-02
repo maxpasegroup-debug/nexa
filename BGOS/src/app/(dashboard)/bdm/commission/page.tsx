@@ -108,7 +108,7 @@ export default async function BdmCommissionPage() {
       },
       orderBy: { createdAt: "desc" },
       include: {
-        lead: { select: { id: true, name: true, phone: true, company: true } },
+        lead: { select: { id: true, name: true, phone: true, company: true, leadType: true } },
       },
     }),
     prisma.customerPortfolio.findMany({
@@ -195,6 +195,36 @@ export default async function BdmCommissionPage() {
     !visibleLeaderboard.some((item) => item.userId === user.id)
       ? [...visibleLeaderboard.slice(0, 5), currentUserRank]
       : visibleLeaderboard;
+  const firstSaleRows = commissions.filter((item) => item.type === "FIRST_SALE");
+  const leadTypeBreakdown = {
+    platform: {
+      closed: firstSaleRows.filter((item) => item.lead?.leadType === "PLATFORM").length,
+      amount: firstSaleRows
+        .filter((item) => item.lead?.leadType === "PLATFORM")
+        .reduce((sum, item) => sum + item.commissionAmt, 0),
+      base: firstSaleRows
+        .filter((item) => item.lead?.leadType === "PLATFORM")
+        .reduce((sum, item) => sum + item.baseCommission, 0),
+    },
+    management: {
+      closed: firstSaleRows.filter((item) => item.lead?.leadType === "MANAGEMENT").length,
+      amount: firstSaleRows
+        .filter((item) => item.lead?.leadType === "MANAGEMENT")
+        .reduce((sum, item) => sum + item.commissionAmt, 0),
+      base: firstSaleRows
+        .filter((item) => item.lead?.leadType === "MANAGEMENT")
+        .reduce((sum, item) => sum + item.baseCommission, 0),
+    },
+    self: {
+      closed: firstSaleRows.filter((item) => item.lead?.leadType === "SELF").length,
+      amount: firstSaleRows
+        .filter((item) => item.lead?.leadType === "SELF")
+        .reduce((sum, item) => sum + item.commissionAmt, 0),
+      base: firstSaleRows
+        .filter((item) => item.lead?.leadType === "SELF")
+        .reduce((sum, item) => sum + item.baseCommission, 0),
+    },
+  };
 
   return (
     <BdeCommissionDashboard
@@ -218,6 +248,7 @@ export default async function BdmCommissionPage() {
         daysElapsed,
         daysRemaining,
         dealsThisMonth,
+        leadTypeBreakdown,
         commissions,
       })}
       initialPortfolio={serialize({

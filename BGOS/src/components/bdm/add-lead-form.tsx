@@ -21,10 +21,12 @@ const companyTypes = [
 
 const sources = [
   { label: "Cold call", value: "COLD_CALL" },
-  { label: "WhatsApp", value: "WHATSAPP" },
-  { label: "Referral", value: "REFERRAL" },
-  { label: "Instagram", value: "INSTAGRAM" },
-  { label: "LinkedIn", value: "OTHER" },
+  { label: "WhatsApp outreach", value: "COLD_WHATSAPP" },
+  { label: "LinkedIn", value: "LINKEDIN" },
+  { label: "Personal referral", value: "PERSONAL_REFERRAL" },
+  { label: "Field visit", value: "FIELD_VISIT" },
+  { label: "Event/exhibition", value: "EVENT" },
+  { label: "Social media", value: "SOCIAL_MEDIA" },
   { label: "Other", value: "OTHER" },
 ];
 
@@ -66,6 +68,8 @@ export function AddLeadForm({ onSuccess, onClose }: AddLeadFormProps) {
         phone,
         email: email || undefined,
         source,
+        leadSource: source,
+        leadType: "SELF",
         bdmStatus: "NEW",
         initialNotes: details,
         followUpDate: followUpDate || undefined,
@@ -163,7 +167,14 @@ export function AddLeadForm({ onSuccess, onClose }: AddLeadFormProps) {
           </div>
 
           <label className="block">
-            <span className="text-xs font-bold text-zinc-400">Source</span>
+            <span className="text-xs font-bold text-zinc-400">Lead type</span>
+            <div className="mt-2 rounded-xl border border-[#F5A623]/20 bg-[#F5A623]/10 px-4 py-3 text-sm font-bold text-[#F5A623]">
+              💪 Self-generated
+            </div>
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-bold text-zinc-400">Lead source</span>
             <select value={source} onChange={(event) => setSource(event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-[#0e0e13] px-4 py-3 text-sm text-white outline-none focus:border-[#7C6FFF]">
               {sources.map((item) => <option key={`${item.label}-${item.value}`} value={item.value}>{item.label}</option>)}
             </select>
