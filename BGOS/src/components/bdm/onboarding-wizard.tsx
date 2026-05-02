@@ -1,8 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUp, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { Check, Clipboard, Send, X } from "lucide-react";
+
+import { PLAN_ORDER, PLANS } from "@/lib/plans";
+
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+  createdAt?: string;
+};
+
+type EmployeeSnapshot = {
+  id: string;
+  fullName?: string;
+  name?: string;
+  title?: string;
+  email?: string;
+  phone?: string | null;
+  reportsTo?: string | null;
+  bgosRole?: string;
+  systemRole?: string;
+  assignedPipelines?: string[];
+  operatingProcedures?: string | null;
+  decisionAuthority?: unknown;
+  completenessScore?: number;
+  nexaFlags?: string[];
+};
+
+type PipelineSnapshot = {
+  id: string;
+  name: string;
+  productName?: string;
+  stages?: string[];
+  slaRules?: Record<string, unknown>;
+  visibleTo?: string[];
+  color?: string;
+};
+
+type SessionSnapshot = {
+  id: string;
+  companyData: Record<string, unknown>;
+  employeeData: EmployeeSnapshot[];
+  pipelineData: PipelineSnapshot[];
+  operatingRules: unknown[];
+  nexaGaps: string[];
+  nexaSuggestions: string[];
+  completenessScore: number;
+  summaryGenerated: boolean;
+  summaryText?: string | null;
+  selectedPlan?: string | null;
+  bdmNotes?: string | null;
+  currentStep?: string;
+  canSubmit?: boolean;
+  submissionBlocked?: string | null;
+  completenessBreakdown?: Record<string, number>;
+  nexaMessages?: ChatMessage[];
+  nexaFlags?: string[];
+  challenges?: Record<string, unknown>;
+  employees?: EmployeeSnapshot[];
+  pipelines?: PipelineSnapshot[];
+};
 
 type Lead = {
   id: string;
@@ -10,7 +69,7 @@ type Lead = {
   email?: string | null;
   phone?: string | null;
   company?: string | null;
-  value?: number;
+  value?: number | null;
   notes?: string | null;
   location?: string;
   companyType?: string;
@@ -25,166 +84,84 @@ type Lead = {
   onboardingSession?: SessionSnapshot | null;
 };
 
-type SessionSnapshot = {
-  id: string;
-  companyData: Record<string, unknown>;
-  employeeData: EmployeeDraft[];
-  pipelineData: PipelineDraft[];
-  operatingRules: RuleDraft[];
-  nexaGaps: string[];
-  nexaSuggestions: Suggestion[];
-  completenessScore: number;
-  summaryGenerated: boolean;
-  summaryText?: string | null;
-  selectedPlan?: string | null;
-  bdmNotes?: string | null;
-};
-
-type EmployeeDraft = {
-  id?: string;
-  name: string;
-  title: string;
-  email: string;
-  phone: string;
-  reportsTo: string;
-  systemRole: string;
-  assignedPipelines: string[];
-  operatingProcedures: string;
-  decisionAuthority: string;
-  dailyTasks: string[];
-  completeness?: number;
-  nexaFlags?: string[];
-};
-
-type PipelineDraft = {
-  id: string;
-  name: string;
-  productName: string;
-  color: string;
-  stages: string[];
-  slaDays: Record<string, number>;
-  visibleTo: string[];
-};
-
-type RuleDraft = {
-  id: string;
-  type: string;
-  text: string;
-};
-
-type Suggestion = {
-  type: string;
-  suggestion: string;
-  reason: string;
-};
-
 type Completeness = {
   score: number;
-  checks: Array<{ label: string; status: "ok" | "missing" | "warning"; message: string }>;
+  breakdown: Record<string, number>;
+  blocked: string | null;
   canSubmit: boolean;
+  missing: string[];
+  warnings: string[];
 };
 
-const industries = [
-  "Solar/Renewable Energy",
-  "Electronics/Devices",
-  "Real Estate",
-  "Clinic/Hospital",
-  "Coaching/Education",
-  "Digital Agency",
-  "Retail/Distribution",
-  "Construction",
-  "Manufacturing",
-  "Service Industry",
-  "Other",
-];
-
-const revenueRanges = ["Below ₹25L", "₹25L-₹1Cr", "₹1Cr-₹5Cr", "₹5Cr-₹20Cr", "₹20Cr+"];
-const toolSuggestions = ["WhatsApp", "Excel", "Tally", "Google Sheets", "Zoho", "IndiaMART"];
-const colors = ["#7C6FFF", "#22D9A0", "#F5A623", "#FF6B6B", "#38BDF8", "#A855F7", "#F97316", "#14B8A6"];
-
-const stageSuggestions: Record<string, string[]> = {
-  "Solar/Renewable Energy": ["Enquiry", "Site Survey", "Quotation", "Approval", "Installation", "Payment"],
-  "Electronics/Devices": ["Dealer Enquiry", "Demo", "Order Placed", "Dispatch", "Delivery", "Payment"],
-  "Real Estate": ["Enquiry", "Site Visit", "Negotiation", "Token", "Agreement", "Registration"],
-  "Clinic/Hospital": ["New Patient", "Appointment", "Consultation", "Prescription", "Follow-up", "Regular"],
+type ChatResponse = {
+  message?: string;
+  completeness?: Completeness;
+  canSubmit?: boolean;
+  blocked?: string | null;
+  flags?: string[];
+  suggestions?: string[];
+  step?: string;
+  session?: {
+    employees?: EmployeeSnapshot[];
+    pipelines?: PipelineSnapshot[];
+    completenessScore?: number;
+    canSubmit?: boolean;
+    submissionBlocked?: string | null;
+  };
+  error?: string;
 };
 
-const planCards = [
-  { id: "STARTER", name: "Starter", price: "₹799", commission: "₹400", value: "Basic CRM and NEXA tips" },
-  { id: "GROWTH", name: "Growth", price: "₹2,499", commission: "₹1,500", value: "Team CRM and automations" },
-  { id: "SCALE", name: "Scale", price: "₹6,999", commission: "₹3,500", value: "Custom pipelines and advanced setup" },
-  { id: "ENTERPRISE", name: "Enterprise", price: "Custom", commission: "₹7,000", value: "Deep customization and priority support" },
-];
-
-const steps = ["Company", "Team", "Pipelines", "Rules", "NEXA review"];
-
-function uid() {
-  return Math.random().toString(36).slice(2, 10);
-}
+const stepOrder = ["company", "employees", "pipelines", "rules", "review"];
 
 function asString(value: unknown, fallback = "") {
-  return typeof value === "string" ? value : fallback;
+  return typeof value === "string" && value.trim() ? value : fallback;
 }
 
 function asNumber(value: unknown, fallback = 0) {
-  return typeof value === "number" ? value : fallback;
+  return typeof value === "number" ? value : Number(value) || fallback;
 }
 
-function asArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : [];
+function scoreColor(score: number) {
+  if (score >= 80) return "#22D9A0";
+  if (score >= 55) return "#F5A623";
+  return "#FF6B6B";
 }
 
-function emptyEmployee(): EmployeeDraft {
-  return {
-    name: "",
-    title: "",
-    email: "",
-    phone: "",
-    reportsTo: "Owner/Boss",
-    systemRole: "Sales",
-    assignedPipelines: [],
-    operatingProcedures: "",
-    decisionAuthority: "",
-    dailyTasks: [],
-    completeness: 0,
-    nexaFlags: [],
-  };
+function stepIndex(step: string) {
+  const index = stepOrder.indexOf(step);
+  return index >= 0 ? index + 1 : 1;
 }
 
-function suggestedStages(industry: string) {
-  return stageSuggestions[industry] ?? ["New", "Contacted", "Demo", "Proposal", "Won", "Lost"];
+function employeeName(employee: EmployeeSnapshot) {
+  return employee.fullName || employee.name || "Unnamed";
 }
 
-function employeePlaceholder(title: string) {
-  if (/sales/i.test(title)) {
-    return "e.g. Makes 20 calls daily, conducts product demos, sends quotations, follows up every 48 hours, reports daily call log to manager...";
+function openingMessage(lead: Lead, companyData: Record<string, unknown>) {
+  const company = asString(companyData.name, lead.company ?? lead.name);
+  const industry = asString(companyData.industry, lead.companyType || "your industry");
+  const location = asString(companyData.location, lead.location || "your location");
+  return `Hi! I am loading ${company}'s details from the lead record. I can see this is a ${industry} company in ${location}. Let me start collecting what I need to build their custom workspace. First - how many people work at ${company} including the owner?`;
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
   }
-  if (/manager/i.test(title)) {
-    return "e.g. Reviews team pipeline every morning, approves discounts, assigns leads, checks reports, escalates blocked work to owner...";
-  }
-  if (/technical|engineer|sde/i.test(title)) {
-    return "e.g. Handles setup requests, resolves bugs, updates task status, checks integrations, reports blockers before end of day...";
-  }
-  return "Describe what this person does daily, what they own, who they report to, and when NEXA should alert them.";
-}
 
-function completionClass(score: number) {
-  if (score >= 90) return "bg-[#22D9A0]";
-  if (score >= 70) return "bg-[#F5A623]";
-  return "bg-[#FF6B6B]";
-}
-
-function buildPipeline(productName: string, industry: string): PipelineDraft {
-  const stages = suggestedStages(industry);
-  return {
-    id: uid(),
-    name: `${productName} Pipeline`,
-    productName,
-    color: colors[0],
-    stages,
-    slaDays: Object.fromEntries(stages.map((stage) => [stage, 2])),
-    visibleTo: [],
-  };
+  return (
+    <button
+      type="button"
+      onClick={() => void copy()}
+      className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-black"
+    >
+      <Clipboard className="h-4 w-4" />
+      {copied ? "Copied ✓" : "Copy full summary"}
+    </button>
+  );
 }
 
 export function OnboardingWizard({
@@ -195,238 +172,126 @@ export function OnboardingWizard({
   onComplete?: () => void;
 }) {
   const initial = lead.onboardingSession;
-  const [step, setStep] = useState(0);
-  const [sessionId] = useState(initial?.id ?? "");
-  const [companyName, setCompanyName] = useState(
-    asString(initial?.companyData?.name, lead.company ?? lead.name),
+  const companyData = initial?.companyData ?? {};
+  const sessionId = initial?.id ?? "";
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    initial?.nexaMessages?.length
+      ? initial.nexaMessages
+      : [{ role: "assistant", content: openingMessage(lead, companyData) }],
   );
-  const [industry, setIndustry] = useState(asString(initial?.companyData?.industry, ""));
-  const [otherIndustry, setOtherIndustry] = useState("");
-  const [location, setLocation] = useState(asString(initial?.companyData?.location, ""));
-  const [employeeCount, setEmployeeCount] = useState(String(asNumber(initial?.companyData?.employeeCount, 1)));
-  const [companyDescription, setCompanyDescription] = useState(
-    asString(initial?.companyData?.description, lead.callNotes?.map((note) => note.content).join("\n\n") ?? ""),
+  const [input, setInput] = useState("");
+  const [currentStep, setCurrentStep] = useState(initial?.currentStep ?? "company");
+  const [score, setScore] = useState(initial?.completenessScore ?? 0);
+  const [breakdown, setBreakdown] = useState<Record<string, number>>(
+    initial?.completenessScore ? { total: initial.completenessScore } : {},
   );
-  const [callNoteInsight, setCallNoteInsight] = useState(
-    asString(
-      initial?.companyData?.callNoteInsight,
-      lead.callNotes?.length
-        ? "You mentioned operational pains in the call notes. I have added these to their challenges."
-        : "",
-    ),
+  const [canSubmit, setCanSubmit] = useState(Boolean(initial?.canSubmit));
+  const [blocked, setBlocked] = useState(initial?.submissionBlocked ?? null);
+  const [employees, setEmployees] = useState<EmployeeSnapshot[]>(
+    initial?.employees?.length ? initial.employees : initial?.employeeData ?? [],
   );
-  const [revenueRange, setRevenueRange] = useState(asString(initial?.companyData?.revenueRange, ""));
-  const [toolInput, setToolInput] = useState("");
-  const [tools, setTools] = useState<string[]>(asArray<string>(initial?.companyData?.tools));
-  const [productInput, setProductInput] = useState("");
-  const [products, setProducts] = useState<string[]>(
-    asArray<string>(initial?.companyData?.products).length
-      ? asArray<string>(initial?.companyData?.products)
-      : lead.company
-        ? [lead.company]
-        : [],
+  const [pipelines, setPipelines] = useState<PipelineSnapshot[]>(
+    initial?.pipelines?.length ? initial.pipelines : initial?.pipelineData ?? [],
   );
-  const [employees, setEmployees] = useState<EmployeeDraft[]>(
-    initial?.employeeData?.length ? initial.employeeData : [{ ...emptyEmployee(), name: lead.name, email: lead.email ?? "", phone: lead.phone ?? "", title: "Owner" }],
-  );
-  const [pipelines, setPipelines] = useState<PipelineDraft[]>(
-    initial?.pipelineData?.length
-      ? initial.pipelineData
-      : products.map((product) => buildPipeline(product, industry)),
-  );
-  const [rules, setRules] = useState<RuleDraft[]>(initial?.operatingRules?.length ? initial.operatingRules : []);
-  const [newRule, setNewRule] = useState({ type: "Approval", text: "" });
-  const [analysis, setAnalysis] = useState<Completeness | null>(null);
-  const [gaps, setGaps] = useState<string[]>(initial?.nexaGaps ?? []);
-  const [gapAnswers, setGapAnswers] = useState<Record<string, string>>({});
-  const [activeGap, setActiveGap] = useState(0);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>(initial?.nexaSuggestions ?? []);
-  const [acceptedSuggestions, setAcceptedSuggestions] = useState<string[]>([]);
+  const [flags, setFlags] = useState<string[]>(initial?.nexaFlags ?? initial?.nexaGaps ?? []);
+  const [suggestions, setSuggestions] = useState<string[]>(initial?.nexaSuggestions ?? []);
   const [summary, setSummary] = useState(initial?.summaryText ?? "");
+  const [summaryJson, setSummaryJson] = useState<unknown>(null);
   const [selectedPlan, setSelectedPlan] = useState(initial?.selectedPlan ?? "GROWTH");
   const [bdmNotes, setBdmNotes] = useState(initial?.bdmNotes ?? "");
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [showPlanSubmit, setShowPlanSubmit] = useState(false);
+  const [dataOpen, setDataOpen] = useState(false);
   const [loading, setLoading] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState<{ company: string; sdeName: string } | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const effectiveIndustry = industry === "Other" ? otherIndustry : industry;
-  const canGenerateSummary = Boolean(analysis && analysis.score > 80);
+  const companyName = asString(companyData.name, lead.company ?? lead.name);
+  const expectedEmployees = asNumber(companyData.employeeCount, Number(lead.teamSize) || 0);
+  const progressStyle = { width: `${Math.max(0, Math.min(score, 100))}%` };
+
+  const checklist = useMemo(
+    () => [
+      { label: "Company details", ok: Boolean(breakdown.company && breakdown.company >= 15) },
+      { label: "Employee count", ok: employees.length >= expectedEmployees && expectedEmployees > 0 },
+      { label: "Employee emails", ok: employees.length > 0 && employees.every((item) => item.email) },
+      {
+        label: "Reporting lines",
+        ok:
+          employees.length > 0 &&
+          employees.every((item) => item.reportsTo || (item.bgosRole || item.systemRole) === "BOSS"),
+      },
+      {
+        label: "Procedures",
+        ok: employees.length > 0 && employees.every((item) => (item.operatingProcedures || "").length >= 30),
+      },
+      { label: "Pipelines", ok: pipelines.some((item) => (item.stages || []).length >= 3) },
+      { label: "Primary challenge", ok: Boolean(initial?.challenges?.primary) || !blocked?.includes("Primary challenge") },
+    ],
+    [blocked, breakdown.company, employees, expectedEmployees, initial?.challenges, pipelines],
+  );
 
   useEffect(() => {
-    setPipelines((current) => {
-      const known = new Set(current.map((pipeline) => pipeline.productName));
-      const additions = products
-        .filter((product) => !known.has(product))
-        .map((product) => buildPipeline(product, effectiveIndustry));
-      return additions.length ? [...current, ...additions] : current;
-    });
-  }, [effectiveIndustry, products]);
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
-  async function saveCompany() {
-    setLoading("company");
+  async function sendMessage(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    const text = input.trim();
+    if (!text || loading) return;
+
+    setInput("");
     setError("");
-    const response = await fetch(`/api/onboarding/session/${sessionId}/company`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        companyData: {
-          name: companyName,
-          industry: effectiveIndustry,
-          location,
-          employeeCount: Number(employeeCount) || 0,
-          description: companyDescription,
-          callNotes: lead.callNotes?.map((note) => note.content).join("\n\n") ?? "",
-          callNoteInsight,
-          revenueRange,
-          tools,
-          products,
-          contactName: lead.name,
-          contactEmail: lead.email,
-          contactPhone: lead.phone,
-        },
-      }),
-    });
-    setLoading("");
-    if (!response.ok) {
-      setError("Could not save company details.");
-      return false;
-    }
-    return true;
-  }
+    setMessages((current) => [...current, { role: "user", content: text }]);
+    setLoading("chat");
 
-  function addTag(value: string, list: string[], setList: (items: string[]) => void) {
-    const item = value.trim();
-    if (!item || list.includes(item)) return;
-    setList([...list, item]);
-  }
-
-  async function checkEmployee(index: number) {
-    const employee = employees[index];
-    setLoading(`employee-${index}`);
-    const method = employee.id ? "PATCH" : "POST";
-    const response = await fetch(`/api/onboarding/session/${sessionId}/employee`, {
-      method,
+    const response = await fetch(`/api/onboarding/session/${sessionId}/chat`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...employee,
-        employeeId: employee.id,
-        decisionAuthority: employee.decisionAuthority
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-      }),
+      body: JSON.stringify({ message: text }),
     });
-    const data = (await response.json().catch(() => ({}))) as {
-      employee?: EmployeeDraft & { id: string; completeness: number; nexaFlags: string[] };
-      flags?: string[];
-      completenessScore?: number;
-      error?: string;
-    };
+    const data = (await response.json().catch(() => ({}))) as ChatResponse;
     setLoading("");
 
-    if (!response.ok || !data.employee) {
-      setError(data.error ?? "Could not check employee completeness.");
+    if (!response.ok || !data.message) {
+      setError(data.error ?? "NEXA could not process that message.");
       return;
     }
 
-    setEmployees((current) =>
-      current.map((item, itemIndex) =>
-        itemIndex === index
-          ? {
-              ...item,
-              id: data.employee!.id,
-              completeness: data.completenessScore ?? data.employee!.completeness,
-              nexaFlags: data.flags ?? data.employee!.nexaFlags ?? [],
-            }
-          : item,
-      ),
-    );
-  }
-
-  async function savePipelines() {
-    setLoading("pipelines");
-    setError("");
-    for (const pipeline of pipelines) {
-      const response = await fetch(`/api/onboarding/session/${sessionId}/pipeline`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pipeline),
-      });
-      if (!response.ok) {
-        setLoading("");
-        setError("Could not save one or more pipelines.");
-        return false;
-      }
-    }
-    setLoading("");
-    return true;
-  }
-
-  async function saveRules() {
-    setLoading("rules");
-    setError("");
-    const response = await fetch(`/api/onboarding/session/${sessionId}/company`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        companyData: {
-          name: companyName,
-          industry: effectiveIndustry,
-          location,
-          employeeCount: Number(employeeCount) || 0,
-          description: companyDescription,
-          callNotes: lead.callNotes?.map((note) => note.content).join("\n\n") ?? "",
-          callNoteInsight,
-          revenueRange,
-          tools,
-          products,
-          operatingRules: rules,
-        },
-      }),
-    });
-    await fetch(`/api/onboarding/session/${sessionId}/analyze`, { method: "POST" }).catch(() => null);
-    setLoading("");
-    if (!response.ok) {
-      setError("Could not save rules.");
-      return false;
-    }
-    return true;
-  }
-
-  async function runAnalysis() {
-    setLoading("analysis");
-    setError("");
-    const response = await fetch(`/api/onboarding/session/${sessionId}/analyze`, { method: "POST" });
-    const data = (await response.json().catch(() => ({}))) as {
-      completeness?: Completeness;
-      gaps?: string[];
-      suggestions?: Suggestion[];
-      error?: string;
-    };
-    setLoading("");
-    if (!response.ok || !data.completeness) {
-      setError(data.error ?? "NEXA could not analyze this session.");
-      return;
-    }
-    setAnalysis(data.completeness);
-    setGaps(data.gaps ?? []);
-    setSuggestions(data.suggestions ?? []);
+    setMessages((current) => [...current, { role: "assistant", content: data.message || "" }]);
+    setCurrentStep(data.step ?? currentStep);
+    setScore(data.completeness?.score ?? data.session?.completenessScore ?? score);
+    setBreakdown(data.completeness?.breakdown ?? breakdown);
+    setCanSubmit(Boolean(data.canSubmit ?? data.session?.canSubmit));
+    setBlocked(data.blocked ?? data.session?.submissionBlocked ?? null);
+    setFlags(data.flags ?? flags);
+    setSuggestions(data.suggestions ?? suggestions);
+    if (data.session?.employees) setEmployees(data.session.employees);
+    if (data.session?.pipelines) setPipelines(data.session.pipelines);
   }
 
   async function generateSummary() {
     setLoading("summary");
     setError("");
-    const response = await fetch(`/api/onboarding/session/${sessionId}/generate-summary`, { method: "POST" });
+    const response = await fetch(`/api/onboarding/session/${sessionId}/generate-summary`, {
+      method: "POST",
+    });
     const data = (await response.json().catch(() => ({}))) as {
-      summary?: { readable: string; recommendedPlan?: string };
+      summary?: { readable?: string; structured?: unknown; score?: number };
       error?: string;
     };
     setLoading("");
-    if (!response.ok || !data.summary) {
-      setError(data.error ?? "Could not generate summary.");
+
+    if (!response.ok || !data.summary?.readable) {
+      setError(data.error ?? "NEXA could not generate the summary yet.");
       return;
     }
+
+    await new Promise((resolve) => window.setTimeout(resolve, 900));
     setSummary(data.summary.readable);
-    if (data.summary.recommendedPlan) setSelectedPlan(data.summary.recommendedPlan);
+    setSummaryJson(data.summary.structured);
+    setSummaryOpen(true);
   }
 
   async function submitToSde() {
@@ -437,201 +302,329 @@ export function OnboardingWizard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ selectedPlan, bdmNotes }),
     });
-    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    const data = (await response.json().catch(() => ({}))) as {
+      sde?: { name?: string };
+      error?: string;
+    };
     setLoading("");
+
     if (!response.ok) {
       setError(data.error ?? "Could not submit to SDE.");
       return;
     }
-    if (onComplete) {
-      onComplete();
-      return;
-    }
-    window.location.href = "/bdm/onboarding";
+
+    setSummaryOpen(false);
+    setSuccess({ company: companyName, sdeName: data.sde?.name ?? "Your SDE" });
+    onComplete?.();
   }
 
-  function nextStep() {
-    setStep((current) => Math.min(steps.length - 1, current + 1));
-  }
+  const dataPanel = (
+    <div className="space-y-5">
+      <section>
+        <h2 className="font-heading text-sm font-bold text-white">Team</h2>
+        <div className="mt-3 space-y-2">
+          {employees.length ? (
+            employees.map((employee) => {
+              const hasWarning = !employee.email || !employee.reportsTo || (employee.operatingProcedures || "").length < 30;
+              return (
+                <div key={employee.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-white">{employeeName(employee)}</p>
+                      <p className="mt-1 text-xs text-zinc-500">{employee.title || "Role pending"}</p>
+                    </div>
+                    <span className={hasWarning ? "text-[#F5A623]" : "text-[#22D9A0]"}>
+                      {hasWarning ? "⚠" : "✓"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm text-zinc-500">No employees collected yet.</p>
+          )}
+        </div>
+      </section>
 
-  const suggestedRules = [
-    `All leads must be contacted within 2 hours by ${employees.find((employee) => /sales/i.test(employee.title))?.name || "Sales"}.`,
-    `Quotes above ₹50,000 need ${employees[0]?.name || "Owner"} approval.`,
-    `Daily report sent to ${employees[0]?.name || "Owner"} by 7 PM.`,
-  ];
+      <section>
+        <h2 className="font-heading text-sm font-bold text-white">Pipelines</h2>
+        <div className="mt-3 space-y-2">
+          {pipelines.length ? (
+            pipelines.map((pipeline) => (
+              <div key={pipeline.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <p className="text-sm font-bold text-white">{pipeline.name}</p>
+                <p className="mt-1 text-xs text-zinc-500">{pipeline.stages?.length ?? 0} stages</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-zinc-500">No pipelines collected yet.</p>
+          )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-heading text-sm font-bold text-white">Checklist</h2>
+        <div className="mt-3 space-y-2">
+          {checklist.map((item) => (
+            <div key={item.label} className="flex items-center gap-2 text-sm">
+              <span className={item.ok ? "text-[#22D9A0]" : "text-[#FF6B6B]"}>
+                {item.ok ? "✓" : "×"}
+              </span>
+              <span className="text-zinc-300">{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {flags.length || suggestions.length ? (
+        <section className="rounded-xl border border-[#F5A623]/20 bg-[#F5A623]/10 p-3">
+          <h2 className="font-heading text-sm font-bold text-[#F5A623]">NEXA notes</h2>
+          {[...flags, ...suggestions].slice(0, 6).map((item) => (
+            <p key={item} className="mt-2 text-xs leading-5 text-amber-100">
+              {item}
+            </p>
+          ))}
+        </section>
+      ) : null}
+    </div>
+  );
+
+  if (success) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#070709] p-6 text-white">
+        <div className="max-w-md text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#22D9A0] text-black">
+            <Check className="h-10 w-10" />
+          </div>
+          <h1 className="mt-6 font-heading text-3xl font-bold">Brief submitted to SDE.</h1>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            {success.sdeName} will build {success.company}&apos;s workspace within 24 hours.
+          </p>
+          <Link
+            href="/bdm/onboarding"
+            className="mt-7 inline-flex rounded-xl bg-[#22D9A0] px-5 py-3 text-sm font-bold text-black"
+          >
+            Back to leads
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#070709] text-white">
-      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#070709]/95 px-6 py-5 backdrop-blur">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-[#22D9A0]">BDM onboarding wizard</p>
-              <h1 className="mt-2 font-heading text-2xl font-bold">{companyName || lead.name}</h1>
+    <div className="flex h-screen flex-col bg-[#070709] text-white">
+      <header className="border-b border-white/10 bg-[#0d0d12] px-4 py-4 lg:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-[#7C6FFF]">Onboarding</p>
+            <h1 className="mt-1 font-heading text-xl font-bold">Onboarding - {companyName}</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right text-xs text-zinc-500">
+              <p>Step {stepIndex(currentStep)} of 7</p>
+              <p className="mt-1 capitalize">{currentStep}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Link href="/bdm/leads" className="rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-zinc-300 transition hover:text-white">
-                Back to lead
-              </Link>
-              <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400">
-                Session {sessionId.slice(0, 8)}
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-extrabold text-black ${score >= 80 ? "animate-pulse" : ""}`}
+              style={{
+                background: `conic-gradient(${scoreColor(score)} ${score}%, rgba(255,255,255,0.12) 0)`,
+              }}
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0d0d12] text-white">
+                {score}
               </span>
             </div>
           </div>
-          <div className="mt-5 grid gap-2 md:grid-cols-5">
-            {steps.map((label, index) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => setStep(index)}
-                className={`rounded-full px-3 py-2 text-xs font-bold ${
-                  index <= step ? "bg-[#22D9A0] text-black" : "bg-white/5 text-zinc-500"
-                }`}
-              >
-                {index + 1}. {label}
-              </button>
-            ))}
-          </div>
         </div>
-      </div>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ ...progressStyle, backgroundColor: scoreColor(score) }}
+          />
+        </div>
+      </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        {lead.resumeBanner ? (
-          <div className="mb-5 rounded-2xl border border-[#7C6FFF]/30 bg-[#7C6FFF]/10 p-4 text-sm text-[#dedaff]">
-            {lead.resumeBanner}
-          </div>
-        ) : null}
-        {error ? <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-100">{error}</div> : null}
+      {error ? (
+        <div className="border-b border-red-500/20 bg-red-500/10 px-6 py-3 text-sm text-red-100">
+          {error}
+        </div>
+      ) : null}
 
-        {step === 0 ? (
-          <section className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
-            <h2 className="font-heading text-xl font-bold">Company basics</h2>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="text-sm text-zinc-300">Company full name<input value={companyName} onChange={(event) => setCompanyName(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" /></label>
-              <label className="text-sm text-zinc-300">Industry<select value={industry} onChange={(event) => setIndustry(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]"><option value="">Select industry</option>{industries.map((item) => <option key={item}>{item}</option>)}</select></label>
-              {industry === "Other" ? <label className="text-sm text-zinc-300">Other industry<input value={otherIndustry} onChange={(event) => setOtherIndustry(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" /></label> : null}
-              <label className="text-sm text-zinc-300">Location<input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="City" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" /></label>
-              <label className="text-sm text-zinc-300">Total employees<input type="number" value={employeeCount} onChange={(event) => setEmployeeCount(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" /></label>
-              <label className="text-sm text-zinc-300">Annual revenue range<select value={revenueRange} onChange={(event) => setRevenueRange(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]"><option value="">Optional</option>{revenueRanges.map((item) => <option key={item}>{item}</option>)}</select></label>
-            </div>
-            <div className="mt-5 rounded-2xl border border-[#22D9A0]/20 bg-[#22D9A0]/10 p-4 text-sm text-emerald-50">
-              I have read your call notes. I will use them to ask better questions.
-            </div>
-            <label className="mt-5 block text-sm text-zinc-300">
-              Company description from call notes
-              <textarea value={companyDescription} onChange={(event) => setCompanyDescription(event.target.value)} className="mt-2 min-h-32 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" />
-            </label>
-            <div className="mt-5">
-              <p className="text-sm text-zinc-300">Products/services</p>
-              <div className="mt-2 flex gap-2"><input value={productInput} onChange={(event) => setProductInput(event.target.value)} placeholder="Solar panels" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" /><button onClick={() => { addTag(productInput, products, setProducts); setProductInput(""); }} className="rounded-xl bg-[#22D9A0] px-4 text-sm font-bold text-black">Add</button></div>
-              <div className="mt-3 flex flex-wrap gap-2">{products.map((item) => <button key={item} onClick={() => setProducts(products.filter((product) => product !== item))} className="rounded-full bg-[#22D9A0]/10 px-3 py-1 text-xs font-bold text-[#22D9A0]">{item} <X className="inline h-3 w-3" /></button>)}</div>
-            </div>
-            <div className="mt-5">
-              <p className="text-sm text-zinc-300">Current tools</p>
-              <div className="mt-2 flex gap-2"><input value={toolInput} onChange={(event) => setToolInput(event.target.value)} placeholder="WhatsApp, Excel, Tally..." className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-white outline-none focus:border-[#22D9A0]" /><button onClick={() => { addTag(toolInput, tools, setTools); setToolInput(""); }} className="rounded-xl border border-white/10 px-4 text-sm font-bold">Add</button></div>
-              <div className="mt-3 flex flex-wrap gap-2">{toolSuggestions.map((item) => <button key={item} onClick={() => tools.includes(item) ? setTools(tools.filter((tool) => tool !== item)) : setTools([...tools, item])} className={`rounded-full px-3 py-1 text-xs font-bold ${tools.includes(item) ? "bg-[#7C6FFF]/15 text-[#c6c1ff]" : "border border-white/10 text-zinc-500"}`}>{item}</button>)}</div>
-            </div>
-            <div className="mt-6 rounded-2xl border border-[#22D9A0]/20 bg-[#22D9A0]/10 p-4 text-sm text-emerald-50">NEXA says: Based on {effectiveIndustry || "this industry"} businesses I have worked with, I will help you collect all the right details. Let us go through your team next.</div>
-            <button onClick={() => void saveCompany().then((ok) => ok && nextStep())} disabled={loading === "company"} className="mt-6 rounded-xl bg-[#22D9A0] px-5 py-3 text-sm font-bold text-black">{loading === "company" ? "Saving..." : "Save and continue"} <ChevronRight className="inline h-4 w-4" /></button>
-          </section>
-        ) : null}
-
-        {step === 1 ? (
-          <section className="space-y-5">
-            <div className="rounded-2xl border border-[#7C6FFF]/25 bg-[#7C6FFF]/10 p-4 text-sm text-[#dedaff]">
-              Start with the owner. You already told me {lead.name} is there — I have added them. Tell me about everyone else.
-            </div>
-            {employees.map((employee, index) => (
-              <div key={index} className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
-                <div className="flex justify-between gap-3">
-                  <h2 className="font-heading text-lg font-bold">Employee {index + 1}</h2>
-                  <button onClick={() => setEmployees(employees.filter((_, itemIndex) => itemIndex !== index))} className="text-zinc-500 hover:text-red-300"><Trash2 className="h-4 w-4" /></button>
-                </div>
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <input value={employee.name} onChange={(event) => setEmployees(employees.map((item, itemIndex) => itemIndex === index ? { ...item, name: event.target.value } : item))} placeholder="Name" className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" />
-                  <input value={employee.title} onChange={(event) => setEmployees(employees.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item))} placeholder="Title" className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" />
-                  <input value={employee.email} onChange={(event) => setEmployees(employees.map((item, itemIndex) => itemIndex === index ? { ...item, email: event.target.value } : item))} placeholder="Email" className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" />
-                  <input value={employee.phone} onChange={(event) => setEmployees(employees.map((item, itemIndex) => itemIndex === index ? { ...item, phone: event.target.value } : item))} placeholder="Phone" className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" />
-                  <select value={employee.reportsTo} onChange={(event) => setEmployees(employees.map((item, itemIndex) => itemIndex === index ? { ...item, reportsTo: event.target.value } : item))} className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]"><option>Owner/Boss</option>{employees.slice(0, index).map((item) => item.name ? <option key={item.name}>{item.name}</option> : null)}</select>
-                  <select value={employee.systemRole} onChange={(event) => setEmployees(employees.map((item, itemIndex) => itemIndex === index ? { ...item, systemRole: event.target.value } : item))} className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]">{["Boss", "Manager", "Sales", "Technical", "Operations"].map((item) => <option key={item}>{item}</option>)}</select>
-                </div>
-                <div className="mt-4">
-                  <p className="text-sm text-zinc-400">Assigned products/pipelines</p>
-                  <div className="mt-2 flex flex-wrap gap-2">{products.map((product) => <button key={product} onClick={() => setEmployees(employees.map((item, itemIndex) => itemIndex === index ? { ...item, assignedPipelines: item.assignedPipelines.includes(product) ? item.assignedPipelines.filter((pipeline) => pipeline !== product) : [...item.assignedPipelines, product] } : item))} className={`rounded-full px-3 py-1 text-xs font-bold ${employee.assignedPipelines.includes(product) ? "bg-[#22D9A0] text-black" : "border border-white/10 text-zinc-500"}`}>{product}</button>)}</div>
-                </div>
-                <textarea value={employee.operatingProcedures} onChange={(event) => setEmployees(employees.map((item, itemIndex) => itemIndex === index ? { ...item, operatingProcedures: event.target.value } : item))} placeholder={employeePlaceholder(employee.title)} className="mt-4 min-h-28 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" />
-                <textarea value={employee.decisionAuthority} onChange={(event) => setEmployees(employees.map((item, itemIndex) => itemIndex === index ? { ...item, decisionAuthority: event.target.value } : item))} placeholder="Decision authority - e.g. Can approve discounts up to 5%, assign callbacks, schedule demos..." className="mt-4 min-h-20 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" />
-                <div className="mt-4">
-                  <div className="h-2 overflow-hidden rounded-full bg-white/10"><div className={`h-full ${completionClass(employee.completeness ?? 0)}`} style={{ width: `${employee.completeness ?? 0}%` }} /></div>
-                  <p className="mt-2 text-xs text-zinc-500">NEXA completeness: {employee.completeness ?? 0}%</p>
-                  {employee.nexaFlags?.length ? <ul className="mt-2 list-disc pl-5 text-xs text-amber-200">{employee.nexaFlags.map((flag) => <li key={flag}>{flag}</li>)}</ul> : null}
-                </div>
-                <button onClick={() => void checkEmployee(index)} disabled={loading === `employee-${index}`} className="mt-4 rounded-xl border border-[#22D9A0]/30 px-4 py-2 text-sm font-bold text-[#22D9A0]">{loading === `employee-${index}` ? "Checking..." : "Check completeness"}</button>
-              </div>
-            ))}
-            <div className="flex justify-between"><button onClick={() => setEmployees([...employees, emptyEmployee()])} className="rounded-xl border border-white/10 px-4 py-3 text-sm font-bold"><Plus className="inline h-4 w-4" /> Add employee</button><button onClick={nextStep} className="rounded-xl bg-[#22D9A0] px-5 py-3 text-sm font-bold text-black">Continue</button></div>
-          </section>
-        ) : null}
-
-        {step === 2 ? (
-          <section className="space-y-4">
-            {pipelines.map((pipeline) => (
-              <details key={pipeline.id} open className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
-                <summary className="cursor-pointer font-heading text-lg font-bold">{pipeline.name}</summary>
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <input value={pipeline.name} onChange={(event) => setPipelines(pipelines.map((item) => item.id === pipeline.id ? { ...item, name: event.target.value } : item))} className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" />
-                  <div className="flex flex-wrap gap-2">{colors.map((color) => <button key={color} onClick={() => setPipelines(pipelines.map((item) => item.id === pipeline.id ? { ...item, color } : item))} className={`h-8 w-8 rounded-full ${pipeline.color === color ? "ring-2 ring-white" : ""}`} style={{ background: color }} />)}</div>
-                </div>
-                <div className="mt-5 space-y-2">{pipeline.stages.map((stage, stageIndex) => <div key={`${stage}-${stageIndex}`} className="grid gap-2 md:grid-cols-[36px_1fr_120px_36px]"><button onClick={() => stageIndex > 0 && setPipelines(pipelines.map((item) => item.id === pipeline.id ? { ...item, stages: item.stages.map((s, i, arr) => i === stageIndex - 1 ? arr[stageIndex] : i === stageIndex ? arr[stageIndex - 1] : s) } : item))} className="rounded-lg border border-white/10 text-zinc-400"><ArrowUp className="mx-auto h-4 w-4" /></button><input value={stage} onChange={(event) => setPipelines(pipelines.map((item) => item.id === pipeline.id ? { ...item, stages: item.stages.map((s, i) => i === stageIndex ? event.target.value : s) } : item))} className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-2 outline-none focus:border-[#22D9A0]" /><input type="number" value={pipeline.slaDays[stage] ?? 2} onChange={(event) => setPipelines(pipelines.map((item) => item.id === pipeline.id ? { ...item, slaDays: { ...item.slaDays, [stage]: Number(event.target.value) } } : item))} className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-2 outline-none focus:border-[#22D9A0]" /><button onClick={() => setPipelines(pipelines.map((item) => item.id === pipeline.id ? { ...item, stages: item.stages.filter((_, i) => i !== stageIndex) } : item))} className="rounded-lg border border-white/10 text-red-300">×</button></div>)}</div>
-                <button onClick={() => setPipelines(pipelines.map((item) => item.id === pipeline.id ? { ...item, stages: [...item.stages, "New stage"] } : item))} className="mt-3 rounded-xl border border-white/10 px-3 py-2 text-sm">Add stage</button>
-                <div className="mt-5"><p className="text-sm text-zinc-400">Who can see this pipeline</p><div className="mt-2 flex flex-wrap gap-2">{employees.map((employee) => employee.name ? <button key={employee.name} onClick={() => setPipelines(pipelines.map((item) => item.id === pipeline.id ? { ...item, visibleTo: item.visibleTo.includes(employee.name) ? item.visibleTo.filter((name) => name !== employee.name) : [...item.visibleTo, employee.name] } : item))} className={`rounded-full px-3 py-1 text-xs font-bold ${pipeline.visibleTo.includes(employee.name) ? "bg-[#7C6FFF] text-white" : "border border-white/10 text-zinc-500"}`}>{employee.name}</button> : null)}</div></div>
-              </details>
-            ))}
-            <div className="flex justify-between"><button onClick={() => setPipelines([...pipelines, buildPipeline("New Product", effectiveIndustry)])} className="rounded-xl border border-white/10 px-4 py-3 text-sm font-bold">Add pipeline</button><button onClick={() => void savePipelines().then((ok) => ok && nextStep())} disabled={loading === "pipelines"} className="rounded-xl bg-[#22D9A0] px-5 py-3 text-sm font-bold text-black">{loading === "pipelines" ? "Saving..." : "Save and continue"}</button></div>
-          </section>
-        ) : null}
-
-        {step === 3 ? (
-          <section className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
-            <h2 className="font-heading text-xl font-bold">Operating rules</h2>
-            <div className="mt-5 grid gap-3 md:grid-cols-[180px_1fr_auto]"><select value={newRule.type} onChange={(event) => setNewRule({ ...newRule, type: event.target.value })} className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3">{["Approval", "Time", "Reporting", "Escalation"].map((item) => <option key={item}>{item}</option>)}</select><input value={newRule.text} onChange={(event) => setNewRule({ ...newRule, text: event.target.value })} placeholder="Quotes above ₹50,000 need owner's approval" className="rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" /><button onClick={() => { if (newRule.text.trim()) setRules([...rules, { id: uid(), ...newRule }]); setNewRule({ type: "Approval", text: "" }); }} className="rounded-xl bg-[#22D9A0] px-4 text-sm font-bold text-black">Add</button></div>
-            <div className="mt-5 space-y-2">{rules.map((rule) => <div key={rule.id} className="flex justify-between rounded-xl border border-white/10 bg-[#0d0d12] p-3 text-sm"><span><b>{rule.type}:</b> {rule.text}</span><button onClick={() => setRules(rules.filter((item) => item.id !== rule.id))} className="text-red-300">Remove</button></div>)}</div>
-            <div className="mt-6 rounded-xl border border-[#7C6FFF]/20 bg-[#7C6FFF]/10 p-4"><p className="text-sm font-bold text-[#c6c1ff]">Suggested rules</p><div className="mt-3 space-y-2">{suggestedRules.map((rule) => <button key={rule} onClick={() => setRules([...rules, { id: uid(), type: "Suggested", text: rule }])} className="block w-full rounded-lg border border-white/10 px-3 py-2 text-left text-sm text-zinc-300">+ {rule}</button>)}</div></div>
-            <button onClick={() => void saveRules().then((ok) => ok && nextStep())} className="mt-6 rounded-xl bg-[#22D9A0] px-5 py-3 text-sm font-bold text-black">Save and start NEXA review</button>
-          </section>
-        ) : null}
-
-        {step === 4 ? (
-          <section className="space-y-5">
-            <div className="rounded-2xl border border-[#22D9A0]/25 bg-[#22D9A0]/10 p-6">
-              <h3 className="font-heading text-lg font-bold text-[#22D9A0]">From your call notes</h3>
-              {lead.callNotes?.length ? (
-                <div className="mt-4 space-y-3">
-                  <textarea value={callNoteInsight} onChange={(event) => setCallNoteInsight(event.target.value)} className="min-h-24 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 text-sm text-white outline-none focus:border-[#22D9A0]" />
-                  <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm text-zinc-300">
-                    {lead.callNotes.map((note) => (
-                      <p key={note.id} className="mb-3 last:mb-0">{note.content}</p>
-                    ))}
+      <main className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)]">
+        <section className="flex min-h-0 flex-col border-white/10 lg:border-r">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5 lg:px-6">
+            {messages.map((message, index) => (
+              <div
+                key={`${message.role}-${index}`}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div className={`max-w-[82%] ${message.role === "assistant" ? "flex gap-3" : ""}`}>
+                  {message.role === "assistant" ? (
+                    <div className="relative mt-1 h-9 w-9 shrink-0 rounded-full bg-[#7C6FFF]">
+                      <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-[#070709] bg-[#22D9A0]" />
+                    </div>
+                  ) : null}
+                  <div
+                    className={`rounded-2xl px-4 py-3 text-sm leading-6 ${
+                      message.role === "assistant"
+                        ? "bg-[#7C6FFF] text-white"
+                        : "bg-[#22D9A0] text-black"
+                    }`}
+                  >
+                    {message.content}
                   </div>
                 </div>
-              ) : (
-                <p className="mt-3 text-sm text-zinc-400">No call notes were attached to this lead yet.</p>
-              )}
+              </div>
+            ))}
+            {loading === "chat" ? (
+              <div className="flex justify-start">
+                <div className="rounded-2xl bg-[#7C6FFF] px-4 py-3 text-sm">NEXA is thinking...</div>
+              </div>
+            ) : null}
+            <div ref={scrollRef} />
+          </div>
+
+          <div className="border-t border-white/10 p-4">
+            <div className="mb-3 flex items-center justify-between gap-3 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setDataOpen(true)}
+                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-zinc-300"
+              >
+                View collected data
+              </button>
+              {canSubmit || score >= 80 ? (
+                <button
+                  type="button"
+                  onClick={() => void generateSummary()}
+                  className="rounded-xl bg-[#22D9A0] px-3 py-2 text-xs font-bold text-black"
+                >
+                  Generate summary →
+                </button>
+              ) : null}
             </div>
-            <div className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
-              <div className="flex items-center justify-between gap-4"><h2 className="font-heading text-xl font-bold">NEXA review</h2><button onClick={() => void runAnalysis()} disabled={loading === "analysis"} className="rounded-xl bg-[#7C6FFF] px-4 py-3 text-sm font-bold">{loading === "analysis" ? "Analyzing..." : "Run analysis"}</button></div>
-              {analysis ? <><div className={`mt-5 inline-flex h-24 w-24 items-center justify-center rounded-full text-3xl font-bold text-black ${completionClass(analysis.score)}`}>{analysis.score}</div><div className="mt-5 grid gap-2">{analysis.checks.map((check) => <div key={check.label} className="rounded-xl border border-white/10 bg-[#0d0d12] p-3 text-sm"><span className={check.status === "ok" ? "text-[#22D9A0]" : check.status === "warning" ? "text-[#F5A623]" : "text-[#FF6B6B]"}>{check.status === "ok" ? "✓" : check.status === "warning" ? "!" : "×"}</span> <b>{check.label}</b> - {check.message}</div>)}</div></> : <p className="mt-4 text-sm text-zinc-500">Run NEXA analysis to see completeness, gaps, and suggestions.</p>}
-            </div>
-            {gaps.length ? <div className="rounded-2xl border border-white/10 bg-[#13131c] p-6"><h3 className="font-heading text-lg font-bold">NEXA gap questions</h3><div className="mt-4 rounded-2xl border border-[#22D9A0]/20 bg-[#22D9A0]/10 p-4 text-sm text-emerald-50">{gaps[activeGap]}</div><textarea value={gapAnswers[gaps[activeGap]] ?? ""} onChange={(event) => setGapAnswers({ ...gapAnswers, [gaps[activeGap]]: event.target.value })} className="mt-3 min-h-24 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" placeholder="Type the answer..." /><button onClick={() => setActiveGap(Math.min(gaps.length - 1, activeGap + 1))} className="mt-3 rounded-xl border border-white/10 px-4 py-2 text-sm">NEXA acknowledges - next</button></div> : null}
-            {suggestions.length ? <div className="rounded-2xl border border-white/10 bg-[#13131c] p-6"><h3 className="font-heading text-lg font-bold">NEXA suggestions</h3><div className="mt-4 grid gap-3">{suggestions.map((suggestion) => <div key={suggestion.suggestion} className="rounded-xl border border-white/10 bg-[#0d0d12] p-4"><p className="text-sm font-bold">{suggestion.type}: {suggestion.suggestion}</p><p className="mt-1 text-xs text-zinc-500">{suggestion.reason}</p><button onClick={() => setAcceptedSuggestions([...acceptedSuggestions, suggestion.suggestion])} className="mt-3 rounded-lg bg-[#22D9A0] px-3 py-1 text-xs font-bold text-black">{acceptedSuggestions.includes(suggestion.suggestion) ? "Accepted" : "Accept"}</button></div>)}</div></div> : null}
-            <div className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
-              <button onClick={() => void generateSummary()} disabled={!canGenerateSummary || loading === "summary"} className={`rounded-xl px-5 py-3 text-sm font-bold ${canGenerateSummary ? "bg-[#22D9A0] text-black" : "bg-white/10 text-zinc-500"}`}>{loading === "summary" ? "Generating..." : "Generate summary"}</button>
-              {summary ? <pre className="mt-5 max-h-96 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-[#0d0d12] p-4 text-sm text-zinc-300">{summary}</pre> : null}
-              {summary ? <><div className="mt-5 grid gap-3 md:grid-cols-4">{planCards.map((plan) => <button key={plan.id} onClick={() => setSelectedPlan(plan.id)} className={`rounded-xl border p-4 text-left ${selectedPlan === plan.id ? "border-[#22D9A0] bg-[#22D9A0]/10" : "border-white/10 bg-[#0d0d12]"}`}><p className="font-bold">{plan.name}</p><p className="mt-1 text-sm text-[#22D9A0]">{plan.price}</p><p className="mt-2 text-xs text-[#F5A623]">Commission {plan.commission}</p><p className="mt-2 text-xs text-zinc-500">{plan.value}</p></button>)}</div><textarea value={bdmNotes} onChange={(event) => setBdmNotes(event.target.value)} placeholder="Private notes for SDE..." className="mt-5 min-h-24 w-full rounded-xl border border-white/10 bg-[#0d0d12] px-4 py-3 outline-none focus:border-[#22D9A0]" /><button onClick={() => void submitToSde()} disabled={loading === "submit"} className="mt-5 w-full rounded-xl bg-[#22D9A0] px-5 py-4 text-sm font-bold text-black">{loading === "submit" ? "Submitting..." : "Submit to SDE"}</button></> : null}
-            </div>
-          </section>
-        ) : null}
+            <form onSubmit={(event) => void sendMessage(event)} className="flex gap-2">
+              <input
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="Tell NEXA what you learned..."
+                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#13131c] px-4 py-3 text-sm outline-none focus:border-[#22D9A0]"
+              />
+              <button
+                type="submit"
+                disabled={loading === "chat"}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#22D9A0] text-black disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <aside className="hidden min-h-0 overflow-y-auto bg-[#0d0d12] p-5 lg:block">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <h2 className="font-heading text-lg font-bold">Collected data</h2>
+            {canSubmit || score >= 80 ? (
+              <button
+                type="button"
+                onClick={() => void generateSummary()}
+                disabled={loading === "summary"}
+                className="rounded-xl bg-[#22D9A0] px-4 py-2 text-sm font-bold text-black"
+              >
+                {loading === "summary" ? "NEXA is preparing..." : "Generate summary →"}
+              </button>
+            ) : null}
+          </div>
+          {blocked ? <p className="mb-4 rounded-xl border border-[#F5A623]/20 bg-[#F5A623]/10 p-3 text-xs leading-5 text-amber-100">{blocked}</p> : null}
+          {dataPanel}
+        </aside>
       </main>
+
+      {dataOpen ? (
+        <div className="fixed inset-0 z-50 bg-black/60 lg:hidden">
+          <div className="absolute bottom-0 max-h-[82vh] w-full overflow-y-auto rounded-t-2xl border border-white/10 bg-[#0d0d12] p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-heading text-lg font-bold">Collected data</h2>
+              <button type="button" onClick={() => setDataOpen(false)}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {dataPanel}
+          </div>
+        </div>
+      ) : null}
+
+      {summaryOpen ? (
+        <div className="fixed inset-0 z-[80] bg-[#070709] text-white">
+          <div className="flex h-full flex-col">
+            <header className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
+              <h2 className="font-heading text-lg font-bold">NEXA summary</h2>
+              <div className="flex items-center gap-2">
+                <CopyButton text={summary} />
+                <button type="button" onClick={() => setSummaryOpen(false)} className="rounded-xl border border-white/10 p-2">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </header>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              <pre className="mx-auto max-w-5xl whitespace-pre-wrap rounded-xl border border-white/10 bg-[#0d0d12] p-5 text-sm leading-6 text-zinc-200">
+                {summary}
+                {summaryJson ? `\n\n${JSON.stringify(summaryJson, null, 2)}` : ""}
+              </pre>
+            </div>
+            <footer className="border-t border-white/10 p-4">
+              {showPlanSubmit ? (
+                <div className="mx-auto max-w-5xl space-y-4">
+                  <div className="grid gap-3 md:grid-cols-4">
+                    {PLAN_ORDER.map((planId) => {
+                      const plan = PLANS[planId];
+                      return (
+                        <button
+                          key={planId}
+                          type="button"
+                          onClick={() => setSelectedPlan(planId)}
+                          className={`rounded-xl border p-4 text-left ${
+                            selectedPlan === planId
+                              ? "border-[#22D9A0] bg-[#22D9A0]/10"
+                              : "border-white/10 bg-[#13131c]"
+                          }`}
+                        >
+                          <p className="font-heading text-sm font-bold">{plan.name}</p>
+                          <p className="mt-1 text-sm text-[#22D9A0]">{plan.priceDisplay}{plan.period}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <textarea
+                    value={bdmNotes}
+                    onChange={(event) => setBdmNotes(event.target.value)}
+                    placeholder="BDM notes for SDE..."
+                    className="min-h-24 w-full rounded-xl border border-white/10 bg-[#13131c] px-4 py-3 text-sm outline-none focus:border-[#22D9A0]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void submitToSde()}
+                    disabled={loading === "submit"}
+                    className="w-full rounded-xl bg-[#22D9A0] px-5 py-4 text-sm font-extrabold text-black"
+                  >
+                    {loading === "submit" ? "Submitting..." : "Submit to SDE →"}
+                  </button>
+                </div>
+              ) : (
+                <div className="mx-auto flex max-w-5xl justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowPlanSubmit(true)}
+                    className="rounded-xl bg-[#22D9A0] px-5 py-3 text-sm font-extrabold text-black"
+                  >
+                    Submit to SDE →
+                  </button>
+                </div>
+              )}
+            </footer>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -6,6 +6,14 @@ import { Copy } from "lucide-react";
 
 import { formatSdeOnboardingSummary } from "@/lib/onboarding-summary-format";
 
+const claudeHeader = `NEW CLIENT ONBOARDING — PASTE INTO CLAUDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Instructions for Claude:
+1. Read this summary carefully
+2. Confirm you understand the architecture
+3. Wait for SDE to say GO before writing any prompts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
 export type OnboardingRequestCardSession = {
   id: string;
   sdeId?: string | null;
@@ -50,18 +58,18 @@ function ringColor(score: number) {
 export function OnboardingRequestCard({ session }: { session: OnboardingRequestCardSession }) {
   const [copied, setCopied] = useState(false);
   const complexityBadge = complexity(session);
-  const copyText = useMemo(
-    () =>
-      formatSdeOnboardingSummary({
+  const copyText = useMemo(() => {
+    const summary = formatSdeOnboardingSummary({
         companyName: session.companyName,
         selectedPlan: session.plan,
         summaryText: session.summaryText,
         summaryJson: session.summaryJson,
         callNotes: session.callNotes,
         bdmAnalysis: session.bdmAnalysis,
-      }),
-    [session],
-  );
+      });
+
+    return `${claudeHeader}\n\n${summary}`;
+  }, [session]);
 
   async function copySummary() {
     await navigator.clipboard.writeText(copyText);
@@ -105,7 +113,7 @@ export function OnboardingRequestCard({ session }: { session: OnboardingRequestC
           onClick={() => void copySummary()}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-extrabold text-black"
         >
-          <Copy className="h-4 w-4" /> {copied ? "Copied ✓" : "📋 Copy NEXA summary"}
+          <Copy className="h-4 w-4" /> {copied ? "Copied ✓" : "Copy summary"}
         </button>
         <Link
           href={`/sde/workspaces/${session.id}`}

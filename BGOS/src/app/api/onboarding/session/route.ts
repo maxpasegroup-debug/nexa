@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getString } from "@/lib/onboarding-flow";
+import { generateClientId } from "@/lib/client-id";
 import {
   getOwnedOnboardingSession,
   jsonError,
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
       create: {
         leadId,
         bdmId: user.id,
+        clientId: await generateClientId(),
         status: "COLLECTING",
         companyData: {
           name: lead.company ?? lead.name,

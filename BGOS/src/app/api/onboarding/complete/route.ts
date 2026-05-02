@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import auth from "@/lib/auth";
+import { generateClientId } from "@/lib/client-id";
 import {
   generateNexaInsights,
   getBusinessContext,
@@ -73,6 +74,7 @@ export async function POST() {
     const answers = toAnswers(onboardingSession.answers);
     const business = await prisma.business.create({
       data: {
+        clientId: await generateClientId(),
         name: `${user.name} business`,
         type: answers["0"] ?? "Business",
         teamSize: answers["1"] ?? "Not specified",

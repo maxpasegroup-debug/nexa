@@ -1,13 +1,11 @@
 import { Prisma } from "@prisma/client";
 
 import {
-  checkSessionCompleteness,
-  generateOnboardingSummary,
-} from "@/lib/nexa-onboarding-intelligence";
+  calculateCompleteness,
+  generateFinalSummary,
+} from "@/lib/nexa-onboarding-engine";
 import {
-  asRecord,
   getOwnedOnboardingSession,
-  jsonArray,
   jsonError,
   requireSessionUser,
 } from "@/lib/onboarding-session-server";
@@ -25,32 +23,36 @@ export async function POST(
     const session = await getOwnedOnboardingSession(params.id, user.id, "BDM");
     if (!session) return jsonError("Session not found.", 404);
 
-    const sessionData = {
-      companyData: asRecord(session.companyData),
-      employeeData: jsonArray(session.employeeData),
-      pipelineData: jsonArray(session.pipelineData),
-      operatingRules: jsonArray(session.operatingRules),
-    };
-    const completeness = checkSessionCompleteness(sessionData);
-    if (completeness.score <= 80) {
-      return jsonError("Completeness score must be above 80 before summary generation.");
+    const completeness = calculateCompleteness(session);
+    if (completeness.score < 80) {
+      return jsonError("Completeness score must be at least 80 before summary generation.");
     }
 
-    const summary = await generateOnboardingSummary(sessionData);
+    const summary = await generateFinalSummary(params.id);
     await prisma.onboardingSession.update({
       where: { id: params.id },
       data: {
         completenessScore: completeness.score,
+        completenessBreakdown: completeness.breakdown as Prisma.InputJsonValue,
+        canSubmit: completeness.canSubmit,
+        submissionBlocked: completeness.blocked,
         summaryText: summary.readable,
-        summaryJson: summary.structured as Prisma.InputJsonValue,
+        summaryJson: summary.json,
+        generatedSummary: summary.readable,
+        generatedJson: summary.json,
         summaryGenerated: true,
-        selectedPlan: summary.recommendedPlan,
-        planReason: summary.planReason,
+        summaryGeneratedAt: new Date(),
         status: "READY",
       },
     });
 
-    return Response.json({ summary });
+    return Response.json({
+      summary: {
+        readable: summary.readable,
+        structured: summary.json,
+        score: summary.score,
+      },
+    });
   } catch (error) {
     console.error("[onboarding-session:summary]", error);
     return jsonError("Unable to generate onboarding summary.", 500);

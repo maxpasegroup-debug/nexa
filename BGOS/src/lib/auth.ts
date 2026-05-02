@@ -7,6 +7,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import type { Role } from "@prisma/client";
 
+import { generateClientId } from "@/lib/client-id";
 import { prisma } from "@/lib/prisma";
 
 declare module "next-auth" {
@@ -104,6 +105,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!existing) {
           const business = await prisma.business.create({
             data: {
+              clientId: await generateClientId(),
               name: `${user.name ?? "New User"}'s Business`,
               type: "Not set",
               teamSize: "Not set",

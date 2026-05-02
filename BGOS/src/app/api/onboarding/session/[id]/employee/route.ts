@@ -16,12 +16,14 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 function employeePayload(body: Record<string, unknown>) {
-  const name = getString(body.name);
+  const fullName = getString(body.fullName) || getString(body.name);
+  const name = getString(body.name) || fullName;
   const title = getString(body.title);
   const email = getString(body.email).toLowerCase();
   const phone = getString(body.phone);
   const reportsTo = getString(body.reportsTo);
-  const systemRole = getString(body.systemRole) || "BDM";
+  const systemRole = getString(body.systemRole) || getString(body.bgosRole) || "BDM";
+  const bgosRole = getString(body.bgosRole) || systemRole;
   const operatingProcedures = getString(body.operatingProcedures);
   const assignedPipelines = asStringArray(body.assignedPipelines);
   const dailyTasks = asStringArray(body.dailyTasks);
@@ -42,12 +44,14 @@ function employeePayload(body: Record<string, unknown>) {
   return {
     data: {
       name,
+      fullName,
       title,
       email,
       phone: phone || undefined,
       reportsTo: reportsTo || undefined,
       directReports,
       systemRole,
+      bgosRole,
       assignedPipelines,
       operatingProcedures: operatingProcedures || undefined,
       dailyTasks,
@@ -55,9 +59,64 @@ function employeePayload(body: Record<string, unknown>) {
       communicationPrefs,
       nexaFlags: completeness.flags,
       completeness: completeness.score,
+      completenessScore: completeness.score,
     },
     completeness,
   };
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const { error, user } = await requireSessionUser(["BDM"]);
+    if (error) return error;
+
+    const session = await getOwnedOnboardingSession(params.id, user.id, "BDM");
+    if (!session) return jsonError("Session not found.", 404);
+
+    const body = (await request.json()) as Record<string, unknown>;
+    const employeeId = getString(body.employeeId) || getString(body.id);
+    const payload = employeePayload(body);
+    if (!payload.data.name && !payload.data.fullName) {
+      return jsonError("fullName is required.");
+    }
+
+    const data = {
+      ...payload.data,
+      directReports: payload.data.directReports as Prisma.InputJsonValue,
+      assignedPipelines: payload.data.assignedPipelines as Prisma.InputJsonValue,
+      dailyTasks: payload.data.dailyTasks as Prisma.InputJsonValue,
+      decisionAuthority: payload.data.decisionAuthority as Prisma.InputJsonValue,
+      communicationPrefs: payload.data.communicationPrefs as Prisma.InputJsonValue,
+      nexaFlags: payload.data.nexaFlags as Prisma.InputJsonValue,
+    };
+
+    const employee = employeeId
+      ? await prisma.onboardingEmployee.update({
+          where: { id: employeeId, sessionId: params.id },
+          data,
+        })
+      : await prisma.onboardingEmployee.create({
+          data: {
+            sessionId: params.id,
+            ...data,
+          },
+        });
+
+    await syncEmployeeData(params.id);
+
+    return NextResponse.json({
+      employee,
+      completenessScore: payload.completeness.score,
+      flags: payload.completeness.flags,
+      missing: payload.completeness.missing,
+    });
+  } catch (error) {
+    console.error("[onboarding-session:employee:upsert]", error);
+    return jsonError("Unable to upsert employee.", 500);
+  }
 }
 
 export async function POST(

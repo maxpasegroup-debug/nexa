@@ -1,6 +1,7 @@
 import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
+import { generateClientId } from "@/lib/client-id";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -36,9 +37,11 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await hash(String(password), 12);
+    const clientId = await generateClientId();
     const user = await prisma.$transaction(async (tx) => {
       const business = await tx.business.create({
         data: {
+          clientId,
           name: `${userName}'s Business`,
           type: "Not set",
           teamSize: "Not set",

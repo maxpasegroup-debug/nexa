@@ -3,6 +3,12 @@ import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
 
+async function generateClientId() {
+  const year = new Date().getFullYear()
+  const count = await prisma.business.count()
+  return `CLT-${year}-${String(count + 1).padStart(3, "0")}`
+}
+
 async function main() {
   // Check if owner already exists
   const existing = await prisma.user.findUnique({
@@ -22,6 +28,7 @@ async function main() {
   // Create BGOS internal business
   const business = await prisma.business.create({
     data: {
+      clientId: await generateClientId(),
       name: "BGOS",
       type: "SaaS / AI Platform",
       teamSize: "2-10",

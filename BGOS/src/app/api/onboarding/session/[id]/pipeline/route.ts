@@ -28,6 +28,74 @@ async function loadSession(paramsId: string, userId: string) {
   return getOwnedOnboardingSession(paramsId, userId, "BDM");
 }
 
+async function syncPipelineData(sessionId: string) {
+  const pipelines = await prisma.onboardingPipeline.findMany({
+    where: { sessionId },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const pipelineData = pipelines.map((pipeline) => ({
+    id: pipeline.id,
+    name: pipeline.name,
+    productName: pipeline.productName,
+    stages: pipeline.stages,
+    slaDays: pipeline.slaRules,
+    visibleTo: pipeline.visibleTo,
+    color: pipeline.color,
+  }));
+
+  await prisma.onboardingSession.update({
+    where: { id: sessionId },
+    data: { pipelineData: pipelineData as Prisma.InputJsonValue },
+  });
+
+  return pipelineData;
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const { error, user } = await requireSessionUser(["BDM"]);
+    if (error) return error;
+    const session = await loadSession(params.id, user.id);
+    if (!session) return jsonError("Session not found.", 404);
+
+    const body = (await request.json()) as Record<string, unknown>;
+    const pipelineId = getString(body.pipelineId) || getString(body.id);
+    const name = getString(body.name);
+    const productName = getString(body.productName) || name;
+    const stages = asStringArray(body.stages);
+    if (!name || stages.length < 1) return jsonError("name and stages are required.");
+
+    const data = {
+      name,
+      productName,
+      stages: stages as Prisma.InputJsonValue,
+      slaRules: asRecord(body.slaRules ?? body.slaDays) as Prisma.InputJsonValue,
+      visibleTo: asStringArray(body.visibleTo) as Prisma.InputJsonValue,
+      color: getString(body.color) || "#7C6FFF",
+    };
+
+    const pipeline = pipelineId
+      ? await prisma.onboardingPipeline.update({
+          where: { id: pipelineId, sessionId: params.id },
+          data,
+        })
+      : await prisma.onboardingPipeline.create({
+          data: { sessionId: params.id, ...data },
+        });
+
+    const pipelineData = await syncPipelineData(params.id);
+
+    return NextResponse.json({ pipeline, pipelineData });
+  } catch (error) {
+    console.error("[onboarding-session:pipeline:upsert]", error);
+    return jsonError("Unable to upsert pipeline.", 500);
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: { id: string } },
@@ -59,6 +127,17 @@ export async function POST(
       data: { pipelineData: pipelines as Prisma.InputJsonValue },
       include: { employees: true, clarifications: true, lead: true },
     });
+    await prisma.onboardingPipeline.create({
+      data: {
+        sessionId: params.id,
+        name: pipeline.name,
+        productName: pipeline.productName,
+        stages: pipeline.stages as Prisma.InputJsonValue,
+        slaRules: (pipeline.slaDays ?? {}) as Prisma.InputJsonValue,
+        visibleTo: (pipeline.visibleTo ?? []) as Prisma.InputJsonValue,
+        color: "#7C6FFF",
+      },
+    }).catch(() => null);
 
     return NextResponse.json({ session: updated, pipeline });
   } catch (error) {

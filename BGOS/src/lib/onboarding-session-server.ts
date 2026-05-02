@@ -78,6 +78,7 @@ export async function getOwnedOnboardingSession(
       bdm: { select: { id: true, name: true, email: true, businessId: true } },
       sde: { select: { id: true, name: true, email: true, businessId: true } },
       employees: true,
+      pipelines: true,
       clarifications: {
         include: {
           raiser: { select: { id: true, name: true, email: true } },
@@ -102,20 +103,23 @@ export async function syncEmployeeData(sessionId: string) {
     data: {
       employeeData: employees.map((employee) => ({
         id: employee.id,
-        name: employee.name,
+        name: employee.fullName || employee.name,
+        fullName: employee.fullName || employee.name,
         title: employee.title,
         email: employee.email,
         phone: employee.phone,
         reportsTo: employee.reportsTo,
         directReports: employee.directReports,
         systemRole: employee.systemRole,
+        bgosRole: employee.bgosRole,
         assignedPipelines: employee.assignedPipelines,
         operatingProcedures: employee.operatingProcedures,
         dailyTasks: employee.dailyTasks,
         decisionAuthority: employee.decisionAuthority,
         communicationPrefs: employee.communicationPrefs,
         nexaFlags: employee.nexaFlags,
-        completeness: employee.completeness,
+        completeness: employee.completenessScore || employee.completeness,
+        completenessScore: employee.completenessScore || employee.completeness,
       })) as Prisma.InputJsonValue,
     },
   });

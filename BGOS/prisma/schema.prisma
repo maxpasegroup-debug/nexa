@@ -112,6 +112,7 @@ model VerificationToken {
 
 model Business {
   id           String   @id @default(cuid())
+  clientId     String?  @unique
   name         String
   type         String
   teamSize     String
@@ -730,6 +731,7 @@ model NexaInsight {
 
 model OnboardingSession {
   id           String   @id @default(cuid())
+  clientId     String?
   userId       String?  @unique
   user         User?    @relation(fields: [userId], references: [id])
   leadId       String?  @unique
@@ -738,23 +740,34 @@ model OnboardingSession {
   bdm          User?    @relation("BDMSessions", fields: [bdmId], references: [id])
   status       OnboardingSessionStatus @default(COLLECTING)
   completenessScore Int @default(0)
+  completenessBreakdown Json @default("{}")
+  canSubmit    Boolean  @default(false)
+  submissionBlocked String?
   companyData  Json     @default("{}")
   employeeData Json     @default("[]")
   pipelineData Json     @default("[]")
   operatingRules Json   @default("[]")
+  challenges   Json     @default("{}")
+  nexaConfig   Json     @default("{}")
   nexaGaps     Json     @default("[]")
   nexaSuggestions Json  @default("[]")
+  nexaFlags    Json     @default("[]")
   nexaMessages Json     @default("[]")
+  currentStep  String   @default("company")
   selectedPlan String?
   planReason   String?
-  bdmNotes     String?
+  bdmNotes     String?  @db.Text
   summaryGenerated Boolean @default(false)
   summaryText  String?  @db.Text
   summaryJson  Json?
+  generatedSummary String? @db.Text
+  generatedJson Json?
+  summaryGeneratedAt DateTime?
   submittedAt  DateTime?
   sdeId        String?
   sde          User?    @relation("SDESessions", fields: [sdeId], references: [id])
   employees    OnboardingEmployee[]
+  pipelines    OnboardingPipeline[]
   clarifications OnboardingClarification[]
   buildStatus  String?
   approvedAt   DateTime?
@@ -784,13 +797,15 @@ enum OnboardingSessionStatus {
 model OnboardingEmployee {
   id               String   @id @default(cuid())
   sessionId        String
-  session          OnboardingSession @relation(fields: [sessionId], references: [id])
+  session          OnboardingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  fullName         String   @default("")
   name             String
   title            String
   email            String
   phone            String?
   reportsTo        String?
   directReports    Json     @default("[]")
+  bgosRole         String   @default("Sales")
   systemRole       String
   assignedPipelines Json    @default("[]")
   operatingProcedures String? @db.Text
@@ -798,8 +813,23 @@ model OnboardingEmployee {
   decisionAuthority Json    @default("[]")
   communicationPrefs Json   @default("{}")
   nexaFlags        Json     @default("[]")
+  completenessScore Int     @default(0)
   completeness     Int      @default(0)
   createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model OnboardingPipeline {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     OnboardingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name        String
+  productName String
+  stages      Json
+  slaRules    Json     @default("{}")
+  visibleTo   Json     @default("[]")
+  color       String   @default("#7C6FFF")
+  createdAt   DateTime @default(now())
 }
 
 model OnboardingClarification {

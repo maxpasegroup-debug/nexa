@@ -1,11 +1,9 @@
 import { sendEmail } from "@/lib/email";
-import { checkSessionCompleteness } from "@/lib/nexa-onboarding-intelligence";
+import { calculateCompleteness } from "@/lib/nexa-onboarding-engine";
 import { findLeastLoadedSDE, getInternalBusiness, getString } from "@/lib/onboarding-flow";
 import {
-  asRecord,
   dueInHours,
   getOwnedOnboardingSession,
-  jsonArray,
   jsonError,
   requireSessionUser,
 } from "@/lib/onboarding-session-server";
@@ -29,15 +27,12 @@ export async function POST(
     const selectedPlan = getString(body.selectedPlan) || session.selectedPlan || "GROWTH";
     const bdmNotes = getString(body.bdmNotes);
 
-    const sessionData = {
-      companyData: asRecord(session.companyData),
-      employeeData: jsonArray(session.employeeData),
-      pipelineData: jsonArray(session.pipelineData),
-      operatingRules: jsonArray(session.operatingRules),
-    };
-    const completeness = checkSessionCompleteness(sessionData);
-    if (completeness.score <= 80) {
-      return jsonError("Completeness score must be above 80 before submission.");
+    const completeness = calculateCompleteness(session);
+    const canSubmit = session.canSubmit || completeness.canSubmit;
+    if (!canSubmit) {
+      return jsonError(
+        completeness.blocked ?? "Complete all required onboarding data before submission.",
+      );
     }
 
     const internalBusiness = await getInternalBusiness();
@@ -57,12 +52,15 @@ export async function POST(
       prisma.onboardingSession.update({
         where: { id: params.id },
         data: {
-          status: "SDE_BUILDING",
+          status: "SUBMITTED",
           submittedAt: new Date(),
           selectedPlan,
           bdmNotes,
           sdeId: sde.id,
           completenessScore: completeness.score,
+          completenessBreakdown: completeness.breakdown,
+          canSubmit: true,
+          submissionBlocked: null,
         },
       }),
       prisma.task.create({

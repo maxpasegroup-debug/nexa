@@ -3,6 +3,7 @@ import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
 import auth from "@/lib/auth";
+import { generateClientId } from "@/lib/client-id";
 import { sendEmail } from "@/lib/email";
 import {
   addDays,
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
 
     const business = await prisma.business.create({
       data: {
+        clientId: await generateClientId(),
         name: workspaceConfig.companyName,
         type: lead.businessType,
         teamSize: lead.employeeCount,

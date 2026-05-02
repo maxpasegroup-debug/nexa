@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { hash } from "bcryptjs";
 
+import { generateClientId } from "@/lib/client-id";
 import { saveNexaMemory } from "@/lib/nexa-brain";
 import { previewToken, randomPassword } from "@/lib/onboarding-flow";
 import { prisma } from "@/lib/prisma";
@@ -94,6 +95,7 @@ export async function buildWorkspaceFromConfig(sessionId: string) {
 
   const business = await prisma.business.create({
     data: {
+      clientId: await generateClientId(),
       name: companyName,
       type: industry,
       teamSize: String(config.company?.employeeCount ?? (employees.length || 1)),

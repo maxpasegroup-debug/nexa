@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
+import type { OnboardingEmployee, OnboardingPipeline } from "@prisma/client";
 
 import { OnboardingWizard } from "@/components/bdm/onboarding-wizard";
 import auth from "@/lib/auth";
+import { generateClientId } from "@/lib/client-id";
 import { prisma } from "@/lib/prisma";
 
 function asArray<T>(value: unknown): T[] {
@@ -12,6 +14,13 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
+}
+
+function asNumberRecord(value: unknown): Record<string, number> {
+  const record = asRecord(value);
+  return Object.fromEntries(
+    Object.entries(record).filter((entry): entry is [string, number] => typeof entry[1] === "number"),
+  );
 }
 
 function extractNoteValue(notes: Array<{ content: string }>, label: string) {
@@ -46,7 +55,12 @@ export default async function BdmOnboardingWizardPage({
       OR: [{ assignedTo: user.id }, { createdBy: user.id }],
     },
     include: {
-      onboardingSession: true,
+      onboardingSession: {
+        include: {
+          employees: true,
+          pipelines: true,
+        },
+      },
       callNotes: {
         orderBy: { createdAt: "desc" },
         include: { author: { select: { id: true, name: true } } },
@@ -68,6 +82,7 @@ export default async function BdmOnboardingWizardPage({
       data: {
         leadId: lead.id,
         bdmId: user.id,
+        clientId: await generateClientId(),
         status: "COLLECTING",
         companyData: {
           name: lead.company ?? lead.name,
@@ -79,6 +94,9 @@ export default async function BdmOnboardingWizardPage({
           employeeCount: Number(teamSize) || 1,
           description: callNoteText,
           callNotes: callNoteText,
+        },
+        challenges: {
+          primary: lead.notes ?? "",
         },
       },
     }));
@@ -93,6 +111,15 @@ export default async function BdmOnboardingWizardPage({
       },
     });
   }
+
+  const onboardingEmployees =
+    ("employees" in onboardingSession && Array.isArray(onboardingSession.employees)
+      ? onboardingSession.employees
+      : []) as OnboardingEmployee[];
+  const onboardingPipelines =
+    ("pipelines" in onboardingSession && Array.isArray(onboardingSession.pipelines)
+      ? onboardingSession.pipelines
+      : []) as OnboardingPipeline[];
 
   return (
     <OnboardingWizard
@@ -129,6 +156,38 @@ export default async function BdmOnboardingWizardPage({
           summaryText: onboardingSession.summaryText,
           selectedPlan: onboardingSession.selectedPlan,
           bdmNotes: onboardingSession.bdmNotes,
+          currentStep: onboardingSession.currentStep,
+          canSubmit: onboardingSession.canSubmit,
+          submissionBlocked: onboardingSession.submissionBlocked,
+          completenessBreakdown: asNumberRecord(onboardingSession.completenessBreakdown),
+          nexaMessages: asArray(onboardingSession.nexaMessages),
+          nexaFlags: asArray(onboardingSession.nexaFlags),
+          challenges: asRecord(onboardingSession.challenges),
+          employees: onboardingEmployees.map((employee) => ({
+            id: employee.id,
+            fullName: employee.fullName || employee.name,
+            name: employee.name,
+            title: employee.title,
+            email: employee.email,
+            phone: employee.phone,
+            reportsTo: employee.reportsTo,
+            bgosRole: employee.bgosRole || employee.systemRole,
+            systemRole: employee.systemRole,
+            assignedPipelines: asArray(employee.assignedPipelines),
+            operatingProcedures: employee.operatingProcedures,
+            decisionAuthority: employee.decisionAuthority,
+            completenessScore: employee.completenessScore || employee.completeness,
+            nexaFlags: asArray(employee.nexaFlags),
+          })),
+          pipelines: onboardingPipelines.map((pipeline) => ({
+            id: pipeline.id,
+            name: pipeline.name,
+            productName: pipeline.productName,
+            stages: asArray(pipeline.stages),
+            slaRules: asRecord(pipeline.slaRules),
+            visibleTo: asArray(pipeline.visibleTo),
+            color: pipeline.color,
+          })),
         },
       }}
     />
