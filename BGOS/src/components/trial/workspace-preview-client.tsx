@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Lock, Send } from "lucide-react";
 
+import { PLANS, type PlanKey } from "@/lib/plans";
+
 type WorkspaceConfig = {
   id: string;
   companyName: string;
@@ -85,12 +87,22 @@ export function WorkspacePreviewClient({ token }: { token: string }) {
   if (!data || !details || error) return <main className="flex min-h-screen items-center justify-center bg-[#070709] text-white">{error || "Preview unavailable."}</main>;
 
   const activateHref = `/activate-trial?businessId=${data.business.id}&token=${encodeURIComponent(token)}`;
+  const planKey = data.lead?.selectedPlan && data.lead.selectedPlan in PLANS ? (data.lead.selectedPlan as PlanKey) : "GROWTH";
+  const plan = PLANS[planKey];
+  const trialNote = plan.price
+    ? `${plan.priceDisplay}/month after 7-day free trial · + 18% GST · Autopay · Cancel anytime`
+    : "Custom plan after 7-day free trial · Annual contract";
 
   return (
     <main className="min-h-screen bg-[#070709] pb-28 text-white">
       <div className="sticky top-0 z-30 border-b border-[#22D9A0]/20 bg-[#07100b]/95 px-6 py-4 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p className="font-heading text-lg font-bold">🎉 {data.workspaceConfig.companyName}&apos;s workspace is ready — built specifically for your business.</p>
+          <div>
+            <p className="font-heading text-lg font-bold">🎉 {data.workspaceConfig.companyName}&apos;s workspace is ready — built specifically for your business.</p>
+            <p className="mt-1 text-xs text-emerald-100">
+              {plan.name} · {plan.priceDisplay}{plan.period} · {plan.gstNote}
+            </p>
+          </div>
           <Link href={activateHref} className="rounded-xl bg-[#22D9A0] px-5 py-3 text-sm font-bold text-black">Activate your team — start free trial →</Link>
         </div>
       </div>
@@ -172,6 +184,7 @@ export function WorkspacePreviewClient({ token }: { token: string }) {
 
       <div className="fixed bottom-5 right-5 z-40 max-w-sm rounded-2xl border border-[#22D9A0]/25 bg-[#0f1914]/95 p-5 shadow-2xl backdrop-blur">
         <p className="text-sm text-emerald-50">You are previewing {data.workspaceConfig.companyName}&apos;s BGOS workspace. Happy with what you see? Activate your 7-day free trial below.</p>
+        <p className="mt-2 text-xs text-emerald-100/80">{trialNote}</p>
         <div className="mt-4 flex gap-3">
           <Link href={activateHref} className="rounded-xl bg-[#22D9A0] px-4 py-3 text-sm font-bold text-black">Start trial →</Link>
           <a href="tel:+910000000000" className="rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-zinc-300">Call our team</a>

@@ -9,14 +9,36 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(
+  _request: Request,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const { error, user } = await requireSessionUser(["BDM", "SDE", "BOSS", "OWNER"]);
+    if (error) return error;
+    const session = await getOwnedOnboardingSession(
+      params.id,
+      user.id,
+      user.role,
+      user.businessId,
+    );
+    if (!session) return jsonError("Session not found.", 404);
+
+    return Response.json({ clarifications: session.clarifications });
+  } catch (error) {
+    console.error("[onboarding-session:clarification:list]", error);
+    return jsonError("Unable to fetch clarifications.", 500);
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: { id: string } },
 ) {
   try {
-    const { error, user } = await requireSessionUser(["SDE"]);
+    const { error, user } = await requireSessionUser(["BDM", "SDE"]);
     if (error) return error;
-    const session = await getOwnedOnboardingSession(params.id, user.id, "SDE");
+    const session = await getOwnedOnboardingSession(params.id, user.id, user.role);
     if (!session) return jsonError("Session not found.", 404);
 
     const body = (await request.json()) as Record<string, unknown>;

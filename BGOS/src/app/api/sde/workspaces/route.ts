@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import type { OnboardingLeadStatus } from "@prisma/client";
 
 import { requireRole } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 
-const activeStatuses = ["BDM_SUBMITTED", "SDE_BUILDING"] as const;
+const activeStatuses: OnboardingLeadStatus[] = [
+  "BDM_SUBMITTED",
+  "SDE_BUILDING",
+  "SDE_DELIVERED",
+];
 
 export async function GET() {
   try {
@@ -15,8 +20,11 @@ export async function GET() {
     const leads = await prisma.onboardingLead.findMany({
       where:
         authResult.user.role === "SDE"
-          ? { assignedSDEId: authResult.user.id }
-          : {},
+          ? {
+              assignedSDEId: authResult.user.id,
+              status: { in: activeStatuses },
+            }
+          : { status: { in: activeStatuses } },
       orderBy: { updatedAt: "desc" },
       include: {
         assignedBDM: { select: { id: true, name: true, email: true } },

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, Menu, Send, X } from "lucide-react";
 
+import { BOTTOM_NOTE, PLAN_ORDER, PLANS, type Plan } from "@/lib/plans";
+
 type ChatMessage = { id: string; role: "nexa" | "user"; content: string };
 
 type Fields = {
@@ -52,6 +54,31 @@ const agents = [
   { icon: "🏢", name: "PropPilot", tag: "Real estate", price: "₹1,299/mo", color: "#009688", bg: "linear-gradient(135deg,#001a0f,#001510)", slug: "proppilot" },
   { icon: "🏪", name: "StockSense", tag: "Orders and dealers", price: "₹999/mo", color: "#FF5722", bg: "linear-gradient(135deg,#1a0a05,#1a0500)", slug: "stocksense" },
 ];
+
+function BoldPlanDescription({ text }: { text: string }) {
+  const phrases = [
+    "NEXA as your CEO",
+    "NEXA CEO running your business",
+    "unlimited pipelines",
+    "dedicated success manager",
+  ];
+  const phrase = phrases.find((item) => text.includes(item));
+  if (!phrase) return <>{text}</>;
+  const [before, after] = text.split(phrase);
+  return (
+    <>
+      {before}
+      <strong className="font-semibold text-[#F0EEF8]">{phrase}</strong>
+      {after}
+    </>
+  );
+}
+
+function mobileCtaClass(plan: Plan) {
+  if (plan.ctaStyle === "primary") return "bg-[#7C6FFF] text-white";
+  if (plan.ctaStyle === "outline-green") return "border border-[#22D9A0]/30 text-[#22D9A0]";
+  return "border border-white/[0.12] text-[#F0EEF8]";
+}
 
 const nexaSets = [
   ["Focus Point's solar workspace is live. 3 pipelines, 6 team members active.", "Suresh has 4 site visits to follow up. I assigned them automatically."],
@@ -267,7 +294,85 @@ export default function MobileLandingPage() {
 
       <section id="marketplace" className="px-4 py-10"><SectionHead label="MARKETPLACE" title="Extend with AI agents." subtitle="Plug-and-play agents. Set up by our team in 24 hours." /><div className="snap-x snap-mandatory overflow-x-auto"><div className="flex gap-3">{agents.map((agent) => <Link key={agent.slug} href={`/marketplace/${agent.slug}`} className="min-w-[160px] snap-start rounded-2xl border border-white/[0.08] p-4" style={{ background: agent.bg }}><span className="text-2xl">{agent.icon}</span><h3 className="mt-4 font-heading text-sm font-extrabold">{agent.name}</h3><p className="mt-1 text-[11px] text-[#6B6878]">{agent.tag}</p><p className="mt-4 font-heading text-[13px] font-extrabold" style={{ color: agent.color }}>{agent.price}</p><p className="mt-3 text-[11px] font-bold" style={{ color: agent.color }}>Learn more →</p></Link>)}</div></div><Link href="/marketplace" className="mt-5 block text-center text-sm font-bold text-[#7C6FFF]">View all agents →</Link></section>
 
-      <section id="pricing" className="px-4 py-10"><SectionHead label="PRICING" title="Choose your plan." subtitle="+ 18% GST · autopay · 7-day free trial on all plans" /><div className="space-y-3">{[["Starter", "₹799/mo", ["CRM + tasks", "NEXA brief", "3 users"], false], ["Growth", "₹2,499/mo", ["Everything in Starter", "Custom pipelines", "Role dashboards", "Automations", "Marketplace access"], true], ["Scale", "₹6,999/mo", ["Advanced automation", "Priority setup", "Multiple teams", "Owner reporting"], false]].map(([tier, price, features, featured]) => <div key={String(tier)} className={`rounded-2xl border bg-[#13131c] p-5 ${featured ? "border-l-4 border-l-[#7C6FFF] border-white/[0.08]" : "border-white/[0.08]"}`}>{featured ? <span className="rounded-full bg-[#7C6FFF]/15 px-3 py-1 text-[10px] font-bold text-[#a89fff]">★ Most popular</span> : null}<p className="mt-3 text-xs text-[#6B6878]">{String(tier)}</p><h3 className={`mt-2 font-heading text-[28px] font-extrabold ${featured ? "text-[#7C6FFF]" : ""}`}>{String(price)}</h3><div className="mt-4 space-y-2">{(features as string[]).map((feature) => <p key={feature} className="text-sm text-[#F0EEF8]"><span className="text-[#22D9A0]">✓</span> {feature}</p>)}</div><button type="button" onClick={openChat} className={`mt-5 h-12 w-full rounded-2xl font-heading text-sm font-extrabold ${featured ? "bg-[#7C6FFF] text-white" : "border border-white/[0.08] text-white"}`}>{featured ? "Get your workspace →" : "Get started →"}</button></div>)}</div><p className="mt-5 text-center text-xs italic text-[#6B6878]">Every plan includes custom workspace setup by our team. Not self-serve.</p></section>
+      <section id="pricing" className="px-4 py-10">
+        <SectionHead label="PRICING" title="Choose your plan." subtitle="All prices + 18% GST · Autopay · Cancel anytime" />
+        <div className="space-y-4">
+          {PLAN_ORDER.map((key) => {
+            const plan = PLANS[key];
+            const userBadge =
+              plan.name === "Growth"
+                ? "border-[#7C6FFF]/25 text-[#a89fff]"
+                : plan.name === "Enterprise"
+                  ? "border-[#22D9A0]/20 text-[#22D9A0]"
+                  : "border-white/[0.08] text-[#F0EEF8]";
+            return (
+              <article
+                key={key}
+                className={`rounded-2xl border bg-[#13131c] p-5 ${
+                  plan.highlight ? "border-l-[3px] border-l-[#7C6FFF] border-white/[0.08]" : "border-white/[0.08]"
+                }`}
+              >
+                {plan.highlight && "badge" in plan ? (
+                  <span className="rounded-full bg-[#7C6FFF]/15 px-3 py-1 text-[10px] font-bold text-[#a89fff]">
+                    {plan.badge}
+                  </span>
+                ) : null}
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6B6878]">{plan.name}</p>
+                <div className="mt-2 flex items-end gap-1">
+                  <h3 className="font-heading text-[32px] font-extrabold" style={{ color: plan.highlight ? plan.color : "#F0EEF8" }}>
+                    {plan.priceDisplay}
+                  </h3>
+                  {plan.period ? <span className="pb-1 text-[13px] text-[#6B6878]">{plan.period}</span> : null}
+                </div>
+                <p className="mt-1 text-[11px] text-[#6B6878] opacity-70">{plan.gstNote}</p>
+                <div className="my-4 h-px bg-white/[0.07]" />
+                <span className={`inline-flex rounded-lg border bg-white/[0.04] px-3.5 py-2 text-[13px] ${userBadge}`}>
+                  👥 {plan.usersDisplay}
+                </span>
+                <p className="mt-4 text-[13px] font-light leading-6 text-[#6B6878]">
+                  <BoldPlanDescription text={plan.description} />
+                </p>
+                <ul className="mt-4 space-y-1">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex min-h-8 gap-2 text-[13px] leading-6 text-[#F0EEF8]">
+                      <span className="text-[#22D9A0]">✓</span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={openChat}
+                  className={`mt-5 min-h-[50px] w-full rounded-2xl font-heading text-sm font-extrabold ${mobileCtaClass(plan)}`}
+                >
+                  {plan.cta}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+        <p className="mt-5 text-center text-xs leading-5 text-[#6B6878]">{BOTTOM_NOTE}</p>
+        <div className="mt-6 rounded-2xl border border-[#7C6FFF]/15 bg-[#7C6FFF]/[0.04] p-4">
+          <h3 className="font-heading text-base font-bold">Extend with AI agents</h3>
+          <p className="mb-4 mt-1 text-xs text-[#6B6878]">Plug-and-play agents for your industry. Set up by our team. Available after subscribing.</p>
+          <div className="flex gap-3 overflow-x-auto scroll-x-hidden">
+            {[
+              ["⚡", "Sales Booster", "₹1,499/mo"],
+              ["💬", "Wazzup", "₹999/mo"],
+              ["🧾", "TaxMate", "₹799/mo"],
+              ["🏥", "CareLoop", "₹1,299/mo"],
+            ].map(([icon, name, price]) => (
+              <div key={name} className="min-w-[140px] shrink-0 rounded-xl border border-white/[0.08] bg-[#13131c] p-3">
+                <p className="font-heading text-[11px] font-bold">{icon} {name}</p>
+                <p className="mt-1 text-[10px] text-[#6B6878]">{price}</p>
+              </div>
+            ))}
+            <Link href="/marketplace" className="min-w-[140px] shrink-0 rounded-xl border border-[#7C6FFF]/20 bg-[#13131c] p-3 font-heading text-[11px] font-bold text-[#7C6FFF]">
+              ＋ 6 more agents
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <section className="px-4 py-10"><SectionHead label="REAL BUSINESSES" title="Workspaces we built." /><div className="space-y-3">{[["☀️", "Solar distribution, Kerala", "6 members", "3 pipelines", "18 hours", "Multi-product tracking", ["Lead", "Survey", "Quote", "Install"]], ["🏥", "Clinic, Tamil Nadu", "8 members", "1 pipeline", "12 hours", "Patient follow-up", ["Patient", "Visit", "Follow-up", "Regular"]], ["💼", "Digital agency, Gujarat", "5 members", "2 pipelines", "16 hours", "Project milestones", ["Brief", "Design", "Review", "Live"]]].map(([icon, name, team, pipes, time, feature, stages]) => <div key={String(name)} className="rounded-2xl border border-white/[0.08] bg-[#13131c] p-4"><h3 className="font-heading text-sm font-extrabold">{icon} {name}</h3><div className="mt-4 grid grid-cols-2 gap-2 text-xs"><span>Team size<br /><b>{team}</b></span><span>Pipelines<br /><b>{pipes}</b></span><span>Setup time<br /><b>{time}</b></span><span>Key feature<br /><b>{feature}</b></span></div><div className="mt-4 flex flex-wrap gap-2">{(stages as string[]).map((stage) => <span key={stage} className="rounded-full bg-white/[0.05] px-2 py-1 text-[10px] text-[#6B6878]">{stage}</span>)}</div></div>)}</div></section>
 

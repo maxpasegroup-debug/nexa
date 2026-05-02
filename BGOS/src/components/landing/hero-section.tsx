@@ -79,7 +79,7 @@ export default function HeroSection() {
 
         <div className="landing-fade mt-8 [animation-delay:1s]">
           <p className="text-center text-xs font-light text-[#A5A1B3]">
-            No credit card required to start | Guided setup during trial | Our team contacts you within 2 hours
+            Guided setup during trial | Our team contacts you within 2 hours
           </p>
         </div>
 

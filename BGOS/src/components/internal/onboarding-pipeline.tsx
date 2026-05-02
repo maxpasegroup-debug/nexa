@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Clock, RefreshCw, UserCog } from "lucide-react";
 
+import { PLANS, type PlanKey } from "@/lib/plans";
+
 type Status =
   | "NEW"
   | "BDM_ASSIGNED"
@@ -96,6 +98,28 @@ function dueFromSubmitted(value: string | null) {
   return due.toISOString();
 }
 
+function planKey(value: string | null): PlanKey | null {
+  if (!value) return null;
+  const upper = value.toUpperCase();
+  return upper in PLANS ? (upper as PlanKey) : null;
+}
+
+function planBadgeClass(key: PlanKey | null) {
+  if (key === "ENTERPRISE") return "border-[#F5A623]/25 bg-[#F5A623]/15 text-[#F5A623]";
+  if (key === "SCALE") return "border-[#22D9A0]/40 bg-transparent text-[#22D9A0]";
+  if (key === "GROWTH") return "border-[#7C6FFF]/25 bg-[#7C6FFF]/15 text-[#a89fff]";
+  return "border-white/10 bg-white/5 text-zinc-400";
+}
+
+function PlanBadge({ value }: { value: string | null }) {
+  const key = planKey(value);
+  return (
+    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${planBadgeClass(key)}`}>
+      {key ? PLANS[key].name : "Plan pending"}
+    </span>
+  );
+}
+
 function timeline(lead: PipelineLead) {
   return [
     { label: "Lead captured", value: lead.createdAt },
@@ -158,10 +182,10 @@ function LeadCard({
       <div className="mt-3 space-y-2 text-xs text-zinc-400">
         {lead.status === "NEW" ? <p>Captured {timeAgo(lead.createdAt)}</p> : null}
         {lead.status === "BDM_ASSIGNED" ? <p>BDM: {lead.assignedBDM?.name ?? "Unassigned"} · {timeAgo(lead.updatedAt)}</p> : null}
-        {lead.status === "BDM_SUBMITTED" ? <p>{lead.plan ?? "Plan pending"} · {lead.bdmSubmittedAt ? timeAgo(lead.bdmSubmittedAt) : timeAgo(lead.updatedAt)}</p> : null}
+        {lead.status === "BDM_SUBMITTED" ? <p><PlanBadge value={lead.plan} /> · {lead.bdmSubmittedAt ? timeAgo(lead.bdmSubmittedAt) : timeAgo(lead.updatedAt)}</p> : null}
         {lead.status === "SDE_BUILDING" ? <p>SDE: {lead.assignedSDE?.name ?? "Unassigned"} · {countdown(dueFromSubmitted(lead.bdmSubmittedAt))}</p> : null}
         {lead.status === "BOSS_PREVIEWING" ? <p>Last viewed {timeAgo(lead.updatedAt)}</p> : null}
-        {lead.status === "TRIAL_ACTIVE" ? <p>{lead.plan ?? "Plan"} · {inr(lead.trialAmount)} · ends {lead.trialEndsAt ? new Date(lead.trialEndsAt).toLocaleDateString("en-IN") : "-"}</p> : null}
+        {lead.status === "TRIAL_ACTIVE" ? <p><PlanBadge value={lead.plan} /> · {inr(lead.trialAmount)} · ends {lead.trialEndsAt ? new Date(lead.trialEndsAt).toLocaleDateString("en-IN") : "-"}</p> : null}
       </div>
     </button>
   );
@@ -313,6 +337,22 @@ export function OnboardingPipeline({
             ))}
           </div>
           <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-400">
+            {(() => {
+              const key = planKey(selected.plan);
+              const plan = key ? PLANS[key] : null;
+              return plan ? (
+                <div className="mb-4 rounded-xl border border-white/10 bg-[#0d0d12] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <PlanBadge value={selected.plan} />
+                    <span className="font-heading text-sm font-bold text-white">
+                      {plan.priceDisplay}{plan.period}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-zinc-500">👥 {plan.usersDisplay}</p>
+                  <p className="mt-2 text-xs leading-5 text-zinc-400">{plan.description}</p>
+                </div>
+              ) : null;
+            })()}
             <p><span className="text-zinc-200">Challenge:</span> {selected.challenge ?? "-"}</p>
             <p className="mt-2"><span className="text-zinc-200">BDM notes:</span> {selected.bdmNotes ?? "-"}</p>
             <p className="mt-2"><span className="text-zinc-200">SDE notes:</span> {selected.sdeNotes ?? "-"}</p>

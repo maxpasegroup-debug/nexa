@@ -67,32 +67,19 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const { error, user } = await requireSessionUser(["BDM", "SDE", "OWNER"]);
+    const { error, user } = await requireSessionUser(["BDM", "SDE", "BOSS", "OWNER"]);
     if (error) return error;
 
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("sessionId") ?? "";
     if (!sessionId) return jsonError("sessionId is required.");
 
-    const session =
-      user.role === "OWNER"
-        ? await prisma.onboardingSession.findUnique({
-            where: { id: sessionId },
-            include: {
-              lead: true,
-              bdm: { select: { id: true, name: true, email: true } },
-              sde: { select: { id: true, name: true, email: true } },
-              employees: true,
-              clarifications: {
-                include: {
-                  raiser: { select: { id: true, name: true, email: true } },
-                  answerer: { select: { id: true, name: true, email: true } },
-                },
-                orderBy: { createdAt: "desc" },
-              },
-            },
-          })
-        : await getOwnedOnboardingSession(sessionId, user.id, user.role);
+    const session = await getOwnedOnboardingSession(
+      sessionId,
+      user.id,
+      user.role,
+      user.businessId,
+    );
 
     if (!session) return jsonError("Session not found.", 404);
 

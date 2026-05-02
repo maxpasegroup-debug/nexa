@@ -7,6 +7,7 @@ import { ArrowRight, BadgePercent, Bot, Clock, Sparkles } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { marketplaceStatusClass, marketplaceStatusLabel } from "@/lib/marketplace-status";
+import { PLANS } from "@/lib/plans";
 import { InstallModal } from "./marketplace-install-modal";
 import type { AgentInstallationView, AgentOfferView, MarketplaceAgentView } from "./types";
 import {
@@ -122,7 +123,6 @@ export function BossMarketplacePage({
   );
   const recommendedSlug = recommendationFor(business.type);
   const recommendedAgent = agents.find((agent) => agent.slug === recommendedSlug) ?? agents[0];
-  const recommendedPositioning = recommendedAgent ? positioningFor(recommendedAgent) : null;
   const filteredAgents =
     activeFilter === "ALL"
       ? agents
@@ -169,7 +169,7 @@ export function BossMarketplacePage({
                   </h1>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-300">
                     {recommendedAgent
-                      ? `${recommendedPositioning?.problem}. ${recommendedPositioning?.does} ${recommendedPositioning?.setup}. ${money(recommendedAgent.onboardingFee)} setup + ${money(recommendedAgent.monthlyFee)}/mo.`
+                      ? `Based on your ${business.type || "business"} setup I recommend the ${PLANS.GROWTH.name} plan — ${PLANS.GROWTH.priceDisplay}/month. ${PLANS.GROWTH.description} Add ${recommendedAgent.name} when you are ready: ${money(recommendedAgent.onboardingFee)} setup + ${money(recommendedAgent.monthlyFee)}/mo.`
                       : "Browse agents below and install the right automation for your workspace."}
                   </p>
                 </div>

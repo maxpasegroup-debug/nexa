@@ -8,6 +8,7 @@ import { formatSdeOnboardingSummary } from "@/lib/onboarding-summary-format";
 
 export type OnboardingRequestCardSession = {
   id: string;
+  sdeId?: string | null;
   companyName: string;
   bdmName?: string | null;
   plan: string | null;

@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     question: "How does the trial and billing work?",
-    answer: "No credit card is required to start. You choose a plan before billing starts, and you can cancel anytime.",
+    answer: "You get a 7-day free trial. You choose a plan before billing starts, and you can cancel anytime.",
   },
 ];
 

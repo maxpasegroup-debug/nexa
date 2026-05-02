@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { PLANS } from "@/lib/plans";
+
 export function TrialActivationBanner({
   trialEndsAt,
   amount,
@@ -14,6 +16,13 @@ export function TrialActivationBanner({
     Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86_400_000),
   );
   const urgent = daysRemaining <= 2;
+  const plan =
+    Object.values(PLANS).find((item) => item.price === Math.round(amount)) ?? PLANS.GROWTH;
+  const date = new Date(trialEndsAt).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 
   return (
     <section
@@ -29,7 +38,7 @@ export function TrialActivationBanner({
             Free trial active: {daysRemaining} day{daysRemaining === 1 ? "" : "s"} remaining
           </p>
           <p className="mt-1 text-xs text-zinc-400">
-            Your next charge is Rs. {Math.round(amount).toLocaleString("en-IN")}. Cancel or upgrade anytime.
+            You are on the {plan.name} plan · {plan.priceDisplay}/month + 18% GST · Trial ends {date}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">

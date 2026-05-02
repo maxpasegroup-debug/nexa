@@ -65,7 +65,7 @@ export type InternalBusiness = {
   id: string;
   name: string;
   bossEmail: string;
-  plan: "STARTER" | "GROWTH" | "SCALE";
+  plan: "STARTER" | "GROWTH" | "SCALE" | "ENTERPRISE";
   joinedAt: string;
   healthScore: number;
   active: boolean;
@@ -113,9 +113,10 @@ function dateLabel(value: string) {
 }
 
 function planClass(plan: InternalBusiness["plan"]) {
-  if (plan === "SCALE") return "border-[#22D9A0]/30 bg-[#22D9A0]/10 text-[#22D9A0]";
-  if (plan === "GROWTH") return "border-[#7C6FFF]/30 bg-[#7C6FFF]/10 text-[#c6c1ff]";
-  return "border-white/10 bg-white/5 text-zinc-300";
+  if (plan === "ENTERPRISE") return "border-[#F5A623]/25 bg-[#F5A623]/15 text-[#F5A623]";
+  if (plan === "SCALE") return "border-[#22D9A0]/40 bg-transparent text-[#22D9A0]";
+  if (plan === "GROWTH") return "border-[#7C6FFF]/25 bg-[#7C6FFF]/15 text-[#a89fff]";
+  return "border-white/10 bg-white/5 text-zinc-400";
 }
 
 function healthClass(score: number) {
@@ -248,7 +249,7 @@ function RecentCustomersTable({ businesses }: { businesses: InternalBusiness[] }
                   <td className="py-4 text-zinc-400">{business.bossEmail}</td>
                   <td className="py-4">
                     <span
-                      className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${planClass(
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${planClass(
                         business.plan,
                       )}`}
                     >

@@ -3,6 +3,8 @@
 import { signIn } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 
+import { PLANS, type PlanKey } from "@/lib/plans";
+
 type PreviewPayload = {
   workspaceConfig: {
     companyName: string;
@@ -18,31 +20,7 @@ type PreviewPayload = {
   };
 };
 
-type PlanKey = "STARTER" | "GROWTH" | "SCALE" | "ENTERPRISE";
 type PaymentMethod = "upi" | "card" | "netbanking";
-
-const plans: Record<PlanKey, { name: string; monthly: number; features: string[] }> = {
-  STARTER: {
-    name: "Starter",
-    monthly: 799,
-    features: ["Lead tracking", "Daily NEXA brief", "Basic team access"],
-  },
-  GROWTH: {
-    name: "Growth",
-    monthly: 2499,
-    features: ["AI lead scoring", "Team targets", "Call logging", "NEXA alerts"],
-  },
-  SCALE: {
-    name: "Scale",
-    monthly: 6999,
-    features: ["Custom pipelines", "Advanced NEXA", "Automation setup", "Priority support"],
-  },
-  ENTERPRISE: {
-    name: "Enterprise",
-    monthly: 15000,
-    features: ["Dedicated setup", "Custom workflows", "Executive reporting", "Premium support"],
-  },
-};
 
 function addDays(days: number) {
   const value = new Date();
@@ -51,7 +29,7 @@ function addDays(days: number) {
 }
 
 function formatAmount(value: number) {
-  return `Rs. ${value.toLocaleString("en-IN")}`;
+  return `₹${value.toLocaleString("en-IN")}`;
 }
 
 function formatDate(value: Date | string) {
@@ -87,7 +65,8 @@ export function ActivateTrialClient({
   const [success, setSuccess] = useState<{ dashboardUrl: string; trialEndsAt: string; amount: number } | null>(null);
 
   const chargeDate = useMemo(() => addDays(7), []);
-  const selectedPlan = plans[plan];
+  const selectedPlan = PLANS[plan];
+  const selectedPlanPrice = selectedPlan.price ?? 0;
 
   useEffect(() => {
     if (!token) return;
@@ -105,7 +84,7 @@ export function ActivateTrialClient({
       setBusinessId(data.business.id);
       setName((current) => current || data.lead?.name || data.business.name);
       setEmail((current) => current || data.lead?.email || "");
-      if (data.lead?.selectedPlan && data.lead.selectedPlan in plans) {
+      if (data.lead?.selectedPlan && data.lead.selectedPlan in PLANS) {
         setPlan(data.lead.selectedPlan as PlanKey);
       }
     }
@@ -180,7 +159,7 @@ export function ActivateTrialClient({
     setSuccess({
       dashboardUrl: data.dashboardUrl ?? "/boss",
       trialEndsAt: data.trialEndsAt ?? chargeDate.toISOString(),
-      amount: data.monthlyAmount ?? selectedPlan.monthly,
+      amount: data.monthlyAmount ?? selectedPlanPrice,
     });
     setStep(3);
   }
@@ -287,17 +266,25 @@ export function ActivateTrialClient({
                     <h3 className="mt-2 font-heading text-3xl font-bold">{selectedPlan.name}</h3>
                     <ul className="mt-4 grid gap-2 text-sm text-zinc-300 md:grid-cols-2">
                       {selectedPlan.features.map((feature) => (
-                        <li key={feature}>- {feature}</li>
+                        <li key={feature} className="flex gap-2">
+                          <span className="text-[#22D9A0]">✓</span>
+                          <span>{feature}</span>
+                        </li>
                       ))}
                     </ul>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-right">
-                    <p className="font-heading text-3xl font-bold text-[#2ECC8A]">
-                      {formatAmount(selectedPlan.monthly)}
+                    <p className="font-heading text-3xl font-extrabold" style={{ color: selectedPlan.color }}>
+                      {selectedPlan.priceDisplay}
                     </p>
-                    <p className="mt-1 text-xs text-zinc-500">per month</p>
+                    <p className="mt-1 text-xs text-zinc-500">{selectedPlan.period || selectedPlan.gstNote}</p>
+                    {selectedPlan.period ? <p className="mt-1 text-xs text-zinc-500">{selectedPlan.gstNote}</p> : null}
                   </div>
                 </div>
+                <div className="mt-4 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-zinc-200">
+                  👥 {selectedPlan.usersDisplay}
+                </div>
+                <p className="mt-4 text-sm font-light leading-6 text-zinc-300">{selectedPlan.description}</p>
               </div>
               <div className="mt-5 rounded-xl border border-[#2ECC8A]/20 bg-[#2ECC8A]/5 p-4 text-sm leading-6 text-emerald-100">
                 Your first charge will be on {formatDate(chargeDate)}. Cancel before {formatDate(chargeDate)} and pay
@@ -326,7 +313,7 @@ export function ActivateTrialClient({
             <div>
               <h2 className="font-heading text-xl font-bold">Authorise payment - charged only after 7 days</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-                Set up your payment method now. We will only charge you {formatAmount(selectedPlan.monthly)} on{" "}
+                Set up your payment method now. We will only charge you {formatAmount(selectedPlanPrice)} on{" "}
                 {formatDate(chargeDate)}. Think of this like saving your card at Amazon: no charge until your trial ends.
               </p>
 
@@ -371,7 +358,7 @@ export function ActivateTrialClient({
                     />
                     <span className="mt-3 block text-xs leading-5 text-zinc-500">
                       Open your UPI app and approve the mandate request. It will appear as BGOS -{" "}
-                      {formatAmount(selectedPlan.monthly)} autopay mandate.
+                      {formatAmount(selectedPlanPrice)} autopay mandate.
                     </span>
                   </label>
                 ) : null}

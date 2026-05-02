@@ -4,6 +4,7 @@ import Link from "next/link";
 
 type MobileSDEBuild = {
   id: string;
+  sdeId?: string | null;
   companyName: string;
   bdmName: string | null;
   plan: string | null;
@@ -13,6 +14,7 @@ type MobileSDEBuild = {
 
 type MobileSDEBuildsProps = {
   builds: MobileSDEBuild[];
+  currentUserId: string;
 };
 
 function timeSince(value: string) {
@@ -44,7 +46,11 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
-export function MobileSDEBuilds({ builds }: MobileSDEBuildsProps) {
+export function MobileSDEBuilds({ builds, currentUserId }: MobileSDEBuildsProps) {
+  const visibleBuilds = builds.filter(
+    (build) => build.sdeId === currentUserId || build.sdeId === null,
+  );
+
   return (
     <main className="mobile-page min-h-screen bg-[var(--bg)] px-4 pt-4 text-[var(--text)]">
       <header>
@@ -53,7 +59,7 @@ export function MobileSDEBuilds({ builds }: MobileSDEBuildsProps) {
       </header>
 
       <section className="mt-4 space-y-3">
-        {builds.map((build) => {
+        {visibleBuilds.map((build) => {
           const overdue = Date.now() - new Date(build.submittedAt).getTime() > 24 * 3600000;
           return (
             <article
@@ -74,7 +80,7 @@ export function MobileSDEBuilds({ builds }: MobileSDEBuildsProps) {
             </article>
           );
         })}
-        {builds.length === 0 ? (
+        {visibleBuilds.length === 0 ? (
           <div className="rounded-[16px] border border-white/10 bg-[var(--card)] p-5 text-center text-xs text-zinc-500">
             No pending workspace builds.
           </div>

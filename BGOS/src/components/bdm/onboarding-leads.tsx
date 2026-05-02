@@ -25,7 +25,7 @@ function submittedLabel(value: string | Date | null) {
   return `Submitted ${timeAgo(value)}`;
 }
 
-export function OnboardingLeads() {
+export function OnboardingLeads({ currentUserId }: { currentUserId: string }) {
   const { toast } = useToast();
   const [leads, setLeads] = useState<OnboardingLeadForBDM[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,9 @@ export function OnboardingLeads() {
       return;
     }
     const data = (await response.json()) as { leads: OnboardingLeadForBDM[] };
-    setLeads(data.leads);
+    setLeads(
+      data.leads.filter((lead) => lead.assignedBDMId === currentUserId),
+    );
   }
 
   useEffect(() => {

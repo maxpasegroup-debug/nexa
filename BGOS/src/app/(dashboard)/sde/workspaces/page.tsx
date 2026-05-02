@@ -58,6 +58,7 @@ export default async function SdeWorkspacesPage() {
 
   const serializedBuilds = builds.map((build) => ({
     id: build.id,
+    sdeId: build.sdeId,
     companyName: companyNameFrom(build.companyData),
     bdmName: build.bdm?.name ?? null,
     plan: build.selectedPlan,
@@ -79,11 +80,11 @@ export default async function SdeWorkspacesPage() {
   return (
     <>
       <div className="show-mobile hidden">
-        <MobileSDEBuilds builds={serializedBuilds} />
+        <MobileSDEBuilds builds={serializedBuilds} currentUserId={user.id} />
       </div>
       <div className="hide-mobile">
         <WorkspaceBuildsPage
-      user={{ name: user.name, role: user.role, businessName: user.business.name }}
+      user={{ id: user.id, name: user.name, role: user.role, businessName: user.business.name }}
       builds={serializedBuilds}
         />
       </div>

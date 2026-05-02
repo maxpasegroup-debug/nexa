@@ -53,12 +53,25 @@ export async function getOwnedOnboardingSession(
   sessionId: string,
   userId: string,
   role: Role,
+  businessId?: string | null,
 ) {
+  const roleWhere: Prisma.OnboardingSessionWhereInput =
+    role === "BDM"
+      ? { bdmId: userId }
+      : role === "SDE"
+        ? { sdeId: userId }
+        : role === "BOSS"
+          ? businessId
+            ? { bdm: { businessId } }
+            : { id: "__forbidden__" }
+          : role === "OWNER"
+            ? {}
+            : { id: "__forbidden__" };
+
   const session = await prisma.onboardingSession.findFirst({
     where: {
       id: sessionId,
-      ...(role === "BDM" ? { bdmId: userId } : {}),
-      ...(role === "SDE" ? { sdeId: userId } : {}),
+      ...roleWhere,
     },
     include: {
       lead: true,

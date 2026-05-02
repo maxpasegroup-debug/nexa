@@ -23,7 +23,6 @@ export default function CtaSection() {
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-4 text-[13px] text-[#A5A1B3]">
           <span>7-day free trial</span>
-          <span>No credit card required to start</span>
           <span>Setup during trial</span>
           <span>Choose a plan before billing</span>
           <span>Cancel anytime</span>

@@ -33,7 +33,7 @@ export default async function BdmOnboardingPage() {
               Turn landing page enquiries into complete workspace build briefs.
             </p>
           </div>
-          <OnboardingLeads />
+          <OnboardingLeads currentUserId={session.user.id} />
         </div>
       </main>
     </div>

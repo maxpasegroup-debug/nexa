@@ -4,9 +4,11 @@ import { FormEvent, useMemo, useState } from "react";
 import { Plus, X } from "lucide-react";
 
 import { useToast } from "@/components/ui/toast";
+import { PLAN_ORDER, PLANS } from "@/lib/plans";
 
 export type OnboardingLeadForBDM = {
   id: string;
+  assignedBDMId?: string | null;
   name: string;
   email: string;
   phone: string;
@@ -27,36 +29,12 @@ type BdmBriefFormProps = {
   onClose: () => void;
 };
 
-const plans = [
-  {
-    id: "STARTER",
-    name: "Starter",
-    price: "₹799",
-    features: "Lead capture, basic CRM, NEXA tips",
-    commission: "₹400",
-  },
-  {
-    id: "GROWTH",
-    name: "Growth",
-    price: "₹2,499",
-    features: "Pipelines, team tracking, automation",
-    commission: "₹1,500",
-  },
-  {
-    id: "SCALE",
-    name: "Scale",
-    price: "₹6,999",
-    features: "Advanced workflows, reporting, SDE support",
-    commission: "₹3,500",
-  },
-  {
-    id: "ENTERPRISE",
-    name: "Enterprise",
-    price: "Custom",
-    features: "Custom setup, integrations, priority support",
-    commission: "₹7,000",
-  },
-];
+const planCommissions = {
+  STARTER: "₹400",
+  GROWTH: "₹1,500",
+  SCALE: "₹3,500",
+  ENTERPRISE: "₹7,000",
+} as const;
 
 const roleSuggestions = ["Owner", "Manager", "Sales Executive", "Technical", "Support"];
 const toolSuggestions = ["Excel", "WhatsApp", "Google Sheets", "Tally", "Zoho"];
@@ -200,25 +178,33 @@ export function BdmBriefForm({ lead, onSuccess, onClose }: BdmBriefFormProps) {
             <section>
               <h3 className="font-heading text-sm font-bold">Plan confirmation</h3>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {plans.map((plan) => (
+                {PLAN_ORDER.map((planId) => {
+                  const plan = PLANS[planId];
+                  return (
                   <button
-                    key={plan.id}
+                    key={planId}
                     type="button"
-                    onClick={() => setSelectedPlan(plan.id)}
+                    onClick={() => setSelectedPlan(planId)}
                     className={`rounded-xl border p-4 text-left transition ${
-                      selectedPlan === plan.id
+                      selectedPlan === planId
                         ? "border-[#22D9A0] bg-[#22D9A0]/10"
                         : "border-white/10 bg-[#13131c] hover:border-white/20"
                     }`}
                   >
                     <p className="font-heading text-base font-bold">{plan.name}</p>
-                    <p className="mt-1 text-sm font-bold text-[#22D9A0]">{plan.price}</p>
-                    <p className="mt-2 text-xs leading-5 text-zinc-500">{plan.features}</p>
+                    <p className="mt-1 font-heading text-xl font-extrabold" style={{ color: plan.color }}>
+                      {plan.priceDisplay}{plan.period}
+                    </p>
+                    <span className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-zinc-300">
+                      👥 {plan.usersDisplay}
+                    </span>
+                    <p className="mt-2 text-xs leading-5 text-zinc-500">{plan.description}</p>
                     <p className="mt-3 text-xs font-bold text-[#F5A623]">
-                      Commission {plan.commission}
+                      Commission {planCommissions[planId]}
                     </p>
                   </button>
-                ))}
+                  );
+                })}
               </div>
               {errors.plan ? <p className="mt-2 text-xs text-[#FF6B6B]">{errors.plan}</p> : null}
             </section>
