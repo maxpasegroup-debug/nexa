@@ -2,8 +2,6 @@ import OpenAI from "openai";
 
 import { prisma } from "@/lib/prisma";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 type AnalysisPattern = {
   type?: "warning" | "tip" | "alert";
   title?: string;
@@ -25,6 +23,12 @@ function companyLabel(lead: { company: string | null; name: string }) {
 
 function parseAnalysis(raw: string): AnalysisResult {
   return JSON.parse(raw.replace(/```json|```/g, "").trim()) as AnalysisResult;
+}
+
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  return new OpenAI({ apiKey });
 }
 
 export async function analyseNotes(userId: string): Promise<void> {
@@ -50,6 +54,12 @@ export async function analyseNotes(userId: string): Promise<void> {
   );
 
   if (allNotes.length === 0) return;
+
+  const openai = getOpenAIClient();
+  if (!openai) {
+    console.warn("NEXA BDM analysis skipped: OPENAI_API_KEY is not configured.");
+    return;
+  }
 
   const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
   const coldLeads = leads.filter(
