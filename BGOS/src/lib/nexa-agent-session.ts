@@ -1,7 +1,5 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 export const AGENT_QUESTIONS: Record<string, string[]> = {
   "sales-booster": [
     "WhatsApp Business number to connect?",
@@ -116,6 +114,8 @@ export async function generateAgentNexaResponse(
       isComplete: isLastQuestion,
     };
   }
+
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const prompt = `You are NEXA, collecting integration requirements for the ${agentSlug} agent.
 
