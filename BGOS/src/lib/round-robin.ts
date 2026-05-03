@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
-async function getBGOSBDMs() {
+async function getBGOSUsers(role: "BDM" | "SDE") {
   const owner = await prisma.user.findFirst({
     where: { email: "boss@bgos.online" },
     select: { businessId: true },
@@ -13,7 +13,7 @@ async function getBGOSBDMs() {
   return prisma.user.findMany({
     where: {
       businessId: owner.businessId,
-      role: "BDM",
+      role,
       active: true,
     },
     orderBy: { createdAt: "asc" },
@@ -22,7 +22,7 @@ async function getBGOSBDMs() {
 }
 
 export async function getNextBDM(trackerType: string) {
-  const bdms = await getBGOSBDMs();
+  const bdms = await getBGOSUsers(trackerType.includes("SDE") ? "SDE" : "BDM");
   if (bdms.length === 0) return null;
 
   return prisma.$transaction(

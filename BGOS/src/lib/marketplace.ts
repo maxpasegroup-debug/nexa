@@ -138,6 +138,14 @@ export type RazorpaySubscription = {
   short_url?: string;
 };
 
+export type RazorpayPaymentLink = {
+  id: string;
+  short_url?: string;
+  status?: string;
+  amount: number;
+  currency: string;
+};
+
 export async function createRazorpayOrder({
   amount,
   receipt,
@@ -153,6 +161,37 @@ export async function createRazorpayOrder({
     receipt,
     notes,
   });
+}
+
+export async function createRazorpayPaymentLink({
+  amount,
+  description,
+  customer,
+  notes,
+}: {
+  amount: number;
+  description: string;
+  customer: { name: string; email?: string | null; contact?: string | null };
+  notes: Record<string, string>;
+}) {
+  return razorpayRequest<RazorpayPaymentLink>("/payment_links", {
+    amount: Math.round(amount * 100),
+    currency: "INR",
+    accept_partial: false,
+    description,
+    customer: {
+      name: customer.name,
+      ...(customer.email ? { email: customer.email } : {}),
+      ...(customer.contact ? { contact: customer.contact.replace(/[^\d+]/g, "") } : {}),
+    },
+    notify: { sms: Boolean(customer.contact), email: Boolean(customer.email) },
+    reminder_enable: true,
+    notes,
+  });
+}
+
+export function razorpayKeyId() {
+  return process.env.RAZORPAY_KEY_ID ?? null;
 }
 
 export function verifyRazorpaySignature({

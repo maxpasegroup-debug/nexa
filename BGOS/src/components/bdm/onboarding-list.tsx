@@ -28,6 +28,35 @@ function location(lead: SimpleLead) {
 }
 
 function sessionState(lead: SimpleLead) {
+  if (lead.agentInterest) {
+    return {
+      icon: "⚡",
+      started: "Agent upsell · Payment pending",
+      body: (
+        <>
+          <p>Focus Point — {lead.agentInterest}</p>
+          <p>This is a lightweight agent integration, not a full workspace build.</p>
+        </>
+      ),
+      actions: (
+        <>
+          <Link
+            href="/bdm/leads"
+            className="flex-1 rounded-xl bg-[#F5A623] px-3 py-2 text-center text-xs font-extrabold text-black"
+          >
+            Send payment link
+          </Link>
+          <Link
+            href="/bdm/leads"
+            className="flex-1 rounded-xl border border-white/10 px-3 py-2 text-center text-xs font-bold text-zinc-200"
+          >
+            View session
+          </Link>
+        </>
+      ),
+    };
+  }
+
   const status = lead.onboardingSession?.status ?? "COLLECTING";
   const score = lead.onboardingSession?.completenessScore ?? 0;
 

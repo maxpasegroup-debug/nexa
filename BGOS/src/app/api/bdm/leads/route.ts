@@ -42,6 +42,8 @@ function agentColor(agentName?: string | null) {
   if (!agentName) return null;
   if (/wazzup/i.test(agentName)) return "#25D366";
   if (/sales booster/i.test(agentName)) return "#7C6FFF";
+  if (/sales-booster/i.test(agentName)) return "#7C6FFF";
+  if (/peopledesk|careloop|stocksense/i.test(agentName)) return "#22D9A0";
   return "#F5A623";
 }
 
@@ -55,6 +57,7 @@ export async function GET(request: Request) {
     const bdmStatus = searchParams.get("bdmStatus") ?? searchParams.get("status");
     const search = searchParams.get("search");
     const source = searchParams.get("source");
+    const type = searchParams.get("type");
     const overdue = searchParams.get("overdue") === "true";
     const excludeOnboarding = searchParams.get("excludeOnboarding") === "true";
     const today = todayBounds();
@@ -76,6 +79,11 @@ export async function GET(request: Request) {
         ...(isBdmLeadStatus(bdmStatus) ? { bdmStatus } : {}),
         ...(excludeOnboarding ? { bdmStatus: { notIn: ["ONBOARDING" as const] } } : {}),
         ...sourceFilter(source),
+        ...(type === "agent_upsell"
+          ? { agentInterest: { not: null } }
+          : type === "new_customer"
+            ? { agentInterest: null }
+            : {}),
         ...(overdue ? { followUpDate: { lt: today.start } } : {}),
       },
       include: {
@@ -112,7 +120,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       leads: sortedLeads.map((lead) => {
-        const interest = parseAgentInterest(lead.notes);
+        const interest = lead.agentInterest ?? parseAgentInterest(lead.notes);
         return {
           ...lead,
           agentInterest: interest,

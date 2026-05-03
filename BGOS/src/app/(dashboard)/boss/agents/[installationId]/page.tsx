@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { marketplaceStatusClass, marketplaceStatusLabel } from "@/lib/marketplace-status";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { AgentPaymentCard } from "@/components/boss/agent-payment-card";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +56,8 @@ export default async function BossAgentDetailPage({
 
   const installation = await prisma.agentInstallation.findFirst({
     where: {
-      id: params.installationId,
       businessId: user.businessId,
+      OR: [{ id: params.installationId }, { agent: { slug: params.installationId } }],
     },
     include: {
       agent: true,
@@ -67,6 +68,7 @@ export default async function BossAgentDetailPage({
 
   const isUiAgent = installation.agent.type === "UI";
   const features = featuresFor(installation.agent.features);
+  const locked = installation.status === "AWAITING_PAYMENT" || installation.status === "PENDING";
 
   return (
     <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
@@ -127,7 +129,23 @@ export default async function BossAgentDetailPage({
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          {locked ? (
+            <AgentPaymentCard
+              agent={{
+                id: installation.agent.id,
+                name: installation.agent.name,
+                icon: installation.agent.icon,
+                colorPrimary: installation.agent.colorPrimary,
+                onboardingFee: installation.agent.onboardingFee,
+                monthlyFee: installation.agent.monthlyFee,
+              }}
+              businessId={user.businessId}
+              orderId={installation.razorpaySetupId}
+              keyId={process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID ?? null}
+            />
+          ) : null}
+
+          {!locked ? <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
             <div className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-[#22D9A0]" />
@@ -192,9 +210,9 @@ export default async function BossAgentDetailPage({
                 </div>
               </div>
             </div>
-          </section>
+          </section> : null}
 
-          <section className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
+          {!locked ? <section className="rounded-2xl border border-white/10 bg-[#13131c] p-6">
             {isUiAgent ? (
               <div>
                 <h2 className="font-heading text-lg font-extrabold text-white">
@@ -214,7 +232,7 @@ export default async function BossAgentDetailPage({
                 </p>
               </div>
             )}
-          </section>
+          </section> : null}
         </div>
       </main>
     </div>

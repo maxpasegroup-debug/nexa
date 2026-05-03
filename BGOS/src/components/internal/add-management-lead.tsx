@@ -8,8 +8,9 @@ type Bdm = { id: string; name: string; email: string };
 
 const sources = [
   { label: "Management network", value: "MANAGEMENT_NETWORK" },
-  { label: "Management referral", value: "MANAGEMENT_REFERRAL" },
-  { label: "Management partner", value: "MANAGEMENT_PARTNER" },
+  { label: "Personal referral", value: "PERSONAL_REFERRAL" },
+  { label: "Partner", value: "MANAGEMENT_PARTNER" },
+  { label: "Event", value: "EVENT" },
 ];
 
 export function AddManagementLead({ onCreated }: { onCreated?: () => void }) {
@@ -17,6 +18,7 @@ export function AddManagementLead({ onCreated }: { onCreated?: () => void }) {
   const [bdms, setBdms] = useState<Bdm[]>([]);
   const [loading, setLoading] = useState(false);
   const [decision, setDecision] = useState("");
+  const [assignmentMode, setAssignmentMode] = useState<"nexa" | "bdm">("nexa");
 
   useEffect(() => {
     if (!open) return;
@@ -36,6 +38,7 @@ export function AddManagementLead({ onCreated }: { onCreated?: () => void }) {
       body: JSON.stringify({
         leadType: "MANAGEMENT",
         createdByType: "OWNER",
+        createdById: "OWNER",
         company: String(form.get("company") ?? ""),
         name: String(form.get("name") ?? ""),
         phone: String(form.get("phone") ?? ""),
@@ -45,9 +48,10 @@ export function AddManagementLead({ onCreated }: { onCreated?: () => void }) {
         companySize: String(form.get("teamSize") ?? ""),
         source: String(form.get("source") ?? "MANAGEMENT_NETWORK"),
         leadSource: String(form.get("source") ?? "MANAGEMENT_NETWORK"),
-        assignedTo: String(form.get("assignedTo") ?? "") || undefined,
+        assignedTo: assignmentMode === "bdm" ? String(form.get("assignedTo") ?? "") || undefined : undefined,
         managementNotes: String(form.get("managementNotes") ?? ""),
         ownerVisible: true,
+        commissionMultiplier: 0.7,
         initialNotes: [
           `Location: ${String(form.get("location") ?? "")}`,
           `Industry: ${String(form.get("industry") ?? "")}`,
@@ -80,13 +84,13 @@ export function AddManagementLead({ onCreated }: { onCreated?: () => void }) {
         onClick={() => setOpen(true)}
         className="rounded-xl bg-[#22D9A0] px-4 py-2 text-sm font-bold text-black"
       >
-        Add management lead
+        🎯 Add management lead
       </button>
       {open ? (
         <div className="fixed inset-0 z-50 bg-black/60">
           <aside className="ml-auto h-full w-full max-w-[520px] overflow-y-auto border-l border-white/10 bg-[#101016] p-5 text-white">
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-xl font-bold">Add management lead</h2>
+              <h2 className="font-heading text-xl font-bold">🎯 Add management lead</h2>
               <button onClick={() => setOpen(false)} className="text-zinc-400">Close</button>
             </div>
             {decision ? (
@@ -111,10 +115,21 @@ export function AddManagementLead({ onCreated }: { onCreated?: () => void }) {
               ))}
               <label className="block">
                 <span className="text-xs font-bold text-zinc-400">Assignment</span>
-                <select name="assignedTo" defaultValue="" className="mt-1 w-full rounded-xl border border-white/10 bg-[#0e0e13] px-4 py-3 text-sm">
-                  <option value="">Let NEXA decide</option>
-                  {bdms.map((bdm) => <option key={bdm.id} value={bdm.id}>{bdm.name}</option>)}
-                </select>
+                <div className="mt-2 grid gap-2">
+                  <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#0e0e13] px-4 py-3 text-sm">
+                    <input type="radio" checked={assignmentMode === "nexa"} onChange={() => setAssignmentMode("nexa")} />
+                    Let NEXA decide
+                  </label>
+                  <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#0e0e13] px-4 py-3 text-sm">
+                    <input type="radio" checked={assignmentMode === "bdm"} onChange={() => setAssignmentMode("bdm")} />
+                    Assign to specific BDM
+                  </label>
+                </div>
+                {assignmentMode === "bdm" ? (
+                  <select name="assignedTo" defaultValue="" className="mt-2 w-full rounded-xl border border-white/10 bg-[#0e0e13] px-4 py-3 text-sm">
+                    {bdms.map((bdm) => <option key={bdm.id} value={bdm.id}>{bdm.name}</option>)}
+                  </select>
+                ) : null}
               </label>
               <label className="block">
                 <span className="text-xs font-bold text-zinc-400">Source</span>
@@ -123,7 +138,7 @@ export function AddManagementLead({ onCreated }: { onCreated?: () => void }) {
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-bold text-zinc-400">Context for the BDM</span>
+                <span className="text-xs font-bold text-zinc-400">Why is this a good fit? How do you know this company? This note is visible to the BDM.</span>
                 <textarea name="managementNotes" rows={5} className="mt-1 w-full rounded-xl border border-white/10 bg-[#0e0e13] px-4 py-3 text-sm" />
               </label>
               <button disabled={loading} className="w-full rounded-xl bg-[#22D9A0] px-4 py-3 text-sm font-extrabold text-black disabled:opacity-60">

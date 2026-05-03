@@ -77,6 +77,27 @@ export default async function SdeWorkspacesPage() {
     pipelineCount: Array.isArray(build.pipelineData) ? build.pipelineData.length : 0,
   }));
 
+  const agentIntegrations = await prisma.agentInstallation.findMany({
+    where: { sdeAssignedId: user.id, status: "SDE_BUILDING" },
+    include: {
+      agent: { select: { slug: true, name: true, icon: true, colorPrimary: true } },
+      business: { select: { id: true, clientId: true, name: true, plan: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  const serializedAgentIntegrations = agentIntegrations.map((item) => ({
+    id: item.id,
+    status: item.status,
+    updatedAt: item.updatedAt.toISOString(),
+    customConfig:
+      item.customConfig && typeof item.customConfig === "object" && !Array.isArray(item.customConfig)
+        ? (item.customConfig as Record<string, unknown>)
+        : {},
+    agent: item.agent,
+    business: item.business,
+  }));
+
   return (
     <>
       <div className="show-mobile hidden">
@@ -86,6 +107,7 @@ export default async function SdeWorkspacesPage() {
         <WorkspaceBuildsPage
       user={{ id: user.id, name: user.name, role: user.role, businessName: user.business.name }}
       builds={serializedBuilds}
+      agentIntegrations={serializedAgentIntegrations}
         />
       </div>
     </>

@@ -1,4 +1,5 @@
 export type MarketplaceLifecycleStatus =
+  | "awaiting_payment"
   | "pending"
   | "paid"
   | "activating"
@@ -7,6 +8,8 @@ export type MarketplaceLifecycleStatus =
 
 export function marketplaceLifecycleStatus(status: string): MarketplaceLifecycleStatus {
   switch (status.toUpperCase()) {
+    case "AWAITING_PAYMENT":
+      return "awaiting_payment";
     case "PAYMENT_DONE":
       return "paid";
     case "SDE_BUILDING":
@@ -28,6 +31,8 @@ export function marketplaceStatusLabel(status: string) {
 
 export function marketplaceStatusClass(status: string) {
   switch (marketplaceLifecycleStatus(status)) {
+    case "awaiting_payment":
+      return "border-[#F5A623]/30 bg-[#F5A623]/10 text-[#F5A623]";
     case "active":
       return "border-[#22D9A0]/30 bg-[#22D9A0]/10 text-[#22D9A0]";
     case "paid":

@@ -93,7 +93,7 @@ export default async function BossAppsPage() {
             <section className="grid gap-4 xl:grid-cols-2">
               {installations.map((installation) => {
                 const isUiAgent = installation.agent.type === "UI";
-                const href = `/boss/agents/${installation.id}`;
+                const href = `/boss/agents/${installation.agent.slug}`;
 
                 return (
                   <article

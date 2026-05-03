@@ -20,25 +20,25 @@ export async function GET() {
     const installations = await prisma.agentInstallation.findMany({
       where: {
         businessId,
-        status: "ACTIVE",
+        status: { in: ["AWAITING_PAYMENT", "PENDING", "PAYMENT_DONE", "SDE_BUILDING", "ACTIVE"] },
         agent: {
           isActive: true,
-          type: "UI",
         },
       },
       select: {
         id: true,
+        status: true,
         agent: {
           select: {
             id: true,
             slug: true,
             name: true,
+            icon: true,
+            type: true,
           },
         },
       },
-      orderBy: {
-        activeFrom: "desc",
-      },
+      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
     });
 
     return NextResponse.json({
@@ -47,7 +47,10 @@ export async function GET() {
         installationId: installation.id,
         name: installation.agent.name,
         slug: installation.agent.slug,
-        href: `/boss/marketplace?agent=${encodeURIComponent(installation.agent.slug)}`,
+        icon: installation.agent.icon,
+        type: installation.agent.type,
+        status: installation.status,
+        href: `/boss/agents/${encodeURIComponent(installation.agent.slug)}`,
       })),
     });
   } catch (error) {

@@ -59,10 +59,32 @@ const STATUS_OPTIONS = [
   dot: string;
 }>;
 
-const leadTypeBadges = {
-  PLATFORM: { label: "Platform lead", color: "#7C6FFF", bg: "rgba(124,111,255,0.1)" },
-  MANAGEMENT: { label: "Management lead", color: "#22D9A0", bg: "rgba(34,217,160,0.08)" },
-  SELF: { label: "Self-generated", color: "#F5A623", bg: "rgba(245,166,35,0.08)" },
+const SOURCE_BADGES: Record<string, { label: string; color: string; bg: string }> = {
+  LANDING_PAGE: { label: "🌐 Website", color: "#7C6FFF", bg: "rgba(124,111,255,0.1)" },
+  WEBSITE: { label: "🌐 Website", color: "#7C6FFF", bg: "rgba(124,111,255,0.1)" },
+  MARKETPLACE: { label: "⚡ Marketplace", color: "#7C6FFF", bg: "rgba(124,111,255,0.1)" },
+  COLD_CALL: { label: "📞 Cold call", color: "#6B6878", bg: "rgba(107,104,120,0.1)" },
+  WHATSAPP_OUTREACH: { label: "💬 WhatsApp", color: "#25D366", bg: "rgba(37,211,102,0.08)" },
+  COLD_WHATSAPP: { label: "💬 WhatsApp", color: "#25D366", bg: "rgba(37,211,102,0.08)" },
+  WHATSAPP: { label: "💬 WhatsApp", color: "#25D366", bg: "rgba(37,211,102,0.08)" },
+  LINKEDIN: { label: "💼 LinkedIn", color: "#0A66C2", bg: "rgba(10,102,194,0.1)" },
+  PERSONAL_REFERRAL: { label: "🤝 Referral", color: "#F5A623", bg: "rgba(245,166,35,0.1)" },
+  FIELD_VISIT: { label: "🚶 Field visit", color: "#22D9A0", bg: "rgba(34,217,160,0.08)" },
+  MANAGEMENT_NETWORK: { label: "🎯 Management", color: "#22D9A0", bg: "rgba(34,217,160,0.1)" },
+};
+
+const AGENTS: Record<string, { icon: string; name: string; color: string }> = {
+  "sales-booster": { icon: "⚡", name: "Sales Booster", color: "#7C6FFF" },
+  "sales booster": { icon: "⚡", name: "Sales Booster", color: "#7C6FFF" },
+  wazzup: { icon: "💬", name: "Wazzup", color: "#25D366" },
+  taxmate: { icon: "🧾", name: "TaxMate", color: "#F5A623" },
+  peopledesk: { icon: "👥", name: "PeopleDesk", color: "#22D9A0" },
+  sitesync: { icon: "🏗️", name: "SiteSync", color: "#7C6FFF" },
+  careloop: { icon: "🏥", name: "CareLoop", color: "#22D9A0" },
+  eduflow: { icon: "🎓", name: "EduFlow", color: "#F5A623" },
+  classmate: { icon: "🏫", name: "ClassMate", color: "#7C6FFF" },
+  proppilot: { icon: "🏢", name: "PropPilot", color: "#F5A623" },
+  stocksense: { icon: "🏪", name: "StockSense", color: "#22D9A0" },
 };
 
 function timeAgo(value: string) {
@@ -109,6 +131,18 @@ function formatFollowUp(value?: string | null, time?: string | null) {
   })}${time ? `, ${time}` : ""}`;
 }
 
+function normalizeSource(value?: string | null) {
+  return String(value ?? "").trim().toUpperCase();
+}
+
+function agentDetails(value?: string | null, fallbackColor?: string | null) {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  const known = AGENTS[normalized] ?? AGENTS[normalized.replace(/\s+/g, "-")];
+  if (known) return known;
+  return { icon: "⚡", name: value, color: fallbackColor ?? "#7C6FFF" };
+}
+
 export function SimpleLeadCard({
   lead,
   onStatusChange,
@@ -128,10 +162,12 @@ export function SimpleLeadCard({
   const visibleNotes = lead.callNotes.slice(0, 3);
   const companyName = lead.company || lead.name;
   const contactLine = [lead.name, lead.email].filter(Boolean).join(" · ");
-  const isMarketplaceLead = String(lead.source ?? "").toLowerCase() === "marketplace";
+  const sourceKey = normalizeSource(lead.leadSource ?? lead.source);
+  const sourceBadgeData = SOURCE_BADGES[sourceKey];
+  const isMarketplaceLead = sourceKey === "MARKETPLACE";
   const leadType = lead.leadType ?? "SELF";
-  const leadTypeBadge = leadTypeBadges[leadType];
   const agentInterest = lead.agentInterest ?? null;
+  const agent = agentDetails(agentInterest, lead.agentColor);
   const currentStatus =
     STATUS_OPTIONS.find((status) => status.value === lead.bdmStatus) ?? STATUS_OPTIONS[0];
   const marketplaceWhatsappText =
@@ -227,13 +263,21 @@ export function SimpleLeadCard({
         <div className="min-w-0">
           <h3 className="font-heading text-[15px] font-bold text-white">{companyName}</h3>
           <p className="mt-1 text-xs text-zinc-500">{contactLine || "No contact details"}</p>
-          <span
-            className="mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-extrabold"
-            style={{ color: leadTypeBadge.color, backgroundColor: leadTypeBadge.bg }}
-          >
-            {leadTypeBadge.label}
-          </span>
-          {sourceBadge}
+          {sourceBadgeData ? (
+            <span
+              className="mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-extrabold"
+              style={{ color: sourceBadgeData.color, backgroundColor: sourceBadgeData.bg }}
+            >
+              {sourceBadgeData.label}
+            </span>
+          ) : (
+            sourceBadge
+          )}
+          {leadType === "PLATFORM" && agent ? (
+            <p className="mt-1 text-xs font-bold" style={{ color: agent.color }}>
+              Interested in: {agent.icon} {agent.name}
+            </p>
+          ) : null}
         </div>
         <div ref={dropdownRef} className="relative shrink-0">
           <button
@@ -293,25 +337,6 @@ export function SimpleLeadCard({
       {leadType === "MANAGEMENT" && lead.managementNotes ? (
         <div className="mt-3 rounded-xl border border-[#22D9A0]/25 bg-[#22D9A0]/10 px-3 py-2 text-xs leading-5 text-[#bfffe8]">
           <strong className="text-[#22D9A0]">Context from management:</strong> {lead.managementNotes}
-        </div>
-      ) : null}
-
-      {leadType === "PLATFORM" ? (
-        <div className="mt-3 rounded-xl border border-[#7C6FFF]/25 bg-[#7C6FFF]/10 px-3 py-2 text-xs text-[#c8c2ff]">
-          From: {agentInterest ? `${agentInterest} marketplace` : lead.leadSource ?? lead.source ?? "Platform"}
-        </div>
-      ) : null}
-
-      {isMarketplaceLead && agentInterest ? (
-        <div
-          className="mt-3 rounded-xl border px-3 py-2 text-sm font-extrabold"
-          style={{
-            borderColor: `${lead.agentColor ?? "#7C6FFF"}55`,
-            color: lead.agentColor ?? "#c6c1ff",
-            backgroundColor: `${lead.agentColor ?? "#7C6FFF"}12`,
-          }}
-        >
-          Interested in: {agentInterest}
         </div>
       ) : null}
 

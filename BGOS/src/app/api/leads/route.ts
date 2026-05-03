@@ -73,6 +73,10 @@ export async function GET(request: Request) {
               role: true,
             },
           },
+          callNotes: {
+            orderBy: { createdAt: "desc" },
+            take: 3,
+          },
         },
         orderBy: { updatedAt: "desc" },
         skip,
@@ -149,8 +153,13 @@ export async function POST(request: Request) {
           ? body.assignedTo
           : undefined;
     let assignmentDecision: { bdmId: string; bdmName: string; reason: string } | null = null;
+    const isBdmMarketplaceUpsell =
+      context.user.role === "BDM" &&
+      leadType === "PLATFORM" &&
+      source === "MARKETPLACE" &&
+      typeof body.customerBusinessId === "string";
 
-    if (leadType === "PLATFORM") {
+    if (leadType === "PLATFORM" && !isBdmMarketplaceUpsell) {
       const nextBDM = await getNextBDM(context.businessId);
       assignedTo = nextBDM.id;
       assignmentDecision = {
@@ -158,6 +167,8 @@ export async function POST(request: Request) {
         bdmName: nextBDM.name,
         reason: "Round-robin platform lead assignment by current active lead load.",
       };
+    } else if (isBdmMarketplaceUpsell) {
+      assignedTo = context.user.id;
     } else if (leadType === "SELF") {
       assignedTo = context.user.id;
     } else if (leadType === "MANAGEMENT" && !assignedTo) {

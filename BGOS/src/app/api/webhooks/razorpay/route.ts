@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { transitionBusinessStatus } from "@/lib/business-status";
 import { notifyRenewalFailed } from "@/lib/churn-notifications";
 import { createAgentCommission, createPlanCommission } from "@/lib/commission-engine";
+import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { sendEmployeeWelcomeEmails } from "@/lib/welcome-emails";
 
@@ -71,10 +72,71 @@ async function handleCaptured(payment?: RazorpayEntity) {
   }
 
   if (paymentType === "AGENT_ONBOARDING") {
-    await markAgentInstallationPaid({
-      businessId,
-      agentSlug: notes.agentSlug,
-      onboardingFeePaid: true,
+    const agentSlug = notes.agentSlug;
+    const sessionId = notes.sessionId;
+    const amount = payment?.amount ? payment.amount / 100 : 0;
+
+    if (!agentSlug) return;
+
+    await prisma.agentInstallation.updateMany({
+      where: { businessId, agent: { slug: agentSlug } },
+      data: {
+        onboardingFeePaid: true,
+        monthlyFeePaid: true,
+        status: "PAYMENT_DONE",
+      },
+    });
+
+    if (notes.monthlyFee) {
+      await createAgentCommission({
+        businessId,
+        agentSlug,
+        razorpayPaymentId: payment?.id ?? "",
+        isFirstPayment: true,
+      });
+    }
+
+    const { getNextBDM } = await import("@/lib/round-robin");
+    const sde = await getNextBDM("SUPPORT_SDE");
+
+    await prisma.agentInstallation.updateMany({
+      where: { businessId, agent: { slug: agentSlug } },
+      data: {
+        sdeAssignedId: sde?.id,
+        status: sde ? "SDE_BUILDING" : "PAYMENT_DONE",
+      },
+    });
+
+    if (sde) {
+      await Promise.allSettled([
+        prisma.task.create({
+          data: {
+            title: `Integrate ${agentSlug} for ${businessId}`,
+            assignedTo: sde.id,
+            priority: "HIGH",
+            dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            description: `Payment confirmed. Integrate ${agentSlug} agent into this customer's existing workspace. Session data: ${sessionId ?? "not provided"}`,
+            type: "AGENT_INTEGRATION",
+          },
+        }),
+        sendEmail({
+          to: sde.email,
+          toName: sde.name,
+          subject: `🔧 Agent integration job — ${agentSlug} for business ${businessId}`,
+          html: `<p>Payment confirmed. Please integrate ${agentSlug} into this customer's workspace within 24 hours. Check your /sde/workspaces dashboard for the full brief.</p>`,
+        }),
+      ]);
+    }
+
+    await prisma.nexaInsight.create({
+      data: {
+        businessId,
+        type: "AGENT_PAYMENT_CONFIRMED",
+        title: `Payment confirmed — ${agentSlug} integration starting`,
+        content: `Your payment of ₹${amount.toLocaleString("en-IN")} has been received. Our team will integrate ${agentSlug} into your workspace within 24 hours.`,
+        message: `Payment confirmed for ${agentSlug}. Integration starts now.`,
+        priority: "HIGH",
+      },
     });
     return;
   }

@@ -14,10 +14,18 @@ type ManagementLead = {
   lastContactedAt?: string | null;
   assignee?: { name: string } | null;
   managementNotes?: string | null;
+  callNotes?: Array<{ content: string }>;
 };
 
-function daysSince(date: string) {
-  return Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
+function hoursSince(date: string) {
+  return Math.floor((Date.now() - new Date(date).getTime()) / 3_600_000);
+}
+
+function noteValue(lead: ManagementLead, label: string) {
+  const prefix = `${label}:`;
+  const text = lead.callNotes?.map((note) => note.content).join("\n") ?? "";
+  const line = text.split(/\r?\n/).find((item) => item.toLowerCase().startsWith(prefix.toLowerCase()));
+  return line?.slice(prefix.length).trim() ?? "-";
 }
 
 export function ManagementLeadsSection() {
@@ -51,31 +59,28 @@ export function ManagementLeadsSection() {
           <thead className="text-xs uppercase text-zinc-500">
             <tr className="border-b border-white/10">
               <th className="pb-3">Company</th>
-              <th className="pb-3">Assigned to</th>
+              <th className="pb-3">Industry</th>
+              <th className="pb-3">Assigned BDM</th>
               <th className="pb-3">Status</th>
-              <th className="pb-3">Days assigned</th>
-              <th className="pb-3">Last contact</th>
-              <th className="pb-3">Signal</th>
+              <th className="pb-3">SLA</th>
+              <th className="pb-3">Last contact logged</th>
+              <th className="pb-3">Action</th>
             </tr>
           </thead>
           <tbody>
             {leads.map((lead) => {
-              const age = daysSince(lead.createdAt);
-              const tone = lead.slaBreached
-                ? "text-[#FF6B6B]"
-                : lead.bdmStatus === "ONBOARDING"
-                  ? "text-[#22D9A0]"
-                  : !lead.lastContactedAt && age >= 3
-                    ? "text-[#F5A623]"
-                    : "text-zinc-300";
+              const hours = hoursSince(lead.createdAt);
+              const contacted = Boolean(lead.lastContactedAt);
+              const tone = contacted && hours <= 1 ? "text-[#22D9A0]" : hours >= 4 ? "text-[#FF6B6B]" : "text-[#F5A623]";
               return (
                 <tr key={lead.id} className="border-b border-white/5">
                   <td className="py-3 font-bold text-white">{lead.company ?? lead.name}</td>
+                  <td className="text-zinc-400">{noteValue(lead, "Industry")}</td>
                   <td className="text-zinc-400">{lead.assignee?.name ?? "Unassigned"}</td>
                   <td>{lead.bdmStatus}</td>
-                  <td>{age}</td>
+                  <td className={tone}>{hours < 1 ? "<1h" : `${hours}h`}</td>
                   <td className="text-zinc-500">{lead.lastContactedAt ? new Date(lead.lastContactedAt).toLocaleDateString("en-IN") : "No contact"}</td>
-                  <td className={tone}>{lead.slaBreached ? "SLA breached" : lead.bdmStatus === "ONBOARDING" ? "Converted" : age === 0 ? "Assigned today" : age >= 3 && !lead.lastContactedAt ? "No contact 3+ days" : "On track"}</td>
+                  <td><button type="button" onClick={() => alert(`${lead.company ?? lead.name}\n\n${lead.managementNotes ?? "No management notes."}`)} className="text-[#7C6FFF]">Open</button></td>
                 </tr>
               );
             })}

@@ -14,8 +14,8 @@ import {
   CheckSquare,
   DollarSign,
   GitBranch,
-  Layers,
   LayoutDashboard,
+  Lock,
   LogOut,
   Mail,
   Phone,
@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Users,
   Wrench,
+  Clock3,
 } from "lucide-react";
 
 type SidebarProps = {
@@ -44,6 +45,8 @@ type InstalledUiAgent = {
   installationId: string;
   name: string;
   slug: string;
+  icon?: string | null;
+  status?: string;
   href: string;
 };
 
@@ -64,7 +67,6 @@ const roleLinks: Record<string, NavItem[]> = {
     { label: "🧠 Onboarding", href: "/bdm/onboarding", icon: Brain },
     { label: "🏢 My Customers", href: "/bdm/customers", icon: Building2 },
     { label: "Earnings", href: "/bdm/commission", icon: DollarSign },
-    { label: "🛒 Marketplace leads", href: "/bdm/marketplace-leads", icon: ShoppingCart },
     { label: "Tasks", href: "/bdm/tasks", icon: CheckSquare },
     { label: "Performance", href: "/bdm/performance", icon: TrendingUp },
     { label: "Call Log", href: "/bdm/calls", icon: Phone },
@@ -144,15 +146,9 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
   const [earningsTotal, setEarningsTotal] = useState<number | null>(null);
   const [onboardingCount, setOnboardingCount] = useState(0);
   const [customerAtRiskCount, setCustomerAtRiskCount] = useState(0);
-  const [marketplaceLeadCount, setMarketplaceLeadCount] = useState(0);
   const [pendingBuilds, setPendingBuilds] = useState(0);
   const [installedUiAgents, setInstalledUiAgents] = useState<InstalledUiAgent[]>([]);
   const marketplaceRecommendations = role === "BOSS" || role === "OWNER" ? 1 : 0;
-  const agentLinks = installedUiAgents.map((agent): NavItem => ({
-    label: agent.name,
-    href: agent.href,
-    icon: Layers,
-  }));
 
   useEffect(() => {
     function toggle() {
@@ -215,34 +211,6 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
 
     void fetchCustomerAlerts();
     const interval = window.setInterval(() => void fetchCustomerAlerts(), 60_000);
-    return () => window.clearInterval(interval);
-  }, [role]);
-
-  useEffect(() => {
-    if (role !== "BDM") return;
-
-    async function fetchMarketplaceLeadCount() {
-      const response = await fetch("/api/bdm/leads?source=marketplace", {
-        cache: "no-store",
-      });
-      if (!response.ok) return;
-      const data = (await response.json()) as {
-        leads?: Array<{ bdmStatus?: string; createdAt?: string }>;
-      };
-      const today = new Date().toDateString();
-      const count =
-        data.leads?.filter((lead) => {
-          const isNew = lead.bdmStatus === "NEW";
-          const createdToday = lead.createdAt
-            ? new Date(lead.createdAt).toDateString() === today
-            : false;
-          return isNew && createdToday;
-        }).length ?? 0;
-      setMarketplaceLeadCount(count);
-    }
-
-    void fetchMarketplaceLeadCount();
-    const interval = window.setInterval(() => void fetchMarketplaceLeadCount(), 60_000);
     return () => window.clearInterval(interval);
   }, [role]);
 
@@ -337,7 +305,6 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
           const isEarnings = item.href === "/bdm/commission";
           const isOnboarding = item.href === "/bdm/onboarding";
           const isCustomers = item.href === "/bdm/customers";
-          const isBdmMarketplaceLeads = item.href === "/bdm/marketplace-leads";
           const isWorkspaceBuilds = item.href === "/sde/workspaces";
           const isMarketplace = item.href === "/boss/marketplace";
 
@@ -374,11 +341,6 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
                   {customerAtRiskCount > 99 ? "99+" : customerAtRiskCount}
                 </span>
               ) : null}
-              {isBdmMarketplaceLeads && marketplaceLeadCount > 0 ? (
-                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#7C6FFF] px-1 text-[10px] font-bold text-white">
-                  {marketplaceLeadCount > 99 ? "99+" : marketplaceLeadCount}
-                </span>
-              ) : null}
               {isWorkspaceBuilds && pendingBuilds > 0 ? (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#22D9A0] px-1 text-[10px] font-bold text-black">
                   {pendingBuilds > 99 ? "99+" : pendingBuilds}
@@ -392,33 +354,57 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
             </Link>
           );
         })}
-        {role === "BOSS" && agentLinks.length > 0 ? (
+        {role === "BOSS" && installedUiAgents.length > 0 ? (
           <div className="mt-5 border-t border-white/10 pt-4">
             <Link
               href="/boss/apps"
               onClick={() => setMobileOpen(false)}
               className="block px-4 pb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#6B6878] transition hover:text-white"
             >
-              Apps
+              Add-ons
             </Link>
             <div className="space-y-1">
-              {agentLinks.map((item) => {
-                const Icon = item.icon;
+              {installedUiAgents.map((item) => {
                 const active = isActive(pathname, item.href, currentHref);
+                const status = item.status ?? "ACTIVE";
+                const awaitingPayment = status === "AWAITING_PAYMENT" || status === "PENDING";
+                const inProgress = status === "PAYMENT_DONE" || status === "SDE_BUILDING";
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                    className={`flex w-full items-start gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
                       active
                         ? "border-l-2 border-[#7C6FFF] bg-[rgba(124,111,255,0.12)] text-white"
-                        : "text-[#6B6878] hover:bg-[rgba(255,255,255,0.04)]"
-                    }`}
+                        : awaitingPayment
+                          ? "text-[#F5A623]/80 opacity-70 hover:bg-[rgba(245,166,35,0.08)]"
+                          : "text-[#6B6878] hover:bg-[rgba(255,255,255,0.04)]"
+                    } ${status === "ACTIVE" ? "opacity-100" : ""}`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span className="flex-1 truncate">{item.label}</span>
+                    <span className="mt-0.5 text-base leading-none">{item.icon || "⚡"}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] text-zinc-200">{item.name}</span>
+                      <span
+                        className={`mt-0.5 block text-[10px] font-bold ${
+                          awaitingPayment
+                            ? "text-[#F5A623]"
+                            : inProgress
+                              ? "text-[#c8c2ff]"
+                              : "text-[#22D9A0]"
+                        }`}
+                      >
+                        {awaitingPayment
+                          ? "Waiting for payment"
+                          : inProgress
+                            ? "Integration in progress"
+                            : "Active"}
+                      </span>
+                    </span>
+                    {awaitingPayment ? <Lock className="mt-0.5 h-3.5 w-3.5 text-[#F5A623]" /> : null}
+                    {inProgress ? <Clock3 className="mt-0.5 h-3.5 w-3.5 text-[#c8c2ff]" /> : null}
+                    {status === "ACTIVE" ? <span className="mt-1.5 h-2 w-2 rounded-full bg-[#22D9A0]" /> : null}
                   </Link>
                 );
               })}

@@ -61,6 +61,7 @@ model User {
   sdeInstallations  AgentInstallation[] @relation("SDEInstallations")
   leadNotes         LeadNote[]    @relation("NoteAuthor")
   bdmAnalysis       NexaBDMAnalysis?
+  agentOnboardingSessions AgentOnboardingSession[] @relation("AgentOnboardingBDM")
 }
 
 enum Role {
@@ -179,6 +180,7 @@ model Business {
   trialSubscription TrialSubscription?
   pipelines        Pipeline[]
   agentInstallations AgentInstallation[]
+  agentOnboardingSessions AgentOnboardingSession[]
   dataExports    CustomerDataExport[]
 }
 
@@ -275,8 +277,29 @@ model AgentInstallation {
   @@unique([agentId, businessId])
 }
 
+model AgentOnboardingSession {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id])
+  bdmId         String
+  bdm           User     @relation("AgentOnboardingBDM", fields: [bdmId], references: [id])
+  agentSlug     String
+  messages      Json     @default("[]")
+  collectedData Json     @default("{}")
+  questionIndex Int      @default(0)
+  isComplete    Boolean  @default(false)
+  status        String   @default("IN_PROGRESS")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([bdmId])
+  @@index([agentSlug])
+}
+
 enum InstallStatus {
   PENDING
+  AWAITING_PAYMENT
   PAYMENT_DONE
   SDE_BUILDING
   ACTIVE
@@ -837,6 +860,7 @@ model Task {
   id          String     @id @default(cuid())
   title       String
   description String?
+  type        String?
   status      TaskStatus @default(TODO)
   priority    Priority   @default(MEDIUM)
   dueDate     DateTime?
