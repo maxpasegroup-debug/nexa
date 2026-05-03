@@ -1,15 +1,12 @@
-import type { BusinessStatus, CommissionType } from "@prisma/client";
-import { NextResponse } from "next/server";
+import crypto from "crypto";
 
-import { notifyRenewalFailed } from "@/lib/churn-notifications";
-import {
-  calcRenewal,
-  calculateFirstSaleCommission,
-} from "@/lib/commission";
-import { sendEmployeeWelcomeEmails } from "@/lib/welcome-emails";
-import { prisma } from "@/lib/prisma";
-import { verifyRazorpayWebhookSignature } from "@/lib/marketplace";
 import { transitionBusinessStatus } from "@/lib/business-status";
+import { notifyRenewalFailed } from "@/lib/churn-notifications";
+import { createAgentCommission, createPlanCommission } from "@/lib/commission-engine";
+import { prisma } from "@/lib/prisma";
+import { sendEmployeeWelcomeEmails } from "@/lib/welcome-emails";
+
+export const dynamic = "force-dynamic";
 
 type RazorpayEntity = {
   id?: string;
@@ -27,250 +24,164 @@ type RazorpayWebhookPayload = {
   };
 };
 
-function getWebhookSignature(request: Request) {
-  return (
-    request.headers.get("x-razorpay-signature") ??
-    request.headers.get("X-Razorpay-Signature") ??
-    ""
-  );
+function verifySignature(rawBody: string, signature: string | null) {
+  if (!signature || !process.env.RAZORPAY_WEBHOOK_SECRET) return false;
+
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
+    .update(rawBody)
+    .digest("hex");
+
+  const received = Buffer.from(signature);
+  const expected = Buffer.from(expectedSignature);
+  return received.length === expected.length && crypto.timingSafeEqual(received, expected);
 }
 
-function addDays(days: number) {
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-}
-
-async function findBusiness(entity?: RazorpayEntity) {
-  const businessId = entity?.notes?.businessId;
-  if (businessId) {
-    const business = await prisma.business.findUnique({
-      where: { id: businessId },
-      include: {
-        trialSubscription: true,
-        onboardingLead: { include: { assignedBDM: true } },
-        users: true,
-      },
-    });
-    if (business) return business;
-  }
-
-  return prisma.business.findFirst({
-    where: {
-      OR: [
-        { razorpayCustomerId: entity?.customer_id ?? "__none__" },
-        { razorpaySubscriptionId: entity?.subscription_id ?? entity?.id ?? "__none__" },
-        { razorpayMandateId: entity?.subscription_id ?? entity?.id ?? "__none__" },
-        { trialSubscription: { razorpayCustomerId: entity?.customer_id ?? "__none__" } },
-        { trialSubscription: { razorpayMandateId: entity?.subscription_id ?? entity?.id ?? "__none__" } },
-      ],
-    },
-    include: {
-      trialSubscription: true,
-      onboardingLead: { include: { assignedBDM: true } },
-      users: true,
-    },
-  });
-}
-
-async function createCommissionForPayment({
+async function markAgentInstallationPaid({
   businessId,
-  bdmId,
-  plan,
-  amount,
-  type,
+  agentSlug,
+  onboardingFeePaid,
+  monthlyFeePaid,
 }: {
   businessId: string;
-  bdmId?: string | null;
-  plan: string;
-  amount: number;
-  type: CommissionType;
+  agentSlug?: string;
+  onboardingFeePaid?: boolean;
+  monthlyFeePaid?: boolean;
 }) {
-  if (!bdmId) return;
-  const now = new Date();
-  const firstSale = calculateFirstSaleCommission(plan, {
-    commissionMultiplier: type === "FIRST_SALE" ? 1 : undefined,
-  });
-  const baseCommission = type === "FIRST_SALE" ? firstSale.base : calcRenewal(plan);
-  const multiplier = type === "FIRST_SALE" ? firstSale.multiplier : 1;
-  const commissionAmt = type === "FIRST_SALE" ? firstSale.final : calcRenewal(plan);
-  await prisma.commission.create({
+  if (!agentSlug) return;
+
+  await prisma.agentInstallation.updateMany({
+    where: { businessId, agent: { slug: agentSlug } },
     data: {
-      userId: bdmId,
-      businessId,
-      type,
-      planType: plan,
-      dealValue: amount,
-      baseCommission,
-      multiplier,
-      commissionAmt,
-      month: now.getMonth() + 1,
-      year: now.getFullYear(),
-      status: "PENDING",
+      ...(onboardingFeePaid === undefined ? {} : { onboardingFeePaid }),
+      ...(monthlyFeePaid === undefined ? {} : { monthlyFeePaid }),
+      status: "PAYMENT_DONE",
     },
   });
 }
 
-async function handleCaptured(entity?: RazorpayEntity) {
-  const business = await findBusiness(entity);
-  if (!business) return;
+async function handleCaptured(payment?: RazorpayEntity) {
+  const notes = payment?.notes ?? {};
+  const paymentType = notes.paymentType;
+  const businessId = notes.businessId;
 
-  const amount = (entity?.amount ?? business.trialSubscription?.monthlyAmount ?? 0) / (entity?.amount ? 100 : 1);
-  const plan = business.trialSubscription?.plan ?? "STARTER";
-  const wasFirstPayment = !business.firstPaymentAt;
-  const nextBillingDate = addDays(30);
-
-  if (business.status === "TRIAL" || business.status === "RENEWAL_FAILED") {
-    await transitionBusinessStatus(business.id, "ACTIVE", "Razorpay payment captured");
+  if (!businessId) {
+    console.error("[razorpay:webhook] Missing businessId in payment notes");
+    return;
   }
 
-  await prisma.business.update({
-    where: { id: business.id },
-    data: {
-      lastPaymentAt: new Date(),
-      firstPaymentAt: business.firstPaymentAt ?? new Date(),
-      nextBillingDate,
-      razorpayCustomerId: entity?.customer_id ?? business.razorpayCustomerId,
-      razorpaySubscriptionId:
-        entity?.subscription_id ?? business.razorpaySubscriptionId,
-    },
-  });
+  if (paymentType === "AGENT_ONBOARDING") {
+    await markAgentInstallationPaid({
+      businessId,
+      agentSlug: notes.agentSlug,
+      onboardingFeePaid: true,
+    });
+    return;
+  }
 
-  await prisma.trialSubscription.updateMany({
-    where: { businessId: business.id },
-    data: { status: "ACTIVE", chargedAt: new Date(), trialEndsAt: new Date() },
-  });
+  if (paymentType === "PLAN_SUBSCRIPTION") {
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: { firstPaymentAt: true },
+    });
 
-  await createCommissionForPayment({
-    businessId: business.id,
-    bdmId: business.onboardingLead?.assignedBDMId,
-    plan,
-    amount,
-    type: wasFirstPayment ? "FIRST_SALE" : "RENEWAL",
-  });
+    await createPlanCommission({
+      businessId,
+      razorpayPaymentId: payment?.id ?? "",
+      isFirstPayment: !business?.firstPaymentAt,
+    });
+    return;
+  }
 
-  await prisma.nexaInsight.create({
-    data: {
-      businessId: business.id,
-      type: "PAYMENT_RECEIVED",
-      message: `Payment of Rs ${Math.round(amount).toLocaleString("en-IN")} received. Your BGOS subscription is active.`,
-      action: "View billing",
-    },
-  });
+  if (paymentType === "AGENT_SUBSCRIPTION") {
+    const agentSlug = notes.agentSlug;
+    if (!agentSlug) return;
+
+    const existingAgentComm = await prisma.commission.findFirst({
+      where: { businessId, agentSlug, type: "AGENT_FIRST_SALE" },
+      select: { id: true },
+    });
+
+    await createAgentCommission({
+      businessId,
+      agentSlug,
+      razorpayPaymentId: payment?.id ?? "",
+      isFirstPayment: !existingAgentComm,
+    });
+
+    await markAgentInstallationPaid({
+      businessId,
+      agentSlug,
+      monthlyFeePaid: true,
+    });
+  }
 }
 
-async function handleFailed(entity?: RazorpayEntity) {
-  const business = await findBusiness(entity);
-  if (!business || business.status !== "ACTIVE") return;
+async function handleFailed(payment?: RazorpayEntity) {
+  const businessId = payment?.notes?.businessId;
+  if (!businessId) return;
 
-  const amount = (entity?.amount ?? business.trialSubscription?.monthlyAmount ?? 0) / (entity?.amount ? 100 : 1);
-  await transitionBusinessStatus(business.id, "RENEWAL_FAILED", "Razorpay payment failed");
-  await prisma.trialSubscription.updateMany({
-    where: { businessId: business.id },
-    data: { status: "FAILED" },
-  });
-  await prisma.nexaInsight.create({
-    data: {
-      businessId: business.id,
-      type: "PAYMENT_FAILED",
-      message: `Your payment of Rs ${Math.round(amount).toLocaleString("en-IN")} failed. Please contact your account manager within 3 days to avoid service interruption.`,
-      action: "Update payment",
-    },
-  });
-  await notifyRenewalFailed(business.id);
+  await transitionBusinessStatus(businessId, "RENEWAL_FAILED", "Razorpay payment failed");
+  await notifyRenewalFailed(businessId);
 }
 
-async function handleSubscriptionActivated(entity?: RazorpayEntity) {
-  const business = await findBusiness(entity);
-  if (!business) return;
+async function handleSubscriptionActivated(subscription?: RazorpayEntity) {
+  const businessId = subscription?.notes?.businessId;
+  if (!businessId) return;
 
-  const trialStartedAt = new Date();
-  const trialEndsAt = addDays(7);
-  await transitionBusinessStatus(business.id, "TRIAL", "Razorpay subscription activated");
-  await prisma.business.update({
-    where: { id: business.id },
-    data: {
-      trialStartedAt,
-      trialEndsAt,
-      razorpayCustomerId: entity?.customer_id ?? business.razorpayCustomerId,
-      razorpaySubscriptionId: entity?.id ?? business.razorpaySubscriptionId,
-      razorpayMandateId: entity?.id ?? business.razorpayMandateId,
-    },
+  await transitionBusinessStatus(businessId, "TRIAL", "Razorpay subscription activated");
+  await prisma.user.updateMany({
+    where: { businessId },
+    data: { active: true },
   });
-  await prisma.user.updateMany({ where: { businessId: business.id }, data: { active: true } });
-  await sendEmployeeWelcomeEmails(business.id);
-  await prisma.nexaInsight.create({
-    data: {
-      businessId: business.id,
-      type: "TRIAL_ACTIVE",
-      message: "Your BGOS workspace is now active. Welcome aboard.",
-      action: "Open workspace",
-    },
-  });
-}
-
-async function handleSubscriptionCancelled(entity?: RazorpayEntity) {
-  const business = await findBusiness(entity);
-  if (!business) return;
-
-  const nextStatus: BusinessStatus =
-    business.status === "TRIAL" ? "SUSPENDED" : "RENEWAL_FAILED";
-  await transitionBusinessStatus(
-    business.id,
-    nextStatus,
-    "Razorpay subscription cancelled",
-  );
-  await prisma.trialSubscription.updateMany({
-    where: { businessId: business.id },
-    data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "Razorpay subscription cancelled" },
-  });
+  await sendEmployeeWelcomeEmails(businessId);
 }
 
 export async function POST(request: Request) {
-  const body = await request.text();
-  const signature = getWebhookSignature(request);
+  const rawBody = await request.text();
+  const signature = request.headers.get("x-razorpay-signature");
 
-  if (!signature || !verifyRazorpayWebhookSignature(body, signature)) {
-    return NextResponse.json({ error: "Invalid webhook signature." }, { status: 400 });
+  if (!verifySignature(rawBody, signature)) {
+    return new Response("Invalid signature", { status: 400 });
   }
 
-  const payload = JSON.parse(body) as RazorpayWebhookPayload;
+  const event = JSON.parse(rawBody) as RazorpayWebhookPayload;
+  const eventType = event.event ?? "unknown";
   const log = await prisma.webhookLog.create({
     data: {
       source: "razorpay",
-      event: payload.event ?? "unknown",
-      payload: payload as object,
+      event: eventType,
+      payload: event as object,
+      processed: false,
     },
   });
 
   try {
-    if (payload.event === "payment.captured") {
-      await handleCaptured(payload.payload?.payment?.entity);
+    if (eventType === "payment.captured" || eventType === "subscription.charged") {
+      await handleCaptured(event.payload?.payment?.entity ?? event.payload?.subscription?.entity);
     }
-    if (payload.event === "payment.failed") {
-      await handleFailed(payload.payload?.payment?.entity);
+
+    if (eventType === "payment.failed") {
+      await handleFailed(event.payload?.payment?.entity);
     }
-    if (payload.event === "subscription.charged") {
-      await handleCaptured(payload.payload?.payment?.entity ?? payload.payload?.subscription?.entity);
-    }
-    if (payload.event === "subscription.activated") {
-      await handleSubscriptionActivated(payload.payload?.subscription?.entity);
-    }
-    if (payload.event === "subscription.cancelled") {
-      await handleSubscriptionCancelled(payload.payload?.subscription?.entity);
+
+    if (eventType === "subscription.activated") {
+      await handleSubscriptionActivated(event.payload?.subscription?.entity);
     }
 
     await prisma.webhookLog.update({
       where: { id: log.id },
       data: { processed: true },
     });
+
+    return new Response("ok", { status: 200 });
   } catch (error) {
-    console.error("[razorpay:webhook]", error);
+    console.error("Webhook processing error:", error);
     await prisma.webhookLog.update({
       where: { id: log.id },
-      data: {
-        error: error instanceof Error ? error.message : String(error),
-      },
+      data: { error: error instanceof Error ? error.message : String(error) },
     });
-  }
 
-  return NextResponse.json({ received: true });
+    return new Response("ok", { status: 200 });
+  }
 }

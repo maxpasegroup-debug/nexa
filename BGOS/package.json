@@ -10,6 +10,7 @@
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "migrate-status": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" src/scripts/migrate-business-status.ts",
     "seed-marketplace": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/seed-marketplace.ts",
+    "seed-targets": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" src/scripts/seed-bdm-targets.ts",
     "reset-owner": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/reset-owner.ts"
   },
   "dependencies": {

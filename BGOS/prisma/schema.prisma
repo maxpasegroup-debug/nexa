@@ -47,9 +47,11 @@ model User {
   customerPortfolio CustomerPortfolio[]
   payoutHistory     PayoutHistory[]
   bdmOnboardingLeads OnboardingLead[] @relation("BDMOnboardingLeads")
+  bdmBusinesses     Business[] @relation("BusinessBDM")
   sdeOnboardingLeads OnboardingLead[] @relation("SDEOnboardingLeads")
   bdmOnboardingSessions OnboardingSession[] @relation("BDMSessions")
   sdeOnboardingSessions OnboardingSession[] @relation("SDESessions")
+  wallet            BDMWallet?
   clarificationsRaised OnboardingClarification[] @relation("ClarificationRaiser")
   clarificationsAnswered OnboardingClarification[] @relation("ClarificationAnswerer")
   workspaceTemplates WorkspaceTemplate[]
@@ -132,6 +134,7 @@ model Business {
   type         String
   teamSize     String
   goal         String
+  plan         String   @default("STARTER")
   healthScore  Int      @default(50)
   status       BusinessStatus @default(LEAD)
   statusUpdatedAt DateTime?
@@ -151,6 +154,8 @@ model Business {
   bdmNotifiedAt DateTime?
   bossEscalatedAt DateTime?
   dataPreservedUntil DateTime?
+  bdmId        String?
+  bdm          User?    @relation("BusinessBDM", fields: [bdmId], references: [id])
   notes        String?  @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -442,23 +447,44 @@ model Commission {
   lead            Lead?     @relation(fields: [leadId], references: [id])
   businessId      String
   business        Business  @relation(fields: [businessId], references: [id])
+  agentSlug       String?
   type            CommissionType
-  planType        String
+  planType        String    @default("STARTER")
   dealValue       Float     @default(0)
   baseCommission  Float     @default(0)
+  baseAmount      Float     @default(0)
   multiplier      Float     @default(1.0)
-  commissionAmt   Float
-  status          CommissionStatus @default(PENDING)
-  month           Int
-  year            Int
+  commissionAmt   Float     @default(0)
+  amount          Float     @default(0)
+  currency        String    @default("INR")
+  razorpayPaymentId String?
+  paymentSource   String?
+  status          CommissionStatus @default(EARNED)
+  month           Int       @default(1)
+  year            Int       @default(2026)
+  billingMonth    Int       @default(1)
+  billingYear     Int       @default(2026)
+  renewalMonth    Int       @default(1)
+  notes           String?
   paidAt          DateTime?
+  paidOutAt       DateTime?
   clawbackAt      DateTime?
   clawbackReason  String?
+  reversedAt      DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  @@index([userId, billingMonth, billingYear])
+  @@index([razorpayPaymentId])
 }
 
 enum CommissionType {
+  PLAN_FIRST_SALE
+  PLAN_RENEWAL
+  AGENT_FIRST_SALE
+  AGENT_RENEWAL
+  SLAB_BONUS
+  MANUAL
   FIRST_SALE
   RENEWAL
   SLAB_BRONZE
@@ -469,10 +495,32 @@ enum CommissionType {
 }
 
 enum CommissionStatus {
+  EARNED
+  PROCESSING
+  PAID_OUT
+  REVERSED
   PENDING
   PAID
   CLAWBACK
   CANCELLED
+}
+
+model BDMWallet {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id])
+  totalEarned        Float    @default(0)
+  totalPaidOut       Float    @default(0)
+  availableBalance   Float    @default(0)
+  thisMonthEarned    Float    @default(0)
+  thisMonthPlanComm  Float    @default(0)
+  thisMonthAgentComm Float    @default(0)
+  thisMonthRenewals  Float    @default(0)
+  thisMonthSlabBonus Float    @default(0)
+  currentSlab        String   @default("NONE")
+  lastUpdatedAt      DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model SlabAchievement {
@@ -820,8 +868,12 @@ model NexaInsight {
   id         String   @id @default(cuid())
   businessId String
   type       String
+  title      String?
+  content    String?  @db.Text
   message    String
   action     String?
+  targetUserId String?
+  priority   String?
   read       Boolean  @default(false)
   createdAt  DateTime @default(now())
 }
@@ -1036,6 +1088,8 @@ model Target {
   leadsTarget   Int      @default(0)
   wonTarget     Int      @default(0)
   revenueTarget Float    @default(0)
+  fixedSalary   Float    @default(0)
+  maxIncentive  Float    @default(30000)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
