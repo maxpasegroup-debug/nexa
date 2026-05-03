@@ -15,6 +15,10 @@ model User {
   role              Role      @default(BDM)
   active            Boolean   @default(true)
   status            String    @default("ACTIVE")
+  theme             String    @default("dark")
+  isLegacyIceconnect Boolean  @default(false)
+  lastLoginAt       DateTime?
+  isActive          Boolean   @default(true)
   phone             String?
   joinedAt          DateTime?
   archivedAt        DateTime?
@@ -74,6 +78,16 @@ enum Role {
   BOSS
   BDM
   SDE
+  ADMIN
+  EMPLOYEE
+}
+
+enum UserRole {
+  OWNER
+  BDM
+  SDE
+  BOSS
+  EMPLOYEE
   ADMIN
 }
 

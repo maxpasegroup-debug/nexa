@@ -68,7 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email: email.toLowerCase() },
         });
 
-        if (!user || !user.active) {
+        if (!user || !user.active || !user.isActive) {
           return null;
         }
 
@@ -77,6 +77,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!passwordMatches) {
           return null;
         }
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
 
         return {
           id: user.id,
@@ -102,6 +107,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email },
         });
 
+        if (existing && (!existing.active || !existing.isActive)) {
+          return false;
+        }
+
         if (!existing) {
           const business = await prisma.business.create({
             data: {
@@ -122,11 +131,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               role: "BOSS",
               businessId: business.id,
               defaultPassword: false,
+              isActive: true,
+              lastLoginAt: new Date(),
             },
           });
 
           return "/onboarding";
         }
+
+        await prisma.user.update({
+          where: { id: existing.id },
+          data: { lastLoginAt: new Date() },
+        });
       }
 
       return true;
