@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import auth from "@/lib/auth";
 import { requireRole } from "@/lib/api-auth";
+import { customerListStatuses } from "@/lib/business-status";
 import { prisma } from "@/lib/prisma";
 
 type InternalOwner = {
@@ -92,5 +93,8 @@ export async function requireInternalOwnerApi() {
 }
 
 export function customerBusinessWhere(internalBusinessId: string) {
-  return { id: { not: internalBusinessId } };
+  return {
+    id: { not: internalBusinessId },
+    status: { in: customerListStatuses },
+  };
 }

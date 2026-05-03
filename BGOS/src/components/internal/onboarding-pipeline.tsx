@@ -242,6 +242,25 @@ export function OnboardingPipeline({
     await load();
   }
 
+  async function startBossMode(targetRole: "BDM" | "SDE") {
+    if (!assigning) return;
+    await fetch("/api/boss/work-locks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        targetType: "ONBOARDING_LEAD",
+        targetId: assigning.id,
+        targetRole,
+        targetUserId: targetRole === "BDM" ? assigning.assignedBDM?.id : assigning.assignedSDE?.id,
+        message: `Boss is operating ${assigning.companyName} onboarding as ${targetRole}. Hold dashboard actions and messages until Boss finishes.`,
+      }),
+    });
+    setForm((current) => ({
+      ...current,
+      note: `Boss mode started as ${targetRole}. ${current.note}`.trim(),
+    }));
+  }
+
   const bdms = data?.team.filter((member) => member.role === "BDM") ?? [];
   const sdes = data?.team.filter((member) => member.role === "SDE") ?? [];
 
@@ -392,6 +411,12 @@ export function OnboardingPipeline({
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => setAssigning(null)} className="rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-zinc-300">Cancel</button>
+              <button onClick={() => void startBossMode("BDM")} className="rounded-xl bg-[#F5A623]/20 px-4 py-3 text-sm font-bold text-[#F5A623]">
+                Boss as BDM
+              </button>
+              <button onClick={() => void startBossMode("SDE")} className="rounded-xl bg-[#22D9A0]/20 px-4 py-3 text-sm font-bold text-[#22D9A0]">
+                Boss as SDE
+              </button>
               <button onClick={() => void saveAssignment()} disabled={saving} className="rounded-xl bg-[#7C6FFF] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">
                 {saving ? "Saving..." : "Save changes"}
               </button>

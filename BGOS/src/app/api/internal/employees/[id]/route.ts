@@ -28,6 +28,9 @@ export async function GET(
       status: true,
       createdAt: true,
       joinedAt: true,
+      archivedAt: true,
+      deletedAt: true,
+      purgeAfter: true,
       updatedAt: true,
       defaultPassword: true,
     },
@@ -64,6 +67,7 @@ export async function PATCH(
   }
 
   const status = str(body.status);
+  const restoring = status === "ACTIVE";
   const user = await prisma.user.update({
     where: { id: params.id },
     data: {
@@ -73,6 +77,7 @@ export async function PATCH(
       ...(role ? { role: role as Role } : {}),
       ...(typeof body.isActive === "boolean" ? { active: body.isActive } : {}),
       ...(status ? { status, active: status === "ACTIVE" } : {}),
+      ...(restoring ? { archivedAt: null, deletedAt: null, purgeAfter: null } : {}),
       ...(str(body.joinedAt) ? { joinedAt: new Date(str(body.joinedAt)!) } : {}),
     },
     select: {
@@ -85,6 +90,9 @@ export async function PATCH(
       status: true,
       createdAt: true,
       joinedAt: true,
+      archivedAt: true,
+      deletedAt: true,
+      purgeAfter: true,
       updatedAt: true,
       defaultPassword: true,
     },
@@ -145,6 +153,30 @@ export async function DELETE(
     );
   }
 
-  await prisma.user.delete({ where: { id: params.id } });
-  return NextResponse.json({ success: true });
+  const now = new Date();
+  const purgeAfter = new Date(now);
+  purgeAfter.setDate(purgeAfter.getDate() + 30);
+
+  await prisma.user.update({
+    where: { id: params.id },
+    data: {
+      active: false,
+      status: "DELETED",
+      deletedAt: now,
+      purgeAfter,
+    },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      businessId: context.business.id,
+      userId: context.owner.id,
+      action: "Employee moved to deletion bin",
+      entity: "User",
+      entityId: params.id,
+      meta: { purgeAfter: purgeAfter.toISOString() },
+    },
+  });
+
+  return NextResponse.json({ success: true, purgeAfter });
 }

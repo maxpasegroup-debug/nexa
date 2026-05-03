@@ -27,6 +27,7 @@ import { LeadDrawer } from "@/components/crm/lead-drawer";
 import type { CrmLead, LeadStatus, TeamMember } from "@/components/crm/types";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { BossWorkAlert } from "@/components/shared/boss-work-alert";
 import { useToast } from "@/components/ui/toast";
 import { useDevice } from "@/hooks/use-device";
 
@@ -312,6 +313,7 @@ export function BdmDashboard({
 
       <main className="pt-[60px]">
         <div className="space-y-8 p-8">
+          <BossWorkAlert />
           {user.defaultPassword ? (
             <div className="rounded-2xl border border-[#F5A623]/30 bg-[#F5A623]/10 px-5 py-4 text-sm text-[#F5A623]">
               Your password is still the default. Please change it now for

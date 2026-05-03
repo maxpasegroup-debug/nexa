@@ -29,7 +29,7 @@ export async function POST(
   await prisma.$transaction([
     prisma.user.update({
       where: { id: params.id },
-      data: { active: false, status: "ARCHIVED" },
+      data: { active: false, status: "ARCHIVED", archivedAt: new Date(), deletedAt: null, purgeAfter: null },
     }),
     ...openLeads.map((lead, index) =>
       prisma.lead.update({

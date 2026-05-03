@@ -88,6 +88,9 @@ export async function GET(request: Request) {
         status: true,
         createdAt: true,
         joinedAt: true,
+        archivedAt: true,
+        deletedAt: true,
+        purgeAfter: true,
         updatedAt: true,
       defaultPassword: true,
       activityLogs: {

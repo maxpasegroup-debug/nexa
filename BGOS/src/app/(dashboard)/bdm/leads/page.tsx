@@ -4,6 +4,7 @@ import { LeadList } from "@/components/bdm/lead-list";
 import { MobileBDMLeads } from "@/components/bdm/mobile/mobile-bdm-leads";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { BossWorkAlert } from "@/components/shared/boss-work-alert";
 import auth from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -36,6 +37,7 @@ export default async function BdmLeadsRoute() {
       <Navbar title="My Leads" userName={user.name} />
       <main className="pt-[60px]">
         <div className="p-8">
+          <BossWorkAlert />
           <LeadList bdmName={user.name} />
         </div>
       </main>

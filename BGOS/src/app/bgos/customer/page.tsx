@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/ui/EmptyState";
 import auth from "@/lib/auth";
+import { customerListStatuses } from "@/lib/business-status";
 import { prisma } from "@/lib/prisma";
 
 export default async function CustomerPage() {
@@ -16,6 +17,7 @@ export default async function CustomerPage() {
   const customers =
     user?.role === "ADMIN" || user?.role === "OWNER"
       ? await prisma.business.findMany({
+          where: { status: { in: customerListStatuses } },
           orderBy: { createdAt: "desc" },
           take: 100,
           select: {

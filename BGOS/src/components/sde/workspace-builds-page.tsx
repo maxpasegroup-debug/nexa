@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { BossWorkAlert } from "@/components/shared/boss-work-alert";
 import { AgentIntegrationCard, type AgentIntegrationJob } from "@/components/sde/agent-integration-card";
 import { OnboardingRequestCard, type OnboardingRequestCardSession } from "@/components/sde/onboarding-request-card";
 
@@ -35,6 +36,7 @@ export function WorkspaceBuildsPage({
       <Navbar title={tab === "builds" ? "Workspace builds" : "Agent integrations"} userName={user.name} role={user.role} />
       <main className="pt-[60px]">
         <div className="space-y-6 p-8">
+          <BossWorkAlert />
           <section>
             <h1 className="font-heading text-2xl font-bold">Workspace builds</h1>
             <p className="mt-1 text-sm text-zinc-500">Review intelligent onboarding summaries and approve workspaces.</p>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import auth from "@/lib/auth";
+import { customerListStatuses } from "@/lib/business-status";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -15,6 +16,7 @@ export async function GET() {
   }
 
   const customers = await prisma.business.findMany({
+    where: { status: { in: customerListStatuses } },
     orderBy: { createdAt: "desc" },
     take: 100,
     select: {

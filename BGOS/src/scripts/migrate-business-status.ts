@@ -22,7 +22,7 @@ async function main() {
     } else if (business.onboardingLead?.status === "SDE_DELIVERED") {
       newStatus = "PREVIEW";
     } else if (!business.onboardingLead && !business.trialSubscription) {
-      newStatus = business.name === "BGOS" ? "ACTIVE" : "PREVIEW";
+      newStatus = business.name === "BGOS" ? "ACTIVE" : "LEAD";
     }
 
     await prisma.business.update({

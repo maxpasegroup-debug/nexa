@@ -99,7 +99,7 @@ export async function employeeStats(userId: string, month = new Date().getMonth(
   };
 }
 
-export function serializeEmployee(user: Pick<User, "id" | "name" | "email" | "role" | "active" | "status" | "phone" | "createdAt" | "updatedAt" | "joinedAt" | "defaultPassword">, stats: Awaited<ReturnType<typeof employeeStats>>) {
+export function serializeEmployee(user: Pick<User, "id" | "name" | "email" | "role" | "active" | "status" | "phone" | "createdAt" | "updatedAt" | "joinedAt" | "archivedAt" | "deletedAt" | "purgeAfter" | "defaultPassword">, stats: Awaited<ReturnType<typeof employeeStats>>) {
   return {
     id: user.id,
     name: user.name,
@@ -112,6 +112,9 @@ export function serializeEmployee(user: Pick<User, "id" | "name" | "email" | "ro
     status: user.status || (user.active ? "ACTIVE" : "ARCHIVED"),
     createdAt: user.createdAt.toISOString(),
     joinedAt: (user.joinedAt ?? user.createdAt).toISOString(),
+    archivedAt: user.archivedAt?.toISOString() ?? null,
+    deletedAt: user.deletedAt?.toISOString() ?? null,
+    purgeAfter: user.purgeAfter?.toISOString() ?? null,
     updatedAt: user.updatedAt.toISOString(),
     defaultPassword: user.defaultPassword,
     lastLoginAt: user.updatedAt.toISOString(),

@@ -12,6 +12,9 @@ export type InternalEmployee = {
   active: boolean;
   isActive: boolean;
   joinedAt: string;
+  archivedAt?: string | null;
+  deletedAt?: string | null;
+  purgeAfter?: string | null;
   lastLoginAt?: string | null;
   totalLeads: number;
   activeLeads: number;
@@ -43,6 +46,7 @@ export function EmployeeCard({
   onRefresh: () => void;
 }) {
   const archived = employee.status === "ARCHIVED" || !employee.active;
+  const deleted = employee.status === "DELETED" || Boolean(employee.deletedAt);
 
   async function resetPassword() {
     if (!window.confirm(`Reset ${employee.name}'s password to BGOS@123456?`)) return;
@@ -71,16 +75,16 @@ export function EmployeeCard({
   }
 
   async function remove() {
-    if (!window.confirm(`Delete ${employee.name} permanently?`)) return;
+    if (!window.confirm(`Move ${employee.name} to deletion bin for 30 days?`)) return;
     const response = await fetch(`/api/internal/employees/${employee.id}`, { method: "DELETE" });
     const data = (await response.json().catch(() => ({}))) as { error?: string };
     if (!response.ok) return toast.error(data.error ?? "Could not delete employee");
-    toast.success("Employee deleted");
+    toast.success("Employee moved to deletion bin");
     onRefresh();
   }
 
   return (
-    <article className={`cursor-pointer rounded-[14px] border border-white/10 bg-[#13131c] p-4 transition hover:border-[#7C6FFF]/60 ${archived ? "opacity-50" : ""}`}>
+    <article className={`cursor-pointer rounded-[14px] border border-white/10 bg-[#13131c] p-4 transition hover:border-[#7C6FFF]/60 ${archived || deleted ? "opacity-60" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 gap-3">
           <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${roleGradient(employee.role)} text-sm font-bold text-black`}>
@@ -93,7 +97,7 @@ export function EmployeeCard({
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[11px] text-zinc-400"><span className={`mr-1 inline-block h-2 w-2 rounded-full ${archived ? "bg-zinc-500" : "bg-[#22D9A0]"}`} />{archived ? "Archived" : "Active"}</p>
+          <p className="text-[11px] text-zinc-400"><span className={`mr-1 inline-block h-2 w-2 rounded-full ${deleted ? "bg-[#FF6B6B]" : archived ? "bg-zinc-500" : "bg-[#22D9A0]"}`} />{deleted ? "Deletion bin" : archived ? "Archived" : "Active"}</p>
           <p className="mt-1 text-[10px] text-zinc-600">{new Date(employee.joinedAt).toLocaleDateString("en-IN")}</p>
         </div>
       </div>
@@ -116,7 +120,11 @@ export function EmployeeCard({
         ))}
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2">
-        {archived ? (
+        {deleted ? (
+          <div className="col-span-3 rounded-xl bg-[#FF6B6B]/10 px-2 py-2 text-center text-xs font-bold text-[#FF6B6B]">
+            Purges {employee.purgeAfter ? new Date(employee.purgeAfter).toLocaleDateString("en-IN") : "in 30 days"}
+          </div>
+        ) : archived ? (
           <>
             <button onClick={unarchive} className="col-span-2 rounded-xl bg-[#22D9A0]/15 px-2 py-2 text-xs font-bold text-[#22D9A0]">Unarchive</button>
             <button onClick={remove} className="rounded-xl bg-[#FF6B6B]/15 px-2 py-2 text-xs font-bold text-[#FF6B6B]">Delete</button>

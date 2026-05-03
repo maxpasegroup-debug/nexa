@@ -1,7 +1,7 @@
 import { requireInternalOwner } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 import { TeamManagementPage } from "@/components/internal/team-management-page";
-import type { EmployeeListItem } from "@/components/internal/employee-list";
+import { employeeStats, serializeEmployee } from "@/lib/internal-control";
 
 function latestDate(...values: Array<Date | null | undefined>) {
   const timestamps = values
@@ -25,8 +25,15 @@ export default async function InternalTeamPage() {
       id: true,
       name: true,
       email: true,
+      phone: true,
       role: true,
+      active: true,
+      status: true,
       createdAt: true,
+      joinedAt: true,
+      archivedAt: true,
+      deletedAt: true,
+      purgeAfter: true,
       updatedAt: true,
       defaultPassword: true,
       activityLogs: {
@@ -52,7 +59,7 @@ export default async function InternalTeamPage() {
     },
   });
 
-  const serializedEmployees: EmployeeListItem[] = employees.map((employee) => {
+  const serializedEmployees = await Promise.all(employees.map(async (employee) => {
     const lastLoginAt = latestDate(
       employee.activityLogs[0]?.createdAt,
       employee.leadActivities[0]?.createdAt,
@@ -62,15 +69,10 @@ export default async function InternalTeamPage() {
     );
 
     return {
-      id: employee.id,
-      name: employee.name,
-      email: employee.email,
-      role: employee.role,
-      createdAt: employee.createdAt.toISOString(),
-      defaultPassword: employee.defaultPassword,
+      ...serializeEmployee(employee, await employeeStats(employee.id)),
       lastLoginAt: lastLoginAt?.toISOString() ?? null,
     };
-  });
+  }));
 
   return (
     <TeamManagementPage

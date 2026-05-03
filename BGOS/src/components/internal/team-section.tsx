@@ -6,7 +6,7 @@ import { AddEmployeeForm } from "@/components/internal/add-employee-form";
 import { EmployeeCard, type InternalEmployee } from "@/components/internal/employee-card";
 import { EmployeeEditDrawer } from "@/components/internal/employee-edit-drawer";
 
-const filters = ["All", "BDM", "SDE", "Active", "Archived"];
+const filters = ["All", "BDM", "SDE", "Active", "Archived", "Deletion bin"];
 
 export function TeamSection({
   onEmployeeClick,
@@ -32,8 +32,9 @@ export function TeamSection({
     () =>
       employees.filter((employee) => {
         if (filter === "BDM" || filter === "SDE") return employee.role === filter;
+        if (filter === "Deletion bin") return employee.status === "DELETED" || Boolean(employee.deletedAt);
         if (filter === "Active") return employee.status === "ACTIVE" && employee.active;
-        if (filter === "Archived") return employee.status === "ARCHIVED" || !employee.active;
+        if (filter === "Archived") return (employee.status === "ARCHIVED" || !employee.active) && employee.status !== "DELETED";
         return true;
       }),
     [employees, filter],
@@ -48,8 +49,8 @@ export function TeamSection({
     <section className="rounded-[14px] border border-white/10 bg-[#13131c] p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-heading text-lg font-bold">My team</h2>
-          <p className="mt-1 text-sm text-zinc-500">{employees.length} employees</p>
+          <h2 className="font-heading text-lg font-bold">Manage my team</h2>
+          <p className="mt-1 text-sm text-zinc-500">{employees.filter((item) => item.status !== "DELETED").length} employees · {employees.filter((item) => item.status === "ARCHIVED").length} archived</p>
         </div>
         <button onClick={() => setShowForm((value) => !value)} className="rounded-xl bg-[#7C6FFF] px-4 py-2 text-sm font-bold text-white">
           Add employee +
