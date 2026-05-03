@@ -11,7 +11,7 @@ import { createChatCompletionText } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 const BRIEF_SYSTEM_PROMPT =
-  "You are NEXA, the AI CEO. Generate a morning brief for this BDM. Return only a JSON object with these fields: greeting (string — a warm personalised good morning message using their name and one motivational line under 20 words), tasks (array of 5 objects each with: title string, priority 'high'/'medium'/'low', leadId string or null, type 'follow_up'/'new_lead'/'demo'/'proposal'/'admin'), insights (array of 3 strings — each a sharp one-line sales tip for today). No other text.";
+  "You are NEXA, the AI CEO. Generate a morning brief for this BDM. Always mention customer alerts first when present because revenue at risk is more important than new leads today. Return only a JSON object with these fields: greeting (string — a warm personalised good morning message using their name and one motivational line under 20 words), tasks (array of 5 objects each with: title string, priority 'high'/'medium'/'low', leadId string or null, type 'follow_up'/'new_lead'/'demo'/'proposal'/'admin'), insights (array of 3 strings — each a sharp one-line sales tip for today). No other text.";
 
 const COMMISSION_BRIEF_INSTRUCTION =
   "Use COMMISSION DATA in the user message. The greeting must say: Good morning [name]. You have earned Rs [total] this month with [X] days left. [nextMilestone]. Your hottest lead is [topLead name] - call them first.";
@@ -92,6 +92,8 @@ export async function GET() {
       portfolioCounts,
       trialAtRisk,
       marketplaceLeads,
+      atRiskCustomers,
+      trialEndingSoon,
     ] = await Promise.all([
       prisma.lead.groupBy({
         by: ["status"],
@@ -169,7 +171,46 @@ export async function GET() {
         select: { id: true, name: true, company: true, notes: true },
         take: 20,
       }),
+      prisma.business.findMany({
+        where: {
+          status: { in: ["RENEWAL_FAILED", "SUSPENDED"] },
+          OR: [
+            { commissions: { some: { userId: context.user.id } } },
+            { leads: { some: { assignedTo: context.user.id } } },
+            { leads: { some: { createdBy: context.user.id } } },
+          ],
+        },
+        select: { name: true, status: true, gracePeriodEndsAt: true },
+      }),
+      prisma.business.findMany({
+        where: {
+          status: "TRIAL",
+          trialEndsAt: { lte: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) },
+          OR: [
+            { commissions: { some: { userId: context.user.id } } },
+            { leads: { some: { assignedTo: context.user.id } } },
+            { leads: { some: { createdBy: context.user.id } } },
+          ],
+        },
+        select: { name: true, trialEndsAt: true },
+      }),
     ]);
+    const customerAlertLines = [
+      "CUSTOMER ALERTS:",
+      atRiskCustomers.length > 0
+        ? `AT RISK: ${atRiskCustomers.map((customer) => `${customer.name} (${customer.status})`).join(", ")}`
+        : "No customers at risk",
+      trialEndingSoon.length > 0
+        ? `TRIAL ENDING: ${trialEndingSoon
+            .map((customer) => {
+              const days = customer.trialEndsAt
+                ? Math.ceil((customer.trialEndsAt.getTime() - Date.now()) / 86_400_000)
+                : 0;
+              return `${customer.name} in ${days} days`;
+            })
+            .join(", ")}`
+        : "",
+    ].filter(Boolean);
     const marketplaceLeadLines = marketplaceLeads.map((lead) => {
       const agentInterest =
         lead.notes?.match(/interested in ([^.]+?)(?:\.|$)/i)?.[1]?.trim() ??
@@ -207,6 +248,8 @@ export async function GET() {
               hottestLead: topLead?.name ?? null,
             },
             promptContext: [
+              ...customerAlertLines,
+              "Mention customer alerts before marketplace leads, follow-ups, or commission context.",
               "MARKETPLACE LEADS TODAY:",
               marketplaceLeadLines.length > 0 ? marketplaceLeadLines.join("\n") : "- None",
               "Mention marketplace leads first if any exist because they are the hottest leads.",

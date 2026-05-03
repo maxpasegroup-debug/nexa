@@ -119,10 +119,6 @@ export function SimpleLeadCard({
   isExiting = false,
 }: SimpleLeadCardProps) {
   const [quickNote, setQuickNote] = useState("");
-  const [callOpen, setCallOpen] = useState(false);
-  const [callNote, setCallNote] = useState(
-    `Call at ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}: `,
-  );
   const [saving, setSaving] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [confirmOnboarding, setConfirmOnboarding] = useState(false);
@@ -174,10 +170,6 @@ export function SimpleLeadCard({
     const data = (await response.json()) as { note: LeadNoteView };
     onNoteAdded(lead.id, data.note);
     setQuickNote("");
-    setCallNote(
-      `Call at ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}: `,
-    );
-    setCallOpen(false);
   }
 
   function handleQuickKey(event: KeyboardEvent<HTMLInputElement>) {
@@ -368,13 +360,6 @@ export function SimpleLeadCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setCallOpen((current) => !current)}
-          className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-zinc-200 transition hover:text-white"
-        >
-          Log call
-        </button>
         {lead.phone ? (
           <a
             href={whatsappHref(lead.phone, marketplaceWhatsappText)}
@@ -382,7 +367,7 @@ export function SimpleLeadCard({
             rel="noreferrer"
             className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-zinc-200 transition hover:text-white"
           >
-            WhatsApp
+            💬 WhatsApp
           </a>
         ) : null}
         {canStartOnboarding ? (
@@ -424,24 +409,6 @@ export function SimpleLeadCard({
         </div>
       ) : null}
 
-      {callOpen ? (
-        <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
-          <textarea
-            value={callNote}
-            onChange={(event) => setCallNote(event.target.value)}
-            rows={3}
-            className="w-full resize-none rounded-xl border border-white/10 bg-[#0e0e13] p-3 text-sm text-white outline-none focus:border-[#7C6FFF]"
-          />
-          <button
-            type="button"
-            onClick={() => void addNote(callNote)}
-            disabled={saving || !callNote.trim()}
-            className="mt-2 rounded-xl bg-[#22D9A0] px-4 py-2 text-xs font-extrabold text-black disabled:opacity-50"
-          >
-            Save call note
-          </button>
-        </div>
-      ) : null}
     </article>
   );
 }

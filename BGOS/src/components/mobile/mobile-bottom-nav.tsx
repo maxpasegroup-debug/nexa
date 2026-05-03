@@ -9,7 +9,7 @@ type Tab = {
   icon: string;
   label: string;
   href: string;
-  badge?: "onboarding";
+  badge?: "onboarding" | "customers";
 };
 
 type MobileBottomNavProps = {
@@ -22,7 +22,7 @@ const bdmTabs: Tab[] = [
   { id: "home", icon: "🏠", label: "Home", href: "/bdm" },
   { id: "leads", icon: "📋", label: "Leads", href: "/bdm/leads" },
   { id: "onboarding", icon: "🧠", label: "Onboarding", href: "/bdm/onboarding", badge: "onboarding" },
-  { id: "earnings", icon: "💰", label: "Earnings", href: "/bdm/commission" },
+  { id: "customers", icon: "🏢", label: "Customers", href: "/bdm/customers", badge: "customers" },
   { id: "more", icon: "⚙️", label: "More", href: "/bdm/more" },
 ];
 
@@ -69,26 +69,37 @@ export function MobileBottomNav({ role, activeTab, onTabChange }: MobileBottomNa
   const pathname = usePathname();
   const tabs = tabsForRole(role);
   const [onboardingCount, setOnboardingCount] = useState(0);
+  const [customerAtRiskCount, setCustomerAtRiskCount] = useState(0);
 
   useEffect(() => {
     if (role !== "BDM") return;
 
-    async function fetchOnboardingCount() {
-      const response = await fetch("/api/bdm/leads?status=ONBOARDING", { cache: "no-store" });
-      if (!response.ok) return;
-      const data = (await response.json()) as { leads?: unknown[] };
-      setOnboardingCount(data.leads?.length ?? 0);
+    async function fetchBadges() {
+      const [onboardingResponse, customersResponse] = await Promise.all([
+        fetch("/api/bdm/leads?status=ONBOARDING", { cache: "no-store" }),
+        fetch("/api/bdm/customers", { cache: "no-store" }),
+      ]);
+
+      if (onboardingResponse.ok) {
+        const data = (await onboardingResponse.json()) as { leads?: unknown[] };
+        setOnboardingCount(data.leads?.length ?? 0);
+      }
+
+      if (customersResponse.ok) {
+        const data = (await customersResponse.json()) as { totalAtRisk?: number };
+        setCustomerAtRiskCount(data.totalAtRisk ?? 0);
+      }
     }
 
-    function refreshOnboarding() {
-      void fetchOnboardingCount();
+    function refreshBadges() {
+      void fetchBadges();
     }
 
-    void fetchOnboardingCount();
-    window.addEventListener("bgos:onboarding-updated", refreshOnboarding);
-    const interval = window.setInterval(() => void fetchOnboardingCount(), 60_000);
+    void fetchBadges();
+    window.addEventListener("bgos:onboarding-updated", refreshBadges);
+    const interval = window.setInterval(() => void fetchBadges(), 60_000);
     return () => {
-      window.removeEventListener("bgos:onboarding-updated", refreshOnboarding);
+      window.removeEventListener("bgos:onboarding-updated", refreshBadges);
       window.clearInterval(interval);
     };
   }, [role]);
@@ -97,6 +108,12 @@ export function MobileBottomNav({ role, activeTab, onTabChange }: MobileBottomNa
     <nav className="fixed inset-x-0 bottom-0 z-50 flex h-[72px] border-t border-white/[0.08] bg-[rgba(13,13,20,0.97)] pb-safe backdrop-blur-[20px] md:hidden">
       {tabs.map((tab) => {
         const active = isActive(pathname, tab, activeTab);
+        const badgeCount =
+          tab.badge === "onboarding"
+            ? onboardingCount
+            : tab.badge === "customers"
+              ? customerAtRiskCount
+              : 0;
         return (
           <Link
             key={tab.id}
@@ -111,9 +128,13 @@ export function MobileBottomNav({ role, activeTab, onTabChange }: MobileBottomNa
               style={active ? { filter: "drop-shadow(0 0 8px rgba(124,111,255,0.8))" } : undefined}
             >
               {tab.icon}
-              {tab.badge === "onboarding" && onboardingCount > 0 ? (
-                <span className="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#22D9A0] px-1 text-[9px] font-bold text-black">
-                  {onboardingCount > 99 ? "99+" : onboardingCount}
+              {badgeCount > 0 ? (
+                <span
+                  className={`absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold ${
+                    tab.badge === "customers" ? "bg-[#FF6B6B] text-white" : "bg-[#22D9A0] text-black"
+                  }`}
+                >
+                  {badgeCount > 99 ? "99+" : badgeCount}
                 </span>
               ) : null}
             </span>

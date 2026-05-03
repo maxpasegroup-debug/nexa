@@ -5,6 +5,8 @@ import { signOut } from "next-auth/react";
 
 const rows = [
   ["🧠", "NEXA", "/bdm/nexa"],
+  ["💰", "Earnings", "/bdm/commission"],
+  ["☎️", "Call log", "/bdm/calls"],
   ["🛒", "Marketplace leads", "/bdm/marketplace-leads"],
   ["📋", "Download questionnaire", "#download"],
   ["🏆", "My performance", "/bdm/performance"],

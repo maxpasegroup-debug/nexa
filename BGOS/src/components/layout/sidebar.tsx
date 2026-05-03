@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   Bot,
   Brain,
+  Building2,
   Bug,
   CheckSquare,
   DollarSign,
@@ -58,10 +59,12 @@ const roleLinks: Record<string, NavItem[]> = {
     { label: "Settings", href: "/boss/settings", icon: Settings },
   ],
   BDM: [
-    { label: "My Leads", href: "/bdm", icon: Target },
+    { label: "Home", href: "/bdm", icon: LayoutDashboard },
+    { label: "My Leads", href: "/bdm/leads", icon: Target },
     { label: "🧠 Onboarding", href: "/bdm/onboarding", icon: Brain },
-    { label: "🛒 Marketplace leads", href: "/bdm/marketplace-leads", icon: ShoppingCart },
+    { label: "🏢 My Customers", href: "/bdm/customers", icon: Building2 },
     { label: "Earnings", href: "/bdm/commission", icon: DollarSign },
+    { label: "🛒 Marketplace leads", href: "/bdm/marketplace-leads", icon: ShoppingCart },
     { label: "Tasks", href: "/bdm/tasks", icon: CheckSquare },
     { label: "Performance", href: "/bdm/performance", icon: TrendingUp },
     { label: "Call Log", href: "/bdm/calls", icon: Phone },
@@ -140,6 +143,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [earningsTotal, setEarningsTotal] = useState<number | null>(null);
   const [onboardingCount, setOnboardingCount] = useState(0);
+  const [customerAtRiskCount, setCustomerAtRiskCount] = useState(0);
   const [marketplaceLeadCount, setMarketplaceLeadCount] = useState(0);
   const [pendingBuilds, setPendingBuilds] = useState(0);
   const [installedUiAgents, setInstalledUiAgents] = useState<InstalledUiAgent[]>([]);
@@ -197,6 +201,21 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
       window.removeEventListener("bgos:commission-created", refreshEarnings);
       window.clearInterval(interval);
     };
+  }, [role]);
+
+  useEffect(() => {
+    if (role !== "BDM") return;
+
+    async function fetchCustomerAlerts() {
+      const response = await fetch("/api/bdm/customers", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as { totalAtRisk?: number };
+      setCustomerAtRiskCount(data.totalAtRisk ?? 0);
+    }
+
+    void fetchCustomerAlerts();
+    const interval = window.setInterval(() => void fetchCustomerAlerts(), 60_000);
+    return () => window.clearInterval(interval);
   }, [role]);
 
   useEffect(() => {
@@ -317,6 +336,7 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
           const isInbox = item.href === "/boss/inbox";
           const isEarnings = item.href === "/bdm/commission";
           const isOnboarding = item.href === "/bdm/onboarding";
+          const isCustomers = item.href === "/bdm/customers";
           const isBdmMarketplaceLeads = item.href === "/bdm/marketplace-leads";
           const isWorkspaceBuilds = item.href === "/sde/workspaces";
           const isMarketplace = item.href === "/boss/marketplace";
@@ -347,6 +367,11 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
               {isOnboarding && onboardingCount > 0 ? (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#F5A623] px-1 text-[10px] font-bold text-black">
                   {onboardingCount > 99 ? "99+" : onboardingCount}
+                </span>
+              ) : null}
+              {isCustomers && customerAtRiskCount > 0 ? (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#FF6B6B] px-1 text-[10px] font-bold text-white">
+                  {customerAtRiskCount > 99 ? "99+" : customerAtRiskCount}
                 </span>
               ) : null}
               {isBdmMarketplaceLeads && marketplaceLeadCount > 0 ? (
