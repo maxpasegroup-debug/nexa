@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Clipboard, Send, X } from "lucide-react";
+import { Check, Clipboard, Pencil, Send, X } from "lucide-react";
 
 import { PLAN_ORDER, PLANS } from "@/lib/plans";
 
@@ -59,8 +59,22 @@ type SessionSnapshot = {
   nexaMessages?: ChatMessage[];
   nexaFlags?: string[];
   challenges?: Record<string, unknown>;
+  nexaConfig?: Record<string, unknown>;
   employees?: EmployeeSnapshot[];
   pipelines?: PipelineSnapshot[];
+};
+
+type ConfidenceField = {
+  value?: unknown;
+  confidence_score?: "low" | "medium" | "high";
+};
+
+type CompanyProfile = {
+  identity?: Record<string, ConfidenceField>;
+  business?: Record<string, ConfidenceField>;
+  sales?: Record<string, ConfidenceField>;
+  team?: Record<string, ConfidenceField>;
+  requirements?: Record<string, ConfidenceField>;
 };
 
 type Lead = {
@@ -95,6 +109,8 @@ type Completeness = {
 
 type ChatResponse = {
   message?: string;
+  extracted?: Record<string, ConfidenceField>;
+  companyProfile?: CompanyProfile;
   completeness?: Completeness;
   canSubmit?: boolean;
   blocked?: string | null;
@@ -251,6 +267,47 @@ function employeeName(employee: EmployeeSnapshot) {
   return employee.fullName || employee.name || "Unnamed";
 }
 
+function profileFromConfig(config?: Record<string, unknown>): CompanyProfile {
+  const profile = config?.company_profile;
+  return profile && typeof profile === "object" && !Array.isArray(profile)
+    ? (profile as CompanyProfile)
+    : {};
+}
+
+type ProfileFact = [string, ConfidenceField];
+
+function profileFacts(profile: CompanyProfile): ProfileFact[] {
+  const facts: Array<[string, ConfidenceField | undefined]> = [
+    ["Company", profile.identity?.company_name],
+    ["Location", profile.identity?.location],
+    ["Business", profile.business?.business_type],
+    ["Products", profile.business?.products_services],
+    ["Customers", profile.business?.target_customers],
+    ["Team", profile.team?.team_size],
+    ["Lead sources", profile.sales?.lead_sources],
+    ["Sales flow", profile.sales?.sales_flow],
+    ["Follow-up", profile.sales?.follow_up_style],
+  ];
+
+  return facts.filter((item): item is ProfileFact => item[1]?.value !== undefined && item[1]?.value !== null);
+}
+
+function formatFactValue(value: unknown) {
+  if (Array.isArray(value)) return value.join(", ");
+  if (value && typeof value === "object") return Object.entries(value).map(([key, item]) => `${key}: ${item}`).join(", ");
+  return String(value ?? "");
+}
+
+function confidenceClass(confidence?: string) {
+  if (confidence === "high") return "border-[#22D9A0]/30 bg-[#22D9A0]/10 text-[#b9ffe9]";
+  if (confidence === "medium") return "border-[#F5A623]/30 bg-[#F5A623]/10 text-amber-100";
+  return "border-white/10 bg-white/[0.03] text-zinc-300";
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 function openingMessage(lead: Lead, companyData: Record<string, unknown>) {
   const company = asString(companyData.name, lead.company ?? lead.name);
   const industry = asString(companyData.industry, lead.companyType || "your industry");
@@ -310,6 +367,11 @@ export function OnboardingWizard({
   );
   const [flags, setFlags] = useState<string[]>(initial?.nexaFlags ?? initial?.nexaGaps ?? []);
   const [suggestions, setSuggestions] = useState<string[]>(initial?.nexaSuggestions ?? []);
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile>(
+    profileFromConfig(initial?.nexaConfig),
+  );
+  const [editMemoryOpen, setEditMemoryOpen] = useState(false);
+  const [memoryCorrection, setMemoryCorrection] = useState("");
   const [summary, setSummary] = useState(initial?.summaryText ?? "");
   const [summaryJson, setSummaryJson] = useState<unknown>(null);
   const [selectedPlan, setSelectedPlan] = useState(initial?.selectedPlan ?? "GROWTH");
@@ -345,9 +407,8 @@ export function OnboardingWizard({
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  async function sendMessage(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault();
-    const text = input.trim();
+  async function sendText(rawText: string) {
+    const text = rawText.trim();
     if (!text || loading) return;
 
     setInput("");
@@ -368,6 +429,7 @@ export function OnboardingWizard({
       return;
     }
 
+    await wait(650);
     setMessages((current) => [...current, { role: "assistant", content: data.message || "" }]);
     setCurrentStep(data.step ?? currentStep);
     setScore(data.completeness?.score ?? data.session?.completenessScore ?? score);
@@ -376,8 +438,22 @@ export function OnboardingWizard({
     setBlocked(data.blocked ?? data.session?.submissionBlocked ?? null);
     setFlags(data.flags ?? flags);
     setSuggestions(data.suggestions ?? suggestions);
+    if (data.companyProfile) setCompanyProfile(data.companyProfile);
     if (data.session?.employees) setEmployees(data.session.employees);
     if (data.session?.pipelines) setPipelines(data.session.pipelines);
+  }
+
+  async function sendMessage(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    await sendText(input);
+  }
+
+  function submitMemoryCorrection() {
+    const text = memoryCorrection.trim();
+    if (!text) return;
+    setMemoryCorrection("");
+    setEditMemoryOpen(false);
+    void sendText(`Correction: ${text}`);
   }
 
   async function generateSummary() {
@@ -429,6 +505,51 @@ export function OnboardingWizard({
 
   const dataPanel = (
     <div className="space-y-5">
+      <section>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-heading text-sm font-bold text-white">Extracted business memory</h2>
+          <button
+            type="button"
+            onClick={() => setEditMemoryOpen((current) => !current)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-bold text-zinc-300"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </button>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {profileFacts(companyProfile).length ? (
+            profileFacts(companyProfile).map(([label, field]) => (
+              <span
+                key={label}
+                className={`rounded-lg border px-2.5 py-2 text-xs leading-5 ${confidenceClass(field?.confidence_score)}`}
+              >
+                <strong className="text-white">{label}:</strong> {formatFactValue(field?.value)}
+              </span>
+            ))
+          ) : (
+            <p className="text-sm text-zinc-500">NEXA will highlight extracted details here as the conversation progresses.</p>
+          )}
+        </div>
+        {editMemoryOpen ? (
+          <div className="mt-3 space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <textarea
+              value={memoryCorrection}
+              onChange={(event) => setMemoryCorrection(event.target.value)}
+              placeholder="Correct or add extracted data, e.g. Team size is 12, customers are builders and apartments."
+              className="min-h-20 w-full rounded-lg border border-white/10 bg-[#0d0d12] px-3 py-2 text-xs outline-none focus:border-[#22D9A0]"
+            />
+            <button
+              type="button"
+              onClick={submitMemoryCorrection}
+              className="rounded-lg bg-[#22D9A0] px-3 py-2 text-xs font-extrabold text-black"
+            >
+              Update memory
+            </button>
+          </div>
+        ) : null}
+      </section>
+
       <section>
         <h2 className="font-heading text-sm font-bold text-white">Team</h2>
         <div className="mt-3 space-y-2">

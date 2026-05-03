@@ -10,6 +10,7 @@ import {
   asRecord,
   jsonArray,
   jsonError,
+  getOwnedOnboardingSession,
   requireSessionUser,
   syncEmployeeData,
 } from "@/lib/onboarding-session-server";
@@ -60,22 +61,19 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   try {
-    const { error, user } = await requireSessionUser(["BDM"]);
+    const { error, user } = await requireSessionUser(["BDM", "BOSS", "OWNER"]);
     if (error) return error;
 
     const body = (await request.json()) as Record<string, unknown>;
     const message = getString(body.message);
     if (!message) return jsonError("message is required.");
 
-    const session = await prisma.onboardingSession.findFirst({
-      where: { id: params.id, bdmId: user.id },
-      include: {
-        lead: true,
-        bdm: { select: { id: true, name: true, email: true, businessId: true } },
-        employees: true,
-        pipelines: true,
-      },
-    });
+    const session = await getOwnedOnboardingSession(
+      params.id,
+      user.id,
+      user.role,
+      user.businessId,
+    );
     if (!session) return jsonError("Session not found.", 404);
 
     const nexa = await generateNexaResponse(
@@ -263,6 +261,8 @@ export async function POST(
 
     return Response.json({
       message: nexa.response,
+      extracted: nexa.parsedContext,
+      companyProfile: nexa.companyProfile,
       completeness,
       canSubmit: completeness.canSubmit,
       blocked: completeness.blocked,

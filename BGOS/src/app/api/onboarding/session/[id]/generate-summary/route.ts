@@ -18,9 +18,14 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   try {
-    const { error, user } = await requireSessionUser(["BDM"]);
+    const { error, user } = await requireSessionUser(["BDM", "BOSS", "OWNER"]);
     if (error) return error;
-    const session = await getOwnedOnboardingSession(params.id, user.id, "BDM");
+    const session = await getOwnedOnboardingSession(
+      params.id,
+      user.id,
+      user.role,
+      user.businessId,
+    );
     if (!session) return jsonError("Session not found.", 404);
 
     const completeness = calculateCompleteness(session);

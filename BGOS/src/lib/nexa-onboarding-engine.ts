@@ -8,6 +8,34 @@ function getOpenAI() {
 }
 
 type JsonRecord = Record<string, unknown>;
+type ConfidenceScore = "low" | "medium" | "high";
+
+type ParsedField<T> = {
+  value: T | null;
+  confidence_score: ConfidenceScore;
+};
+
+export type BusinessContext = {
+  company_name: ParsedField<string>;
+  business_type: ParsedField<string>;
+  products_services: ParsedField<string[]>;
+  target_customers: ParsedField<string[]>;
+  team_size: ParsedField<number>;
+  location: ParsedField<string>;
+  lead_sources: ParsedField<string[]>;
+  sales_flow: ParsedField<string[]>;
+  follow_up_style: ParsedField<string>;
+  roles_mapping: ParsedField<Record<string, string>>;
+  problems_faced: ParsedField<string[]>;
+};
+
+export type CompanyProfile = {
+  identity: JsonRecord;
+  business: JsonRecord;
+  sales: JsonRecord;
+  team: JsonRecord;
+  requirements: JsonRecord;
+};
 
 type EngineEmployee = {
   id?: string;
@@ -101,6 +129,431 @@ function asArray<T = unknown>(value: unknown): T[] {
 
 function asString(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function confidenceRank(score: unknown) {
+  if (score === "high") return 3;
+  if (score === "medium") return 2;
+  return 1;
+}
+
+function field<T>(value: T | null, confidence_score: ConfidenceScore): ParsedField<T> {
+  return { value, confidence_score: value === null ? "low" : confidence_score };
+}
+
+function uniqueStrings(items: unknown[]) {
+  return Array.from(
+    new Set(
+      items
+        .flatMap((item) => (Array.isArray(item) ? item : [item]))
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function phraseList(input: string) {
+  return uniqueStrings(
+    input
+      .replace(/\b(team|staff|employees?|members?|people)\s*(size)?\s*(is|of|:)?\s*\d+/gi, " ")
+      .split(/[,/&+]| and /i)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 2 && item.length < 50),
+  );
+}
+
+function matchKnown(input: string, options: string[]) {
+  const lower = input.toLowerCase();
+  return options.filter((option) => lower.includes(option.toLowerCase()));
+}
+
+function guessBusinessType(input: string, products: string[]) {
+  const lower = input.toLowerCase();
+  const known = [
+    "solar",
+    "cctv",
+    "electrical",
+    "construction",
+    "real estate",
+    "education",
+    "healthcare",
+    "retail",
+    "manufacturing",
+    "consulting",
+    "service",
+    "trading",
+    "distribution",
+    "software",
+    "agency",
+  ];
+  const hits = known.filter((item) => lower.includes(item));
+  if (hits.length) return field(hits.slice(0, 3).join(" and "), "medium");
+  if (products.length) return field(`${products[0]} business`, "low");
+  return field<string>(null, "low");
+}
+
+function inferTargetCustomers(input: string, businessType: string | null) {
+  const explicit = matchKnown(input, [
+    "homes",
+    "home owners",
+    "residential",
+    "commercial",
+    "businesses",
+    "builders",
+    "contractors",
+    "dealers",
+    "schools",
+    "hospitals",
+    "apartments",
+    "offices",
+    "retail shops",
+  ]);
+  if (explicit.length) return field(explicit, "high");
+  const lowerType = (businessType || "").toLowerCase();
+  if (lowerType.includes("solar") || lowerType.includes("cctv") || lowerType.includes("electrical")) {
+    return field(["residential customers", "commercial clients"], "low");
+  }
+  return field<string[]>(null, "low");
+}
+
+function extractLocation(input: string) {
+  const match = input.match(/\b(?:in|at|from|near)\s+([A-Z][A-Za-z .-]{2,40})(?:[,.]|$)/);
+  if (match?.[1]) return field(match[1].trim(), "medium");
+  return field<string>(null, "low");
+}
+
+function extractCompanyName(input: string) {
+  const match = input.match(/\b(?:company|business|firm|client)\s+(?:name\s+)?(?:is|:)?\s*([A-Z][A-Za-z0-9 &'().-]{2,60})/i);
+  if (match?.[1]) return field(match[1].trim(), "high");
+  const possessive = input.match(/\b([A-Z][A-Za-z0-9 &'().-]{2,60})'?s\s+(?:business|company|firm)\b/);
+  if (possessive?.[1]) return field(possessive[1].trim(), "medium");
+  return field<string>(null, "low");
+}
+
+function extractTeamSize(input: string) {
+  const match =
+    input.match(/\b(?:team|staff|employees?|members?|people)\s*(?:size)?\s*(?:is|of|:)?\s*(\d{1,4})\b/i) ||
+    input.match(/\b(\d{1,4})\s*(?:people|members|staff|employees?|team)\b/i);
+  return match?.[1] ? field(Number(match[1]), "high") : field<number>(null, "low");
+}
+
+function extractRoles(input: string) {
+  const roles: Record<string, string> = {};
+  const lower = input.toLowerCase();
+  if (lower.includes("owner") || lower.includes("boss")) roles.owner = "Business owner / final approver";
+  if (lower.includes("sales") || lower.includes("bdm")) roles.sales = "Lead handling and follow-up";
+  if (lower.includes("technician") || lower.includes("engineer")) roles.technical = "Installation/service execution";
+  if (lower.includes("accounts") || lower.includes("payment")) roles.accounts = "Billing and collections";
+  if (lower.includes("admin")) roles.admin = "Coordination and operations";
+  return field(Object.keys(roles).length ? roles : null, Object.keys(roles).length > 1 ? "medium" : "low");
+}
+
+function extractProblems(input: string) {
+  const lower = input.toLowerCase();
+  const problems: string[] = [];
+  if (/(follow.?up|miss|forget|delay)/i.test(lower)) problems.push("follow-up leakage");
+  if (/(payment|collection|due|pending amount)/i.test(lower)) problems.push("payment and collection tracking");
+  if (/(task|work|assign|accountability|responsibility)/i.test(lower)) problems.push("task ownership and accountability");
+  if (/(report|dashboard|visibility|track|monitor)/i.test(lower)) problems.push("management visibility");
+  if (/(quotation|quote|estimate)/i.test(lower)) problems.push("quotation tracking");
+  if (/(service|complaint|maintenance|amc)/i.test(lower)) problems.push("service and maintenance tracking");
+  return field(problems.length ? problems : null, problems.length > 1 ? "medium" : "low");
+}
+
+export function parseBusinessContext(input: string): BusinessContext {
+  const safeInput = input || "";
+  const leadSources = matchKnown(safeInput, [
+    "WhatsApp",
+    "Instagram",
+    "Facebook",
+    "website",
+    "Google",
+    "referral",
+    "walk-in",
+    "cold calling",
+    "field visit",
+    "IndiaMART",
+  ]);
+  const salesFlow = matchKnown(safeInput, [
+    "new lead",
+    "contacted",
+    "follow up",
+    "site visit",
+    "quotation",
+    "negotiation",
+    "payment",
+    "installation",
+    "handover",
+    "lost",
+  ]);
+  const followUp = matchKnown(safeInput, ["daily", "weekly", "monthly", "WhatsApp", "call", "email"]);
+  const teamSize = extractTeamSize(safeInput);
+  const obviousProducts = matchKnown(safeInput, [
+    "solar",
+    "CCTV",
+    "electrical",
+    "AMC",
+    "maintenance",
+    "installation",
+    "quotation",
+    "service",
+    "consulting",
+    "trading",
+  ]);
+  const products = obviousProducts.length ? obviousProducts : phraseList(safeInput);
+  const businessType = guessBusinessType(safeInput, products);
+
+  return {
+    company_name: extractCompanyName(safeInput),
+    business_type: businessType,
+    products_services: field(products.length ? products : null, obviousProducts.length ? "medium" : "low"),
+    target_customers: inferTargetCustomers(safeInput, businessType.value),
+    team_size: teamSize,
+    location: extractLocation(safeInput),
+    lead_sources: field(leadSources.length ? leadSources : null, leadSources.length > 1 ? "high" : "medium"),
+    sales_flow: field(salesFlow.length ? salesFlow : null, salesFlow.length > 2 ? "high" : "medium"),
+    follow_up_style: field(followUp.length ? followUp.join(" + ") : null, followUp.length > 1 ? "high" : "medium"),
+    roles_mapping: extractRoles(safeInput),
+    problems_faced: extractProblems(safeInput),
+  };
+}
+
+function emptyProfile(): CompanyProfile {
+  return {
+    identity: {},
+    business: {},
+    sales: {},
+    team: {},
+    requirements: {},
+  };
+}
+
+function getProfile(nexaConfig: unknown): CompanyProfile {
+  const config = asRecord(nexaConfig);
+  const profile = asRecord(config.company_profile);
+  return {
+    ...emptyProfile(),
+    ...profile,
+    identity: asRecord(profile.identity),
+    business: asRecord(profile.business),
+    sales: asRecord(profile.sales),
+    team: asRecord(profile.team),
+    requirements: asRecord(profile.requirements),
+  };
+}
+
+function setProfileField(section: JsonRecord, key: string, incoming: ParsedField<unknown>) {
+  if (incoming.value === null || incoming.value === undefined) return;
+  const current = asRecord(section[key]);
+  const currentValue = current.value;
+  const currentConfidence = current.confidence_score;
+  const nextValue =
+    Array.isArray(currentValue) || Array.isArray(incoming.value)
+      ? uniqueStrings([...(Array.isArray(currentValue) ? currentValue : []), incoming.value])
+      : incoming.value;
+
+  if (!currentValue || confidenceRank(incoming.confidence_score) >= confidenceRank(currentConfidence)) {
+    section[key] = {
+      value: nextValue,
+      confidence_score: incoming.confidence_score,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+}
+
+export function mergeBusinessContextIntoProfile(
+  currentProfile: unknown,
+  parsed: BusinessContext,
+): CompanyProfile {
+  const profile = {
+    ...emptyProfile(),
+    ...asRecord(currentProfile),
+    identity: asRecord(asRecord(currentProfile).identity),
+    business: asRecord(asRecord(currentProfile).business),
+    sales: asRecord(asRecord(currentProfile).sales),
+    team: asRecord(asRecord(currentProfile).team),
+    requirements: asRecord(asRecord(currentProfile).requirements),
+  };
+
+  setProfileField(profile.identity, "company_name", parsed.company_name as ParsedField<unknown>);
+  setProfileField(profile.identity, "location", parsed.location as ParsedField<unknown>);
+  setProfileField(profile.business, "business_type", parsed.business_type as ParsedField<unknown>);
+  setProfileField(profile.business, "products_services", parsed.products_services as ParsedField<unknown>);
+  setProfileField(profile.business, "target_customers", parsed.target_customers as ParsedField<unknown>);
+  setProfileField(profile.team, "team_size", parsed.team_size as ParsedField<unknown>);
+  setProfileField(profile.team, "roles_mapping", parsed.roles_mapping as ParsedField<unknown>);
+  setProfileField(profile.sales, "lead_sources", parsed.lead_sources as ParsedField<unknown>);
+  setProfileField(profile.sales, "sales_flow", parsed.sales_flow as ParsedField<unknown>);
+  setProfileField(profile.sales, "follow_up_style", parsed.follow_up_style as ParsedField<unknown>);
+  setProfileField(profile.requirements, "problems_faced", parsed.problems_faced as ParsedField<unknown>);
+
+  return profile;
+}
+
+export function businessContextToCompanyData(parsed: BusinessContext): JsonRecord {
+  const company: JsonRecord = {};
+  if (parsed.company_name.value) company.name = parsed.company_name.value;
+  if (parsed.business_type.value) company.industry = parsed.business_type.value;
+  if (parsed.products_services.value) company.products = parsed.products_services.value;
+  if (parsed.target_customers.value) company.targetCustomers = parsed.target_customers.value;
+  if (parsed.team_size.value) company.employeeCount = parsed.team_size.value;
+  if (parsed.location.value) company.location = parsed.location.value;
+  return company;
+}
+
+function knownProfileFacts(profile: CompanyProfile) {
+  return [
+    profile.identity.company_name,
+    profile.business.business_type,
+    profile.business.products_services,
+    profile.team.team_size,
+    profile.identity.location,
+    profile.sales.lead_sources,
+  ]
+    .map((item) => asRecord(item).value)
+    .filter((item) => item !== undefined && item !== null && (!Array.isArray(item) || item.length));
+}
+
+export function analyzeCompanyProfile(profile: CompanyProfile) {
+  const required = [
+    ["identity", "company_name"],
+    ["business", "business_type"],
+    ["business", "products_services"],
+    ["business", "target_customers"],
+    ["team", "team_size"],
+    ["identity", "location"],
+    ["sales", "lead_sources"],
+    ["sales", "sales_flow"],
+    ["sales", "follow_up_style"],
+    ["team", "roles_mapping"],
+    ["requirements", "problems_faced"],
+  ] as const;
+  const missing = required
+    .filter(([section, key]) => !asRecord(profile[section][key]).value)
+    .map(([, key]) => key);
+  const uncertain = required
+    .filter(([section, key]) => {
+      const item = asRecord(profile[section][key]);
+      return item.value && item.confidence_score !== "high";
+    })
+    .map(([, key]) => key);
+
+  return {
+    known: knownProfileFacts(profile),
+    missing,
+    uncertain,
+    decision: uncertain.length ? "confirm" : missing.length ? "ask" : "infer",
+  };
+}
+
+export function generateResponse(profile: CompanyProfile, lastInput: string) {
+  const context = analyzeCompanyProfile(profile);
+  const businessType = asString(asRecord(profile.business.business_type).value, "this business");
+  const products = asArray<string>(asRecord(profile.business.products_services).value);
+  const teamSize = asRecord(profile.team.team_size).value;
+  const understanding = products.length
+    ? `Got it. You are running ${products.join(", ")} under a ${businessType} setup${teamSize ? ` with around ${teamSize} people` : ""}.`
+    : `Let me break that down. I have captured part of the business context from: "${lastInput.slice(0, 90)}".`;
+  const nextQuestion = context.missing.includes("target_customers")
+    ? "Do they mainly work with homes, commercial clients, or both?"
+    : context.missing.includes("lead_sources")
+      ? "Where do most leads come from today: WhatsApp, referrals, website, social media, field visits, or another source?"
+      : context.missing.includes("sales_flow")
+        ? "What is the normal sales flow from first enquiry to payment or handover?"
+        : "What should the Boss dashboard track first: leads, team work, payments, service status, or reports?";
+
+  return `${understanding}\n\n${nextQuestion}`;
+}
+
+function inferredSalesPipeline(companyData: JsonRecord, pipelines: EnginePipeline[]) {
+  if (pipelines.length) return pipelines;
+  const industry = asString(companyData.industry).toLowerCase();
+  const stages =
+    industry.includes("solar") || industry.includes("cctv") || industry.includes("electrical")
+      ? ["Enquiry", "Qualification", "Site visit", "Quotation", "Follow-up", "Payment", "Installation", "Handover"]
+      : ["Enquiry", "Discussion", "Follow-up", "Conversion", "Payment", "Execution"];
+
+  return [
+    {
+      name: "Default Sales Pipeline",
+      productName: asString(companyData.industry, "Core service"),
+      stages,
+      slaRules: { followUp: "Same day for new leads", quotation: "Within 24 hours after requirement clarity" },
+      visibleTo: ["Boss", "Sales team"],
+      color: "#7C6FFF",
+    },
+  ];
+}
+
+function inferredModuleSuggestions(requirements: JsonRecord, companyData: JsonRecord) {
+  const industry = asString(companyData.industry).toLowerCase();
+  const modules = uniqueStrings([
+    asArray(requirements.modules),
+    ["Leads", "Tasks", "Attendance", "Quotation", "Accounts"],
+    industry.includes("service") || industry.includes("solar") || industry.includes("cctv") || industry.includes("electrical")
+      ? ["Site Visit", "Installation / Service Tracking"]
+      : [],
+  ]);
+
+  return {
+    modules,
+    automations: asArray(requirements.automations).length
+      ? asArray(requirements.automations)
+      : ["Auto-remind owner and assigned employee for overdue follow-ups", "Escalate unassigned leads to Boss"],
+    reports: asArray(requirements.reports).length
+      ? asArray(requirements.reports)
+      : ["Lead funnel report", "Employee performance report", "Revenue and collection report"],
+    integrations: asArray(requirements.integrations),
+  };
+}
+
+function inferredDashboardPlan(requirements: JsonRecord) {
+  return {
+    bossDashboard: asArray(requirements.dashboardKpis).length
+      ? asArray(requirements.dashboardKpis)
+      : ["Total leads", "Open follow-ups", "Converted revenue", "Pending payments", "Employee performance"],
+    employeeViews: asArray(requirements.permissions).length
+      ? asArray(requirements.permissions)
+      : ["Employees see assigned leads, tasks, follow-ups, and own performance only"],
+    remindersAndEscalations: asArray(requirements.notifications).length
+      ? asArray(requirements.notifications)
+      : ["Notify assignee for new lead", "Alert Boss when lead is overdue or unassigned"],
+    acceptanceCriteria: asArray(requirements.acceptanceCriteria),
+  };
+}
+
+function mergeProfileIntoExtractedData(
+  extractedData: JsonRecord,
+  companyProfile: CompanyProfile,
+  parsedContext: BusinessContext,
+  existingNexaConfig: JsonRecord,
+) {
+  const company = {
+    ...businessContextToCompanyData(parsedContext),
+    ...asRecord(extractedData.company),
+  };
+  const nextNexaConfig = {
+    ...existingNexaConfig,
+    ...asRecord(extractedData.nexaConfig),
+    company_profile: companyProfile,
+    short_term_memory: {
+      last_input: parsedContext,
+      last_updated_at: new Date().toISOString(),
+    },
+  };
+
+  return {
+    ...extractedData,
+    company,
+    challenges: parsedContext.problems_faced.value
+      ? {
+          ...asRecord(extractedData.challenges),
+          primary: parsedContext.problems_faced.value.join(", "),
+        }
+      : asRecord(extractedData.challenges),
+    nexaConfig: nextNexaConfig,
+  };
 }
 
 function hasDetailedText(value: unknown, minLength = 18): boolean {
@@ -336,14 +789,50 @@ export async function generateNexaResponse(
   updatedData: JsonRecord;
   newFlags: string[];
   suggestions: string[];
+  parsedContext: BusinessContext;
+  companyProfile: CompanyProfile;
 }> {
   const companyData = asRecord(session.companyData);
   const employees = session.employees || [];
   const pipelines = session.pipelines || [];
+  const nexaConfigRecord = asRecord(session.nexaConfig);
   const requirements = buildRequirementsFrom(session);
+  const parsedContext = parseBusinessContext(userMessage);
+  const companyProfile = mergeBusinessContextIntoProfile(
+    getProfile(session.nexaConfig),
+    parsedContext,
+  );
+  const contextState = analyzeCompanyProfile(companyProfile);
+  const deterministicResponse = generateResponse(companyProfile, userMessage);
   const { score, missing, warnings } = calculateCompleteness(session);
 
-  const systemPrompt = `You are NEXA, the BGOS onboarding analyst. Your job is to collect a complete implementation brief from the BDM so an SDE can paste the final summary into Claude and build the exact customer workspace without guessing.
+  const systemPrompt = `You are NEXA - the AI Operating Head of BGOS.
+
+You function as a combined CEO + COO + CTO + CXO + Operations Manager.
+
+Your responsibility is to understand businesses, configure systems, guide employees, ensure execution, maintain accountability, and drive growth.
+
+You are not a chatbot. You are a decision-making, execution-oriented operating system for BGOS.
+
+You are also an experienced business operations manager with 30+ years of experience.
+
+You understand businesses from incomplete input.
+You think before asking.
+You infer intelligently.
+You confirm assumptions politely.
+You guide conversations efficiently.
+You never behave like a chatbot.
+You never ask unnecessary questions.
+You speak like a calm, confident senior manager.
+
+Behave like a sharp operator who understands Indian SME operations, sales pipelines, teams, payments, dashboards, and software delivery. Your job is to run the end-to-end BGOS onboarding conversation like ChatGPT: intelligent, adaptive, warm, decisive, and commercially aware.
+
+You are not a form bot. You infer what is reasonable, explain your thinking briefly, ask one high-leverage question at a time, and turn messy answers into a precise workspace implementation brief that an SDE can build without guessing.
+
+Audience:
+- If the speaker is BDM or Boss, help them complete onboarding fast.
+- If Boss is operating, treat it as priority and use owner-level language.
+- Always think about final BGOS delivery: Boss dashboard, employee dashboards, permissions, modules, automations, reports, and SDE handoff.
 
 Business: ${companyData.name || "unknown"}
 Industry: ${companyData.industry || "unknown"}
@@ -355,6 +844,18 @@ Build readiness score: ${score}/100
 Current step: ${currentStep}
 Missing: ${missing.join(", ") || "none"}
 Warnings: ${warnings.join(", ") || "none"}
+
+PERSISTENT COMPANY PROFILE:
+${JSON.stringify(companyProfile)}
+
+LATEST PARSED INPUT:
+${JSON.stringify(parsedContext)}
+
+CONTEXT ENGINE STATE:
+${JSON.stringify(contextState)}
+
+SHORT TERM MEMORY:
+${JSON.stringify(asArray(session.nexaMessages).slice(-6))}
 
 COLLECTED USERS:
 ${JSON.stringify(employees.map((employee) => ({ name: employeeName(employee), title: employee.title, email: employee.email, reportsTo: employee.reportsTo, role: employee.bgosRole || employee.systemRole, procedures: employee.operatingProcedures })))}
@@ -379,14 +880,40 @@ BUILD READINESS CHECKLIST - every item must be specific:
 11. Acceptance criteria: at least 3 concrete checks the SDE can use to verify the build.
 12. Out of scope: what the SDE should not build or touch.
 
+OPERATING HEAD DECISION RULES:
+1. Think before speaking. Interpret the input, then respond.
+2. Connect partial input with previous memory. Do not treat every message as a new form answer.
+3. If business = solar/CCTV/electrical, expect enquiry, qualification, site visit, quotation, follow-up, payment, installation, and handover.
+4. If business = service, expect lead, discussion, execution, payment, and service follow-up.
+5. If team size is more than 10, require role separation between Boss, sales, operations/technical, and accounts.
+6. If roles are unclear, propose a default structure instead of waiting.
+7. Ensure no lead, follow-up, task, payment, or service work remains unassigned.
+8. Suggest the practical BGOS modules needed to run the company: leads, tasks, attendance, quotation, accounts, reports, and service/installation if relevant.
+9. Configure dashboards mentally while asking questions: Boss view needs summary, revenue, performance, pending work, and risk; employee view needs assigned leads, tasks, follow-ups, and own results.
+10. Skip irrelevant details. Prioritize clarity, accountability, and execution.
+
 CONVERSATION RULES:
-1. Ask one question at a time.
-2. Acknowledge the answer briefly before asking the next question.
-3. If an answer is vague, ask a clarification before moving on.
-4. Do not let the BDM finish until every missing item is resolved.
-5. Prefer industry-specific follow-ups.
-6. Keep each response under 120 words.
-7. Never invent values. Store uncertain data as a flag or ask again.
+1. Every response must follow: understand, summarize, confirm if needed, move forward.
+2. Start with understanding, for example: "Got it. You are running a solar and CCTV business with around 10 team members."
+3. Confirm only uncertain assumptions. If team size is known, never ask team size again.
+4. Ask only what is missing, one question at a time, but make it the most relevant next step.
+5. If input is messy, summarize what you extracted and continue.
+6. Never say "I didn't understand", "repeat that", or "could you rephrase".
+7. Use: "Let me break that down to make sure I got it right..." when input is unclear.
+8. If an answer is vague, offer 2-4 likely options and ask them to choose or correct you.
+9. Do not interrogate. Make the user feel guided by a competent senior manager.
+10. Never say you are only collecting data. Speak as if you are designing their BGOS operating system.
+11. Prefer industry-specific follow-ups and practical examples.
+12. Keep each response under 120 words unless the user asks for a detailed plan.
+13. Never invent confirmed values. You may propose assumptions, but mark them as assumptions.
+14. If the user gives multiple details, extract all of them in one pass.
+15. Always move toward a build-ready SDE handoff.
+
+QUALITY BAR:
+- Sound trained, strategic, and useful.
+- Avoid robotic phrases like "I understand" repeated every turn.
+- Do not expose JSON, schema, or internal scoring to the user.
+- When enough data exists, summarize what is ready and identify the next gap.
 
 STEP GUIDE:
 - company: company profile and business context.
@@ -405,6 +932,8 @@ Return only valid JSON:
     "rules": [],
     "challenges": {},
     "nexaConfig": {
+      "company_profile": {},
+      "short_term_memory": [],
       "buildRequirements": {
         "modules": [],
         "dataModels": [],
@@ -448,20 +977,29 @@ Return only valid JSON:
     const parsed = JSON.parse(text.replace(/```json|```/g, "").trim()) as JsonRecord;
 
     return {
-      response: asString(parsed.message) || "I did not understand that. Could you rephrase?",
+      response: asString(parsed.message) || deterministicResponse,
       nextStep: asString(parsed.nextStep) || currentStep,
-      updatedData: asRecord(parsed.extractedData),
+      updatedData: mergeProfileIntoExtractedData(asRecord(parsed.extractedData), companyProfile, parsedContext, nexaConfigRecord),
       newFlags: asArray<string>(parsed.flags),
       suggestions: asArray<string>(parsed.suggestions),
+      parsedContext,
+      companyProfile,
     };
   } catch (error) {
     console.error("NEXA engine error:", error);
     return {
-      response: "I had a brief issue. Could you repeat that?",
+      response: deterministicResponse,
       nextStep: currentStep,
-      updatedData: {},
-      newFlags: [],
+      updatedData: mergeProfileIntoExtractedData(
+        { company: businessContextToCompanyData(parsedContext) },
+        companyProfile,
+        parsedContext,
+        nexaConfigRecord,
+      ),
+      newFlags: ["NEXA used deterministic onboarding memory because the AI response was unavailable."],
       suggestions: [],
+      parsedContext,
+      companyProfile,
     };
   }
 }
@@ -517,6 +1055,19 @@ export async function generateFinalSummary(sessionId: string): Promise<{
 
   const structured = {
     clientId,
+    businessSummary: {
+      companyName,
+      industry: asString(companyData.industry),
+      location: asString(companyData.location),
+      teamSize: Number(companyData.employeeCount || employees.length || 0),
+      productsServices: companyData.products ?? companyData.services ?? [],
+      targetCustomers: companyData.targetCustomers ?? "",
+      primaryChallenge: asString(challenges.primary, "Not captured"),
+    },
+    salesPipeline: inferredSalesPipeline(companyData, pipelines),
+    roleAssignment: employees,
+    moduleSuggestions: inferredModuleSuggestions(requirements, companyData),
+    dashboardConfigurationPlan: inferredDashboardPlan(requirements),
     company: {
       name: companyName,
       industry: asString(companyData.industry),
@@ -584,6 +1135,26 @@ export async function generateFinalSummary(sessionId: string): Promise<{
     "BUSINESS CONTEXT",
     "------------------------------------------------------------",
     formatKeyValues(companyData),
+    "",
+    "BUSINESS SUMMARY",
+    "------------------------------------------------------------",
+    formatKeyValues(structured.businessSummary),
+    "",
+    "SALES PIPELINE",
+    "------------------------------------------------------------",
+    formatList(structured.salesPipeline),
+    "",
+    "ROLE ASSIGNMENT",
+    "------------------------------------------------------------",
+    formatList(structured.roleAssignment),
+    "",
+    "MODULE SUGGESTIONS",
+    "------------------------------------------------------------",
+    formatKeyValues(structured.moduleSuggestions),
+    "",
+    "DASHBOARD CONFIGURATION PLAN",
+    "------------------------------------------------------------",
+    formatKeyValues(structured.dashboardConfigurationPlan),
     "",
     "PRIMARY BUSINESS CHALLENGE",
     "------------------------------------------------------------",
