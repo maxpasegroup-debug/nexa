@@ -33,3 +33,14 @@ export function getDashboardDomain(role: string): string {
   if (isEmployeeRole(role)) return `https://${EMPLOYEE_DOMAIN}`;
   return "";
 }
+
+export function getLogoutCallbackUrl(role?: string, host?: string): string {
+  const currentHost = host ?? "";
+
+  if (role && isEmployeeRole(role)) return `https://${EMPLOYEE_DOMAIN}`;
+  if (role && isBossRole(role)) return `https://${BOSS_DOMAIN}`;
+  if (currentHost.includes(EMPLOYEE_DOMAIN)) return `https://${EMPLOYEE_DOMAIN}`;
+  if (currentHost.includes(BOSS_DOMAIN)) return `https://${BOSS_DOMAIN}`;
+
+  return "/";
+}

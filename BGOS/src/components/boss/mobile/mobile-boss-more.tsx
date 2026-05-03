@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { getLogoutCallbackUrl } from "@/lib/domain";
 
 const items = [
   { icon: "📥", label: "Inbox", href: "/boss/inbox" },
@@ -29,7 +30,11 @@ export function MobileBossMore() {
         ))}
         <button
           type="button"
-          onClick={() => void signOut({ callbackUrl: "/" })}
+          onClick={() =>
+            void signOut({
+              callbackUrl: getLogoutCallbackUrl("BOSS", window.location.host),
+            })
+          }
           className="flex h-[52px] w-full items-center gap-3 px-4 text-left"
         >
           <span className="text-base">🚪</span>

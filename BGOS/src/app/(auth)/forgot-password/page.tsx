@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,11 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isEmployeePortal, setIsEmployeePortal] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setIsEmployeePortal(window.location.host.includes("iceconnect.in"));
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,6 +45,35 @@ export default function ForgotPasswordPage() {
     }
 
     setSuccess(true);
+  }
+
+  if (isEmployeePortal === null) {
+    return <main className="min-h-screen bg-[#070709]" />;
+  }
+
+  if (isEmployeePortal) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#070709] px-4 py-10 font-sans">
+        <section className="w-full max-w-md rounded-2xl border border-[#22D9A0]/20 bg-[#13131c] p-8 text-center shadow-2xl shadow-black/30">
+          <div className="font-heading text-3xl font-bold tracking-normal">
+            <span className="text-white">ice</span>
+            <span className="text-[#22D9A0]">connect</span>
+          </div>
+          <h1 className="mt-8 font-heading text-2xl font-bold tracking-normal text-white">
+            Password reset
+          </h1>
+          <p className="mt-4 text-sm leading-6 text-zinc-400">
+            Contact your management for resetting the password.
+          </p>
+          <Link
+            href="/login"
+            className="mt-7 inline-flex rounded-xl bg-[#22D9A0] px-5 py-3 text-sm font-bold text-black"
+          >
+            Back to employee login
+          </Link>
+        </section>
+      </main>
+    );
   }
 
   return (

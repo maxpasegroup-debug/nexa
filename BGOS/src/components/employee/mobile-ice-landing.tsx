@@ -123,7 +123,7 @@ export default function MobileIceLanding() {
       <MobileSheet isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Help" height="auto">
         <div className="space-y-4 text-sm leading-6 text-[#6B6878]">
           <p><span className="font-bold text-white">Who can sign in?</span><br />Only employees invited by their company admin.</p>
-          <p><span className="font-bold text-white">Forgot your password?</span><br />Use the forgot password link or ask your manager to reset it.</p>
+          <p><span className="font-bold text-white">Forgot your password?</span><br />Contact your management for resetting the password.</p>
           <p><span className="font-bold text-white">Need support?</span><br />Email hello@bgos.online.</p>
         </div>
       </MobileSheet>

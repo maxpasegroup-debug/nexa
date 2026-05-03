@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { getLogoutCallbackUrl } from "@/lib/domain";
 
 const items = [
   { icon: "🏃", label: "Sprint view", href: "/sde/sprint" },
@@ -27,7 +28,11 @@ export function MobileSDEMore() {
         ))}
         <button
           type="button"
-          onClick={() => void signOut({ callbackUrl: "/" })}
+          onClick={() =>
+            void signOut({
+              callbackUrl: getLogoutCallbackUrl("SDE", window.location.host),
+            })
+          }
           className="flex h-[52px] w-full items-center gap-3 px-4 text-left"
         >
           <span>🚪</span>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { getLogoutCallbackUrl } from "@/lib/domain";
 
 const rows = [
   ["🧠", "NEXA", "/bdm/nexa"],
@@ -40,7 +41,11 @@ export function MobileBDMMore() {
         )}
         <button
           type="button"
-          onClick={() => void signOut({ callbackUrl: "/" })}
+          onClick={() =>
+            void signOut({
+              callbackUrl: getLogoutCallbackUrl("BDM", window.location.host),
+            })
+          }
           className="flex h-[52px] w-full items-center gap-3 px-4 text-left text-sm text-[#FF6B6B]"
         >
           <span>🚪</span>

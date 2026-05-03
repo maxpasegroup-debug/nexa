@@ -254,12 +254,18 @@ export default function MobileLandingPage() {
     <main className="min-h-screen overflow-x-hidden bg-[#070709] pb-[92px] pt-[52px] font-sans text-[#F0EEF8]">
       <header className="fixed inset-x-0 top-0 z-50 flex h-[52px] items-center justify-between border-b border-white/[0.08] bg-[#070709]/95 px-4 backdrop-blur-xl">
         <Link href="/" className="font-heading text-xl font-extrabold"><span>BG</span><span className="text-[#7C6FFF]">OS</span></Link>
-        <button type="button" onClick={() => setMenuOpen(true)} className="rounded-xl border border-white/[0.08] p-2" aria-label="Open menu"><Menu className="h-5 w-5" /></button>
+        <div className="flex items-center gap-2">
+          <Link href="/login" className="rounded-xl border border-white/[0.08] px-3 py-2 text-xs font-bold text-[#F0EEF8]">
+            Sign in
+          </Link>
+          <button type="button" onClick={() => setMenuOpen(true)} className="rounded-xl border border-white/[0.08] p-2" aria-label="Open menu"><Menu className="h-5 w-5" /></button>
+        </div>
       </header>
 
       <div className={`fixed inset-0 z-[9998] bg-[#070709] px-6 pt-5 transition-transform duration-300 ${menuOpen ? "translate-x-0" : "translate-x-full"}`}>
         <div className="mb-10 flex items-center justify-between"><span className="font-heading text-xl font-extrabold">BG<span className="text-[#7C6FFF]">OS</span></span><button type="button" onClick={closeMenu} className="p-2"><X className="h-5 w-5" /></button></div>
         {["How it works", "Industries", "Marketplace", "Pricing"].map((item) => <a key={item} href={`#${item.toLowerCase().replaceAll(" ", "-")}`} onClick={closeMenu} className="block h-14 border-b border-white/[0.08] py-4 font-heading text-base font-extrabold">{item}</a>)}
+        <Link href="/login" onClick={closeMenu} className="mt-8 flex h-14 w-full items-center justify-center rounded-2xl border border-white/[0.12] font-heading text-sm font-extrabold text-[#F0EEF8]">Sign in</Link>
         <button type="button" onClick={() => { closeMenu(); openChat(); }} className="mt-8 h-14 w-full rounded-2xl bg-[#22D9A0] font-heading text-sm font-extrabold text-black">Get your workspace</button>
       </div>
 

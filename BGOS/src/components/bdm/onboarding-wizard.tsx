@@ -112,6 +112,111 @@ type ChatResponse = {
 };
 
 const stepOrder = ["company", "employees", "pipelines", "requirements", "review"];
+const guideTabs = ["flow", "data", "intel", "output"] as const;
+
+type GuideTab = (typeof guideTabs)[number];
+
+const flowSteps = [
+  {
+    id: 1,
+    title: "Company & identity",
+    desc: "Company name, business type, short description, and location.",
+    tag: "30 sec",
+    tone: "green",
+    chips: ["Text input", "Type buttons", "Skip allowed"],
+  },
+  {
+    id: 2,
+    title: "Products / services",
+    desc: "What they sell or offer. Add multiple entries as chips.",
+    tag: "45 sec",
+    tone: "green",
+    chips: ["Chip tags", "Type + Enter", "No limit"],
+  },
+  {
+    id: 3,
+    title: "Target customers",
+    desc: "NEXA suggests customer types from the company and product context.",
+    tag: "AI-assisted",
+    tone: "purple",
+    chips: ["Dealers", "Contractors", "Businesses", "Add custom"],
+  },
+  {
+    id: 4,
+    title: "Sales system",
+    desc: "Lead sources, pipeline stages, and follow-up style.",
+    tag: "Critical",
+    tone: "amber",
+    chips: ["WhatsApp", "Calls", "Website", "Social media"],
+  },
+  {
+    id: 5,
+    title: "Roles & responsibilities",
+    desc: "Who handles leads, follows up, closes, and manages each workflow.",
+    tag: "45 sec",
+    tone: "neutral",
+    chips: ["Owner", "Sales", "Manager", "Everyone"],
+  },
+  {
+    id: 6,
+    title: "Dashboard requirements",
+    desc: "What the boss sees and what each employee should see.",
+    tag: "30 sec",
+    tone: "neutral",
+    chips: ["Lead tracking", "Reports", "Accounts", "Team monitoring"],
+  },
+  {
+    id: 7,
+    title: "Modules",
+    desc: "NEXA pre-selects modules from everything collected so far.",
+    tag: "AI-assisted",
+    tone: "purple",
+    chips: ["Leads", "Tasks", "Attendance", "Quotation"],
+  },
+  {
+    id: 8,
+    title: "Team setup",
+    desc: "Name, email, and role for each employee on iceconnect.",
+    tag: "Important",
+    tone: "amber",
+    chips: ["Name", "Email", "Role picker", "Add more"],
+  },
+  {
+    id: 9,
+    title: "Team size -> plan",
+    desc: "Team size maps to the subscription plan automatically.",
+    tag: "10 sec",
+    tone: "green",
+    chips: ["1-3", "4-15", "16-50", "50+"],
+  },
+  {
+    id: 10,
+    title: "Review & submit",
+    desc: "NEXA creates the SDE-ready workspace build brief.",
+    tag: "Final",
+    tone: "purple",
+    chips: ["Summary", "Plan", "BDM notes", "Submit"],
+  },
+];
+
+const intelligenceRows = [
+  {
+    title: "Customer type suggestion",
+    desc: "Uses business type and products to suggest selectable customer chips.",
+  },
+  {
+    title: "Pipeline recommendation",
+    desc: "Turns lead sources into a practical sales flow the BDM can accept or edit.",
+  },
+  {
+    title: "Module pre-selection",
+    desc: "Chooses likely modules such as leads, tasks, quotation, accounts, or communication.",
+  },
+  {
+    title: "Completeness guard",
+    desc: "Keeps the session from reaching SDE until the build brief has enough detail.",
+  },
+];
 
 function asString(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim() ? value : fallback;
@@ -121,6 +226,20 @@ function scoreColor(score: number) {
   if (score >= 80) return "#22D9A0";
   if (score >= 55) return "#F5A623";
   return "#FF6B6B";
+}
+
+function toneClass(tone: string) {
+  if (tone === "green") return "border-[#22D9A0]/25 bg-[#22D9A0]/[0.03]";
+  if (tone === "purple") return "border-[#7C6FFF]/25 bg-[#7C6FFF]/[0.03]";
+  if (tone === "amber") return "border-[#F5A623]/30 bg-[#F5A623]/[0.03]";
+  return "border-white/[0.07] bg-[#13131c]";
+}
+
+function toneTextClass(tone: string) {
+  if (tone === "green") return "text-[#22D9A0]";
+  if (tone === "purple") return "text-[#a89fff]";
+  if (tone === "amber") return "text-[#F5A623]";
+  return "text-zinc-400";
 }
 
 function stepIndex(step: string) {
@@ -198,6 +317,7 @@ export function OnboardingWizard({
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [showPlanSubmit, setShowPlanSubmit] = useState(false);
   const [dataOpen, setDataOpen] = useState(false);
+  const [guideTab, setGuideTab] = useState<GuideTab>("flow");
   const [loading, setLoading] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<{ company: string; sdeName: string } | null>(null);
@@ -378,6 +498,132 @@ export function OnboardingWizard({
     </div>
   );
 
+  const guidePanel = (
+    <div className="space-y-4">
+      <div className="sticky top-0 z-10 -mx-5 -mt-5 overflow-x-auto border-b border-white/[0.07] bg-[#070709] px-5 pt-5">
+        <div className="flex min-w-max gap-0">
+          {guideTabs.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setGuideTab(tab)}
+              className={`border-b-2 px-3 py-3 text-xs font-semibold capitalize ${
+                guideTab === tab
+                  ? "border-[#7C6FFF] text-[#a89fff]"
+                  : "border-transparent text-zinc-500"
+              }`}
+            >
+              {tab === "intel" ? "NEXA intel" : tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {guideTab === "flow" ? (
+        <section>
+          <h2 className="font-heading text-[15px] font-extrabold text-white">
+            NEXA onboarding - simplified 10-section flow
+          </h2>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">
+            Chat-based, one question at a time. NEXA suggests, BDM confirms.
+          </p>
+          <div className="mt-4 space-y-3">
+            {flowSteps.map((step) => (
+              <article key={step.id} className={`flex gap-3 rounded-xl border p-3 ${toneClass(step.tone)}`}>
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-current text-[11px] font-extrabold ${toneTextClass(step.tone)}`}>
+                  {step.id}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-heading text-[13px] font-bold text-white">{step.title}</h3>
+                    <span className={`shrink-0 rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-semibold ${toneTextClass(step.tone)}`}>
+                      {step.tag}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">{step.desc}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {step.chips.map((chip) => (
+                      <span key={chip} className="rounded-full border border-white/[0.07] px-2.5 py-1 text-[10px] text-zinc-500">
+                        {chip}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {guideTab === "data" ? dataPanel : null}
+
+      {guideTab === "intel" ? (
+        <section>
+          <h2 className="font-heading text-[15px] font-extrabold text-white">NEXA intelligence</h2>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">
+            The assistant turns loose call notes into choices, gaps, and a build-ready brief.
+          </p>
+          <div className="mt-4 space-y-2">
+            {intelligenceRows.map((row, index) => (
+              <div key={row.title} className="flex gap-3 rounded-lg border border-[#7C6FFF]/10 bg-[#7C6FFF]/[0.04] p-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#7C6FFF]/15 text-[11px] font-bold text-[#a89fff]">
+                  {index + 1}
+                </span>
+                <div>
+                  <h3 className="text-xs font-semibold text-white">{row.title}</h3>
+                  <p className="mt-1 text-[11px] leading-5 text-zinc-500">{row.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {flags.length || suggestions.length ? (
+            <div className="mt-4 rounded-xl border border-[#F5A623]/20 bg-[#F5A623]/10 p-3">
+              <h3 className="font-heading text-sm font-bold text-[#F5A623]">Live notes</h3>
+              {[...flags, ...suggestions].slice(0, 6).map((item) => (
+                <p key={item} className="mt-2 text-xs leading-5 text-amber-100">
+                  {item}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {guideTab === "output" ? (
+        <section>
+          <h2 className="font-heading text-[15px] font-extrabold text-white">Final output</h2>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">
+            This is what NEXA prepares for the SDE build dashboard after submission.
+          </p>
+          <div className="mt-4 rounded-xl border border-white/[0.07] bg-[#13131c] p-4">
+            {[
+              ["Company", companyName],
+              ["Current section", currentStep],
+              ["Completeness", `${score}%`],
+              ["Team members", String(employees.length)],
+              ["Pipelines", String(pipelines.length)],
+              ["Selected plan", selectedPlan],
+            ].map(([label, value]) => (
+              <div key={label} className="flex justify-between gap-4 border-b border-white/[0.07] py-2 text-xs last:border-b-0">
+                <span className="text-zinc-500">{label}</span>
+                <span className="max-w-[60%] text-right font-medium text-white">{value}</span>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => void generateSummary()}
+            disabled={!canSubmit || loading === "summary"}
+            className="mt-4 w-full rounded-xl bg-[#22D9A0] px-4 py-3 text-sm font-extrabold text-black disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading === "summary" ? "NEXA is preparing..." : "Generate SDE summary"}
+          </button>
+          {blocked ? <p className="mt-3 text-xs leading-5 text-[#F5A623]">{blocked}</p> : null}
+        </section>
+      ) : null}
+    </div>
+  );
+
   if (success) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#070709] p-6 text-white">
@@ -510,8 +756,8 @@ export function OnboardingWizard({
           </div>
         </section>
 
-        <aside className="hidden min-h-0 overflow-y-auto bg-[#0d0d12] p-5 lg:block">
-          <div className="mb-5 flex items-center justify-between gap-3">
+        <aside className="hidden min-h-0 overflow-y-auto bg-[#070709] p-5 lg:block">
+          <div className="hidden">
             <h2 className="font-heading text-lg font-bold">Collected data</h2>
             {canSubmit ? (
               <button
@@ -524,8 +770,7 @@ export function OnboardingWizard({
               </button>
             ) : null}
           </div>
-          {blocked ? <p className="mb-4 rounded-xl border border-[#F5A623]/20 bg-[#F5A623]/10 p-3 text-xs leading-5 text-amber-100">{blocked}</p> : null}
-          {dataPanel}
+          {guidePanel}
         </aside>
       </main>
 

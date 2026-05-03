@@ -27,6 +27,7 @@ import {
   Wrench,
   Clock3,
 } from "lucide-react";
+import { getLogoutCallbackUrl } from "@/lib/domain";
 
 type SidebarProps = {
   role: string;
@@ -433,7 +434,11 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
         </div>
         <button
           type="button"
-          onClick={() => void signOut({ callbackUrl: "/" })}
+          onClick={() =>
+            void signOut({
+              callbackUrl: getLogoutCallbackUrl(role, window.location.host),
+            })
+          }
           className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-zinc-400 transition hover:bg-[rgba(255,255,255,0.04)] hover:text-white"
         >
           <LogOut className="h-4 w-4" />

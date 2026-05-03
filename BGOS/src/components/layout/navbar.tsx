@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { Bell, Mail, Menu } from "lucide-react";
+import { getLogoutCallbackUrl } from "@/lib/domain";
 
 type NavbarProps = {
   title: string;
@@ -266,7 +267,11 @@ export function Navbar({ title, userName, role }: NavbarProps) {
               </button>
               <button
                 type="button"
-                onClick={() => void signOut({ callbackUrl: "/" })}
+                onClick={() =>
+                  void signOut({
+                    callbackUrl: getLogoutCallbackUrl(role, window.location.host),
+                  })
+                }
                 className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white"
               >
                 Sign out
