@@ -6,10 +6,16 @@ const productLinks = [
   ["Pricing", "#pricing"],
 ];
 
+const policyLinks = [
+  ["Terms and Conditions", "/terms"],
+  ["Privacy Policy", "/privacy"],
+  ["Refund Policy", "/refund"],
+];
+
 export default function LandingFooter() {
   return (
     <footer className="border-t border-white/10 bg-[#070709] px-5 pb-8 pt-16 md:px-12">
-      <div className="mx-auto grid max-w-[1100px] gap-10 md:grid-cols-[1.5fr_repeat(2,1fr)]">
+      <div className="mx-auto grid max-w-[1100px] gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div>
           <div className="font-heading text-[22px] font-extrabold">
             <span className="text-white">BG</span>
@@ -38,17 +44,31 @@ export default function LandingFooter() {
           <h3 className="font-heading text-sm font-bold text-white">Contact</h3>
           <div className="mt-4 space-y-3">
             <a
-              href="mailto:hello@bgos.in"
+              href="mailto:hello@bgos.online"
               className="block text-sm text-[#A5A1B3] transition hover:text-white"
             >
-              hello@bgos.in
+              hello@bgos.online
             </a>
             <p className="text-sm text-[#A5A1B3]">Made in India for Indian SMEs.</p>
           </div>
         </div>
+        <div>
+          <h3 className="font-heading text-sm font-bold text-white">Policies</h3>
+          <div className="mt-4 space-y-3">
+            {policyLinks.map(([label, href]) => (
+              <a
+                key={label}
+                href={href}
+                className="block text-sm text-[#A5A1B3] transition hover:text-white"
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="mx-auto mt-12 flex max-w-[1100px] flex-col justify-between gap-3 border-t border-white/10 pt-8 text-xs text-[#A5A1B3] md:flex-row">
-        <p>Copyright 2026 BGOS. All rights reserved.</p>
+        <p>Copyright 2026 MIB - MAKE IT BEAUTIFUL LLP. All rights reserved.</p>
         <p>Early access product with guided setup.</p>
       </div>
     </footer>

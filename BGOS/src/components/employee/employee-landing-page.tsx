@@ -279,8 +279,8 @@ export default function EmployeeLandingPage() {
           <p className="md:text-center">Employee workspace · part of the BGOS platform</p>
           <div className="flex justify-center gap-4 md:justify-end">
             <a href="https://bgos.online" className="transition hover:text-[#EFF5F0]">bgos.online →</a>
-            <a href="#" className="transition hover:text-[#EFF5F0]">Privacy</a>
-            <a href="mailto:support@iceconnect.in" className="transition hover:text-[#EFF5F0]">Support</a>
+            <Link href="/privacy" className="transition hover:text-[#EFF5F0]">Privacy</Link>
+            <a href="mailto:hello@bgos.online" className="transition hover:text-[#EFF5F0]">Support</a>
           </div>
         </div>
       </footer>

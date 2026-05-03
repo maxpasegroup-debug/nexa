@@ -111,14 +111,10 @@ type ChatResponse = {
   error?: string;
 };
 
-const stepOrder = ["company", "employees", "pipelines", "rules", "review"];
+const stepOrder = ["company", "employees", "pipelines", "requirements", "review"];
 
 function asString(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim() ? value : fallback;
-}
-
-function asNumber(value: unknown, fallback = 0) {
-  return typeof value === "number" ? value : Number(value) || fallback;
 }
 
 function scoreColor(score: number) {
@@ -208,28 +204,21 @@ export function OnboardingWizard({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const companyName = asString(companyData.name, lead.company ?? lead.name);
-  const expectedEmployees = asNumber(companyData.employeeCount, Number(lead.teamSize) || 0);
   const progressStyle = { width: `${Math.max(0, Math.min(score, 100))}%` };
 
   const checklist = useMemo(
     () => [
-      { label: "Company details", ok: Boolean(breakdown.company && breakdown.company >= 15) },
-      { label: "Employee count", ok: employees.length >= expectedEmployees && expectedEmployees > 0 },
-      { label: "Employee emails", ok: employees.length > 0 && employees.every((item) => item.email) },
-      {
-        label: "Reporting lines",
-        ok:
-          employees.length > 0 &&
-          employees.every((item) => item.reportsTo || (item.bgosRole || item.systemRole) === "BOSS"),
-      },
-      {
-        label: "Procedures",
-        ok: employees.length > 0 && employees.every((item) => (item.operatingProcedures || "").length >= 30),
-      },
-      { label: "Pipelines", ok: pipelines.some((item) => (item.stages || []).length >= 3) },
-      { label: "Primary challenge", ok: Boolean(initial?.challenges?.primary) || !blocked?.includes("Primary challenge") },
+      { label: "Company profile", ok: Boolean(breakdown.company && breakdown.company >= 10) },
+      { label: "Users, roles, reporting, SOP", ok: Boolean(breakdown.team && breakdown.team >= 15) },
+      { label: "Workflows, stages, SLA", ok: Boolean(breakdown.workflows && breakdown.workflows >= 15) },
+      { label: "Modules, screens, fields", ok: Boolean(breakdown.workspaceModules && breakdown.workspaceModules >= 15) },
+      { label: "Permission matrix", ok: Boolean(breakdown.permissions && breakdown.permissions >= 10) },
+      { label: "Automations and notifications", ok: Boolean(breakdown.automations && breakdown.automations >= 10) },
+      { label: "Reports and KPIs", ok: Boolean(breakdown.reports && breakdown.reports >= 10) },
+      { label: "Acceptance criteria", ok: Boolean(breakdown.acceptanceCriteria && breakdown.acceptanceCriteria >= 5) },
+      { label: "Out of scope", ok: Boolean(breakdown.outOfScope && breakdown.outOfScope >= 5) },
     ],
-    [blocked, breakdown.company, employees, expectedEmployees, initial?.challenges, pipelines],
+    [breakdown],
   );
 
   useEffect(() => {
@@ -421,7 +410,7 @@ export function OnboardingWizard({
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right text-xs text-zinc-500">
-              <p>Step {stepIndex(currentStep)} of 7</p>
+              <p>Step {stepIndex(currentStep)} of {stepOrder.length}</p>
               <p className="mt-1 capitalize">{currentStep}</p>
             </div>
             <div
@@ -493,7 +482,7 @@ export function OnboardingWizard({
               >
                 View collected data
               </button>
-              {canSubmit || score >= 80 ? (
+              {canSubmit ? (
                 <button
                   type="button"
                   onClick={() => void generateSummary()}
@@ -524,7 +513,7 @@ export function OnboardingWizard({
         <aside className="hidden min-h-0 overflow-y-auto bg-[#0d0d12] p-5 lg:block">
           <div className="mb-5 flex items-center justify-between gap-3">
             <h2 className="font-heading text-lg font-bold">Collected data</h2>
-            {canSubmit || score >= 80 ? (
+            {canSubmit ? (
               <button
                 type="button"
                 onClick={() => void generateSummary()}

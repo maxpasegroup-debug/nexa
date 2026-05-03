@@ -25,6 +25,36 @@ function mergeUnique(current: unknown, additions: string[]) {
   return Array.from(new Set([...jsonArray<string>(current), ...additions]));
 }
 
+function mergeDeep(current: Record<string, unknown>, next: Record<string, unknown>): Record<string, unknown> {
+  return Object.entries(next).reduce<Record<string, unknown>>(
+    (acc, [key, value]) => {
+      const existing = acc[key];
+      if (
+        existing &&
+        value &&
+        typeof existing === "object" &&
+        typeof value === "object" &&
+        !Array.isArray(existing) &&
+        !Array.isArray(value)
+      ) {
+        acc[key] = mergeDeep(existing as Record<string, unknown>, value as Record<string, unknown>);
+      } else if (Array.isArray(existing) && Array.isArray(value)) {
+        const seen = new Set<string>();
+        acc[key] = [...existing, ...value].filter((item) => {
+          const marker = typeof item === "string" ? item : JSON.stringify(item);
+          if (seen.has(marker)) return false;
+          seen.add(marker);
+          return true;
+        });
+      } else {
+        acc[key] = value;
+      }
+      return acc;
+    },
+    { ...current },
+  );
+}
+
 export async function POST(
   request: Request,
   { params }: { params: { id: string } },
@@ -63,9 +93,20 @@ export async function POST(
     const employee = asRecord(extracted.employee);
     if (Object.keys(employee).length) {
       const normalized = normalizeEmployee(employee);
-      if (normalized.id) {
+      const existingEmployee = normalized.id
+        ? null
+        : session.employees.find((item) => {
+            const emailMatches =
+              normalized.email && item.email.toLowerCase() === normalized.email.toLowerCase();
+            const nameMatches =
+              normalized.fullName &&
+              item.name.toLowerCase() === normalized.fullName.toLowerCase();
+            return emailMatches || nameMatches;
+          });
+      const employeeId = normalized.id || existingEmployee?.id;
+      if (employeeId) {
         await prisma.onboardingEmployee.update({
-          where: { id: normalized.id, sessionId: session.id },
+          where: { id: employeeId, sessionId: session.id },
           data: {
             fullName: normalized.fullName,
             name: normalized.name,
@@ -107,9 +148,17 @@ export async function POST(
     const pipeline = asRecord(extracted.pipeline);
     if (Object.keys(pipeline).length) {
       const normalized = normalizePipeline(pipeline);
-      if (normalized.id) {
+      const existingPipeline = normalized.id
+        ? null
+        : session.pipelines.find(
+            (item) =>
+              item.name.toLowerCase() === normalized.name.toLowerCase() ||
+              item.productName.toLowerCase() === normalized.productName.toLowerCase(),
+          );
+      const pipelineId = normalized.id || existingPipeline?.id;
+      if (pipelineId) {
         await prisma.onboardingPipeline.update({
-          where: { id: normalized.id, sessionId: session.id },
+          where: { id: pipelineId, sessionId: session.id },
           data: {
             name: normalized.name,
             productName: normalized.productName,
@@ -145,13 +194,18 @@ export async function POST(
     if (!fresh) return jsonError("Session not found.", 404);
 
     const operatingRules = [...jsonArray(fresh.operatingRules), ...rules];
+    const nextChallenges = Object.keys(challenges).length
+      ? mergeDeep(asRecord(fresh.challenges), challenges)
+      : asRecord(fresh.challenges);
+    const nextNexaConfig = Object.keys(nexaConfig).length
+      ? mergeDeep(asRecord(fresh.nexaConfig), nexaConfig)
+      : asRecord(fresh.nexaConfig);
     const completeness = calculateCompleteness({
       ...fresh,
       companyData: nextCompanyData,
       operatingRules,
-      challenges: Object.keys(challenges).length
-        ? { ...asRecord(fresh.challenges), ...challenges }
-        : fresh.challenges,
+      challenges: nextChallenges,
+      nexaConfig: nextNexaConfig,
     });
     const nexaMessages = [
       ...jsonArray(fresh.nexaMessages),
@@ -169,10 +223,10 @@ export async function POST(
         companyData: nextCompanyData as Prisma.InputJsonValue,
         operatingRules: operatingRules as Prisma.InputJsonValue,
         challenges: Object.keys(challenges).length
-          ? ({ ...asRecord(fresh.challenges), ...challenges } as Prisma.InputJsonValue)
+          ? (nextChallenges as Prisma.InputJsonValue)
           : undefined,
         nexaConfig: Object.keys(nexaConfig).length
-          ? ({ ...asRecord(fresh.nexaConfig), ...nexaConfig } as Prisma.InputJsonValue)
+          ? (nextNexaConfig as Prisma.InputJsonValue)
           : undefined,
         currentStep: nexa.nextStep,
         nexaMessages: nexaMessages as Prisma.InputJsonValue,

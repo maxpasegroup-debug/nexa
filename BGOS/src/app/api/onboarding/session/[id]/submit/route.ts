@@ -1,5 +1,5 @@
 import { sendEmail } from "@/lib/email";
-import { calculateCompleteness } from "@/lib/nexa-onboarding-engine";
+import { calculateCompleteness, generateFinalSummary } from "@/lib/nexa-onboarding-engine";
 import { findLeastLoadedSDE, getInternalBusiness, getString } from "@/lib/onboarding-flow";
 import {
   dueInHours,
@@ -28,12 +28,20 @@ export async function POST(
     const bdmNotes = getString(body.bdmNotes);
 
     const completeness = calculateCompleteness(session);
-    const canSubmit = session.canSubmit || completeness.canSubmit;
-    if (!canSubmit) {
+    if (!completeness.canSubmit) {
       return jsonError(
         completeness.blocked ?? "Complete all required onboarding data before submission.",
       );
     }
+    if (!session.summaryText || !session.summaryJson || !session.summaryGenerated) {
+      return jsonError("Generate the NEXA build-ready summary before submitting to SDE.");
+    }
+
+    await prisma.onboardingSession.update({
+      where: { id: params.id },
+      data: { selectedPlan, bdmNotes },
+    });
+    const finalSummary = await generateFinalSummary(params.id);
 
     const internalBusiness = await getInternalBusiness();
     const sde = await findLeastLoadedSDE(internalBusiness?.id ?? user.businessId);
@@ -44,9 +52,7 @@ export async function POST(
       session.lead?.company ||
       session.lead?.name ||
       "Client";
-    const summaryText =
-      session.summaryText ??
-      `BGOS ONBOARDING SUMMARY\nClient: ${companyName}\nPlan: ${selectedPlan}`;
+    const summaryText = finalSummary.readable;
 
     const [, task] = await prisma.$transaction([
       prisma.onboardingSession.update({
@@ -61,6 +67,10 @@ export async function POST(
           completenessBreakdown: completeness.breakdown,
           canSubmit: true,
           submissionBlocked: null,
+          summaryText: finalSummary.readable,
+          summaryJson: finalSummary.json,
+          generatedSummary: finalSummary.readable,
+          generatedJson: finalSummary.json,
         },
       }),
       prisma.task.create({

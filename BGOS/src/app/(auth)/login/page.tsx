@@ -215,7 +215,10 @@ export default function LoginPage() {
         </div>
 
         <div style={{ textAlign: "center", marginTop: "20px", fontSize: "11px", color: "#6B6878" }}>
-          By signing in you agree to our Terms of Service
+          By signing in you agree to our{" "}
+          <Link href="/terms" style={{ color: "#7C6FFF", textDecoration: "none" }}>
+            Terms and Conditions
+          </Link>
         </div>
       </div>
     </main>

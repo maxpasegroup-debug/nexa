@@ -15,7 +15,7 @@ export default function CtaSection() {
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
           <LandingCtaButton className="rounded-lg bg-[#7C6FFF] px-10 py-4 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#9186FF]" />
           <a
-            href="mailto:hello@bgos.in"
+            href="mailto:hello@bgos.online"
             className="rounded-lg border border-white/15 px-10 py-4 text-sm font-bold text-white transition hover:border-[#7C6FFF]/50"
           >
             Talk to our team

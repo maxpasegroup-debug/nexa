@@ -124,7 +124,7 @@ export default function MobileIceLanding() {
         <div className="space-y-4 text-sm leading-6 text-[#6B6878]">
           <p><span className="font-bold text-white">Who can sign in?</span><br />Only employees invited by their company admin.</p>
           <p><span className="font-bold text-white">Forgot your password?</span><br />Use the forgot password link or ask your manager to reset it.</p>
-          <p><span className="font-bold text-white">Need support?</span><br />Email support@iceconnect.in.</p>
+          <p><span className="font-bold text-white">Need support?</span><br />Email hello@bgos.online.</p>
         </div>
       </MobileSheet>
     </main>
