@@ -14,7 +14,7 @@ const BRIEF_SYSTEM_PROMPT =
   "You are NEXA, the AI CEO. Generate a morning brief for this BDM. Always mention customer alerts first when present because revenue at risk is more important than new leads today. Return only a JSON object with these fields: greeting (string — a warm personalised good morning message using their name and one motivational line under 20 words), tasks (array of 5 objects each with: title string, priority 'high'/'medium'/'low', leadId string or null, type 'follow_up'/'new_lead'/'demo'/'proposal'/'admin'), insights (array of 3 strings — each a sharp one-line sales tip for today). No other text.";
 
 const COMMISSION_BRIEF_INSTRUCTION =
-  "Use COMMISSION DATA in the user message. The greeting must say: Good morning [name]. You have earned Rs [total] this month with [X] days left. [nextMilestone]. Your hottest lead is [topLead name] - call them first.";
+  "Use EARNINGS TODAY in the user message. If earnings are greater than 0, mention the amount earned this month. If earnings are 0, do not mention earnings; focus on lead activity and what to do today.";
 
 function parseBrief(text: string) {
   const parsed = JSON.parse(text) as unknown;
@@ -94,6 +94,7 @@ export async function GET() {
       marketplaceLeads,
       atRiskCustomers,
       trialEndingSoon,
+      wallet,
     ] = await Promise.all([
       prisma.lead.groupBy({
         by: ["status"],
@@ -194,6 +195,7 @@ export async function GET() {
         },
         select: { name: true, trialEndsAt: true },
       }),
+      prisma.bDMWallet.findUnique({ where: { userId: context.user.id } }),
     ]);
     const customerAlertLines = [
       "CUSTOMER ALERTS:",
@@ -221,6 +223,9 @@ export async function GET() {
     const payingCount =
       portfolioCounts.find((item) => item.status === "PAYING")?._count._all ?? 0;
     const nextMilestone = getNextMilestone(dealsThisMonth);
+    const targetValue = target?.revenueTarget || 30000;
+    const walletEarnings = wallet?.thisMonthEarned || 0;
+    const progressPct = targetValue > 0 ? Math.min(100, Math.round((walletEarnings / targetValue) * 100)) : 0;
 
     const text = await createChatCompletionText({
       maxTokens: 700,
@@ -250,6 +255,14 @@ export async function GET() {
             promptContext: [
               ...customerAlertLines,
               "Mention customer alerts before marketplace leads, follow-ups, or commission context.",
+              "EARNINGS TODAY:",
+              `This month so far: ₹${walletEarnings}`,
+              `Target: ₹${targetValue}`,
+              `Progress: ${progressPct}%`,
+              `Current slab: ${wallet?.currentSlab || "None"}`,
+              walletEarnings > 0
+                ? "Earnings are greater than 0, mention the amount earned this month in the brief."
+                : "Earnings are 0, do not mention earnings; focus on lead activity and what to do today.",
               "MARKETPLACE LEADS TODAY:",
               marketplaceLeadLines.length > 0 ? marketplaceLeadLines.join("\n") : "- None",
               "Mention marketplace leads first if any exist because they are the hottest leads.",

@@ -3,68 +3,39 @@ import { NextResponse } from "next/server";
 import { getBdmContext, monthBounds, todayBounds } from "@/lib/bdm/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const context = await getBdmContext();
-
     if (context.error) return context.error;
 
     const now = new Date();
     const month = monthBounds(now);
     const today = todayBounds(now);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [
-      myLeadsTotal,
-      myLeadsNew,
-      myLeadsHot,
-      followUpsDueToday,
-      followUpsOverdue,
-      wonThisMonth,
-      revenueAgg,
-      callsToday,
-      target,
-      teamUsers,
-      wonByBdm,
-      leadsForResponseTime,
-    ] = await Promise.all([
-      prisma.lead.count({ where: { assignedTo: context.user.id } }),
-      prisma.lead.count({ where: { assignedTo: context.user.id, status: "NEW" } }),
-      prisma.lead.count({ where: { assignedTo: context.user.id, score: { gt: 70 } } }),
-      prisma.lead.count({
-        where: {
-          assignedTo: context.user.id,
-          followUpDate: { gte: today.start, lt: today.end },
-          status: { notIn: ["WON", "LOST"] },
+    const [leads, notes, wallet, target, totalBDMs, wallets] = await Promise.all([
+      prisma.lead.findMany({
+        where: { assignedTo: context.user.id },
+        select: {
+          id: true,
+          bdmStatus: true,
+          score: true,
+          followUpDate: true,
+          lastContactAt: true,
+          lastContactedAt: true,
+          createdAt: true,
         },
       }),
-      prisma.lead.count({
+      prisma.leadNote.findMany({
         where: {
-          assignedTo: context.user.id,
-          followUpDate: { lt: today.start },
-          status: { notIn: ["WON", "LOST"] },
+          authorId: context.user.id,
+          createdAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
         },
+        select: { id: true },
       }),
-      prisma.lead.count({
-        where: {
-          assignedTo: context.user.id,
-          status: "WON",
-          wonAt: { gte: month.start, lt: month.end },
-        },
-      }),
-      prisma.lead.aggregate({
-        where: {
-          assignedTo: context.user.id,
-          status: "WON",
-          wonAt: { gte: month.start, lt: month.end },
-        },
-        _sum: { value: true },
-      }),
-      prisma.callLog.count({
-        where: {
-          userId: context.user.id,
-          createdAt: { gte: today.start, lt: today.end },
-        },
-      }),
+      prisma.bDMWallet.findUnique({ where: { userId: context.user.id } }),
       prisma.target.findUnique({
         where: {
           userId_month_year: {
@@ -75,73 +46,86 @@ export async function GET() {
         },
       }),
       prisma.user.count({ where: { businessId: context.businessId, role: "BDM" } }),
-      prisma.lead.groupBy({
-        by: ["assignedTo"],
-        where: {
-          businessId: context.businessId,
-          status: "WON",
-          assignedTo: { not: null },
-          wonAt: { gte: month.start, lt: month.end },
-        },
-        _count: { _all: true },
-        orderBy: { _count: { assignedTo: "desc" } },
-      }),
-      prisma.lead.findMany({
-        where: {
-          assignedTo: context.user.id,
-          lastContactAt: { not: null },
-        },
-        select: { createdAt: true, lastContactAt: true },
-        take: 100,
+      prisma.bDMWallet.findMany({
+        where: { user: { businessId: context.businessId, role: "BDM" } },
+        select: { userId: true, thisMonthEarned: true },
+        orderBy: { thisMonthEarned: "desc" },
       }),
     ]);
 
-    const responseTimes = leadsForResponseTime
+    const followUpsToday = leads.filter(
+      (lead) => lead.followUpDate && lead.followUpDate >= today.start && lead.followUpDate < today.end,
+    ).length;
+    const followUpsOverdue = leads.filter(
+      (lead) => lead.followUpDate && lead.followUpDate < today.start,
+    ).length;
+    const responseTimes = leads
       .filter((lead) => lead.lastContactAt)
-      .map(
-        (lead) =>
-          (lead.lastContactAt!.getTime() - lead.createdAt.getTime()) /
-          (1000 * 60 * 60),
-      )
+      .map((lead) => (lead.lastContactAt!.getTime() - lead.createdAt.getTime()) / 3_600_000)
       .filter((hours) => hours >= 0);
-    const avgResponseTime =
-      responseTimes.length > 0
-        ? Math.round(
-            (responseTimes.reduce((sum, hours) => sum + hours, 0) /
-              responseTimes.length) *
-              10,
-          ) / 10
-        : 0;
-    const revenueThisMonth = revenueAgg._sum.value ?? 0;
-    const wonTarget = target?.wonTarget ?? 0;
-    const revenueTarget = target?.revenueTarget ?? 0;
-    const teamRank =
-      wonByBdm.findIndex((item) => item.assignedTo === context.user.id) + 1 || teamUsers;
+    const avgResponseTime = responseTimes.length
+      ? Math.round((responseTimes.reduce((sum, hours) => sum + hours, 0) / responseTimes.length) * 10) / 10
+      : 0;
+    const earnedThisMonth = wallet?.thisMonthEarned || 0;
+    const revenueTarget = target?.revenueTarget || 30000;
+    const progressPct = revenueTarget > 0 ? Math.min(100, Math.round((earnedThisMonth / revenueTarget) * 100)) : 0;
+    const rankIndex = wallets.findIndex((item) => item.userId === context.user.id);
+    const rank = rankIndex >= 0 ? rankIndex + 1 : 0;
+    const dealsThisMonth =
+      (await prisma.commission.count({
+        where: {
+          userId: context.user.id,
+          createdAt: { gte: monthStart },
+          type: { in: ["PLAN_FIRST_SALE", "AGENT_FIRST_SALE", "FIRST_SALE"] },
+          status: { in: ["EARNED", "PENDING", "PAID_OUT", "PAID"] },
+        },
+      })) || 0;
+
+    const totalLeads = leads.length;
+    const newLeads = leads.filter((lead) => lead.bdmStatus === "NEW").length;
+    const contactedLeads = leads.filter((lead) => lead.bdmStatus === "CONTACTED").length;
+    const followUpLeads = leads.filter((lead) => lead.bdmStatus === "FOLLOW_UP").length;
+    const onboardingLeads = leads.filter((lead) => lead.bdmStatus === "ONBOARDING").length;
+    const lostLeads = leads.filter((lead) => lead.bdmStatus === "LOST").length;
 
     return NextResponse.json({
-      myLeadsTotal,
-      myLeadsNew,
-      myLeadsHot,
-      followUpsDueToday,
+      totalLeads,
+      newLeads,
+      contactedLeads,
+      followUpLeads,
+      onboardingLeads,
+      lostLeads,
+      callsThisWeek: notes.length,
+      dealsThisMonth,
+      earnedThisMonth,
+      planCommission: wallet?.thisMonthPlanComm || 0,
+      agentCommission: wallet?.thisMonthAgentComm || 0,
+      renewalIncome: wallet?.thisMonthRenewals || 0,
+      slabBonus: wallet?.thisMonthSlabBonus || 0,
+      currentSlab: wallet?.currentSlab || "NONE",
+      teamRank: rank || 0,
+      totalBDMs: totalBDMs || 1,
+      target: target || { revenueTarget: 30000 },
+      progressPct: progressPct || 0,
+
+      myLeadsTotal: totalLeads,
+      myLeadsNew: newLeads,
+      myLeadsHot: leads.filter((lead) => (lead.score ?? 0) > 70).length,
+      followUpsDueToday: followUpsToday,
       followUpsOverdue,
-      wonThisMonth,
-      wonTarget,
-      wonProgress: wonTarget > 0 ? Math.round((wonThisMonth / wonTarget) * 100) : 0,
-      revenueThisMonth,
+      wonThisMonth: dealsThisMonth,
+      wonTarget: target?.wonTarget || 0,
+      wonProgress: target?.wonTarget ? Math.round((dealsThisMonth / target.wonTarget) * 100) : 0,
+      revenueThisMonth: earnedThisMonth,
       revenueTarget,
-      revenueProgress:
-        revenueTarget > 0 ? Math.round((revenueThisMonth / revenueTarget) * 100) : 0,
-      callsToday,
+      revenueProgress: progressPct,
+      callsToday: notes.length,
       avgResponseTime,
-      conversionRate:
-        myLeadsTotal > 0 ? Math.round((wonThisMonth / myLeadsTotal) * 1000) / 10 : 0,
-      teamRank,
-      teamSize: teamUsers,
+      conversionRate: totalLeads > 0 ? Math.round((dealsThisMonth / totalLeads) * 1000) / 10 : 0,
+      teamSize: totalBDMs || 1,
     });
-  } catch {
-    return NextResponse.json(
-      { error: "Unable to fetch BDM metrics." },
-      { status: 500 },
-    );
+  } catch (error) {
+    console.error("[bdm-metrics:get]", error);
+    return NextResponse.json({ error: "Unable to fetch BDM metrics." }, { status: 500 });
   }
 }
