@@ -10,17 +10,13 @@ import {
   getIntelligentAssignment,
   getNextBDM,
 } from "@/lib/nexa-lead-assignment";
+import { isBdmLeadStatus } from "@/lib/bdm-lead-status";
 import { prisma } from "@/lib/prisma";
 
-const bdmLeadStatuses = ["NEW", "CONTACTED", "FOLLOW_UP", "ONBOARDING", "LOST"] as const;
 const leadTypes = ["PLATFORM", "MANAGEMENT", "SELF"] as const;
 
 function isLeadType(value: unknown): value is (typeof leadTypes)[number] {
   return typeof value === "string" && leadTypes.includes(value as (typeof leadTypes)[number]);
-}
-
-function isBdmLeadStatus(value: unknown): value is (typeof bdmLeadStatuses)[number] {
-  return typeof value === "string" && bdmLeadStatuses.includes(value as (typeof bdmLeadStatuses)[number]);
 }
 
 function tomorrow() {

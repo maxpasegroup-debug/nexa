@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { bdmLeadStatuses, isBdmLeadStatus } from "@/lib/bdm-lead-status";
 import { getBdmContext, todayBounds } from "@/lib/bdm/server";
 import { prisma } from "@/lib/prisma";
 
-const bdmLeadStatuses = ["NEW", "CONTACTED", "FOLLOW_UP", "ONBOARDING", "LOST"] as const;
 const bdmStatusRank: Record<(typeof bdmLeadStatuses)[number], number> = {
   FOLLOW_UP: 0,
   CONTACTED: 1,
@@ -11,10 +11,6 @@ const bdmStatusRank: Record<(typeof bdmLeadStatuses)[number], number> = {
   ONBOARDING: 3,
   LOST: 4,
 };
-
-function isBdmLeadStatus(value: unknown): value is (typeof bdmLeadStatuses)[number] {
-  return typeof value === "string" && bdmLeadStatuses.includes(value as (typeof bdmLeadStatuses)[number]);
-}
 
 function daysSince(value?: Date | null) {
   if (!value) return null;

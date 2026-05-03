@@ -19,6 +19,7 @@ export type OnboardingRequestCardSession = {
   sdeId?: string | null;
   companyName: string;
   bdmName?: string | null;
+  submittedByBoss?: boolean;
   plan: string | null;
   status: string;
   submittedAt: string;
@@ -83,10 +84,15 @@ export function OnboardingRequestCard({ session }: { session: OnboardingRequestC
         <div>
           <h2 className="font-heading text-xl font-bold text-white">{session.companyName}</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            BDM: {session.bdmName ?? "Unassigned"} · {session.plan ?? "Plan pending"} ·{" "}
+            {session.submittedByBoss ? "Submitted by Boss" : `BDM: ${session.bdmName ?? "Unassigned"}`} · {session.plan ?? "Plan pending"} ·{" "}
             {new Date(session.submittedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
+            {session.submittedByBoss ? (
+              <span className="rounded-full border border-[#F5A623]/40 bg-[#F5A623]/15 px-3 py-1 text-xs font-bold text-[#F5A623]">
+                Priority: Boss submitted
+              </span>
+            ) : null}
             <span className={`rounded-full border px-3 py-1 text-xs font-bold ${complexityBadge.className}`}>
               {complexityBadge.label}
             </span>

@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
-import type { BDMLeadStatus } from "@prisma/client";
-
+import { bdmLeadStatuses, isBdmLeadStatus } from "@/lib/bdm-lead-status";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
 function str(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
-
-const bdmStatuses = ["NEW", "CONTACTED", "FOLLOW_UP", "ONBOARDING", "LOST"];
 
 export async function GET(request: Request) {
   const context = await requireInternalOwnerApi();
@@ -22,7 +19,7 @@ export async function GET(request: Request) {
     prisma.lead.findMany({
       where: {
         businessId: context.business.id,
-        ...(status && bdmStatuses.includes(status) ? { bdmStatus: status as BDMLeadStatus } : {}),
+        ...(isBdmLeadStatus(status) ? { bdmStatus: status } : {}),
         ...(search
           ? {
               OR: [
@@ -68,6 +65,7 @@ export async function GET(request: Request) {
       })),
     })),
     team,
+    statuses: bdmLeadStatuses,
   });
 }
 

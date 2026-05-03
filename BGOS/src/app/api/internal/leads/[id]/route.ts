@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
-import type { BDMLeadStatus, LeadStatus } from "@prisma/client";
 
+import { isEditableBdmLeadStatus } from "@/lib/bdm-lead-status";
 import { startBossWorkLock } from "@/lib/boss-work-locks";
+import { generateClientId } from "@/lib/client-id";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
 
 function str(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
-
-const leadStatuses = ["NEW", "CONTACTED", "DEMO", "PROPOSAL", "WON", "LOST"];
-const bdmStatuses = ["NEW", "CONTACTED", "FOLLOW_UP", "ONBOARDING", "LOST"];
 
 export async function PATCH(
   request: Request,
@@ -20,7 +18,6 @@ export async function PATCH(
   if ("error" in context) return context.error;
 
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const status = str(body.status);
   const bdmStatus = str(body.bdmStatus);
   const assignedTo = str(body.assignedTo);
 
@@ -40,10 +37,10 @@ export async function PATCH(
       ...(Object.prototype.hasOwnProperty.call(body, "notes") ? { notes: str(body.notes) || null } : {}),
       ...(Object.prototype.hasOwnProperty.call(body, "managementNotes") ? { managementNotes: str(body.managementNotes) || null } : {}),
       ...(typeof body.value === "number" ? { value: body.value } : {}),
-      ...(leadStatuses.includes(status) ? { status: status as LeadStatus } : {}),
-      ...(bdmStatuses.includes(bdmStatus) ? { bdmStatus: bdmStatus as BDMLeadStatus } : {}),
+      ...(isEditableBdmLeadStatus(bdmStatus) ? { bdmStatus } : {}),
       ...(Object.prototype.hasOwnProperty.call(body, "assignedTo") ? { assignedTo: assignedTo || null } : {}),
       ...(bdmStatus === "CONTACTED" || bdmStatus === "FOLLOW_UP" ? { lastContactedAt: new Date() } : {}),
+      ...(bdmStatus === "LOST" ? { lostAt: new Date(), lostReason: str(body.lostReason) || null } : {}),
     },
   });
 
@@ -69,6 +66,47 @@ export async function PATCH(
   return NextResponse.json({ lead });
 }
 
+export async function DELETE(
+  _request: Request,
+  { params }: { params: { id: string } },
+) {
+  const context = await requireInternalOwnerApi();
+  if ("error" in context) return context.error;
+
+  const lead = await prisma.lead.findFirst({
+    where: { id: params.id, businessId: context.business.id },
+    include: { onboardingSession: true },
+  });
+  if (!lead) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
+
+  const lockTargetIds = [lead.id, lead.onboardingSession?.id].filter((value): value is string => Boolean(value));
+
+  await prisma.$transaction([
+    prisma.bossWorkLock.deleteMany({ where: { targetId: { in: lockTargetIds } } }),
+    prisma.customerPortfolio.deleteMany({ where: { leadId: lead.id } }),
+    prisma.commission.deleteMany({ where: { leadId: lead.id } }),
+    prisma.callLog.deleteMany({ where: { leadId: lead.id } }),
+    prisma.email.updateMany({ where: { leadId: lead.id }, data: { leadId: null } }),
+    ...(lead.onboardingSession
+      ? [prisma.onboardingSession.delete({ where: { id: lead.onboardingSession.id } })]
+      : []),
+    prisma.lead.delete({ where: { id: lead.id } }),
+  ]);
+
+  await prisma.activityLog.create({
+    data: {
+      businessId: context.business.id,
+      userId: context.owner.id,
+      action: "Lead permanently deleted by Boss",
+      entity: "Lead",
+      entityId: lead.id,
+      meta: { leadName: lead.name, company: lead.company },
+    },
+  });
+
+  return NextResponse.json({ success: true });
+}
+
 export async function POST(
   request: Request,
   { params }: { params: { id: string } },
@@ -92,6 +130,7 @@ export async function POST(
       data: {
         leadId: lead.id,
         bdmId: lead.assignedTo,
+        clientId: await generateClientId(),
         status: "COLLECTING",
         companyData: {
           name: lead.company || lead.name,

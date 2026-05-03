@@ -16,16 +16,20 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   try {
-    const { error, user } = await requireSessionUser(["BDM"]);
+    const { error, user } = await requireSessionUser(["BDM", "OWNER"]);
     if (error) return error;
-    if (!user.businessId) return jsonError("BDM business not found.", 400);
+    if (!user.businessId) return jsonError("Business not found.", 400);
 
-    const session = await getOwnedOnboardingSession(params.id, user.id, "BDM");
+    const submittedByBoss = user.role === "OWNER";
+    const session = await getOwnedOnboardingSession(params.id, user.id, user.role);
     if (!session) return jsonError("Session not found.", 404);
 
     const body = (await request.json()) as Record<string, unknown>;
     const selectedPlan = getString(body.selectedPlan) || session.selectedPlan || "GROWTH";
-    const bdmNotes = getString(body.bdmNotes);
+    const rawBdmNotes = getString(body.bdmNotes);
+    const bdmNotes = submittedByBoss
+      ? `[Submitted by Boss: ${user.name}]\n${rawBdmNotes}`.trim()
+      : rawBdmNotes;
 
     const completeness = calculateCompleteness(session);
     if (!completeness.canSubmit) {
@@ -75,9 +79,11 @@ export async function POST(
       }),
       prisma.task.create({
         data: {
-          title: `Build workspace - ${companyName}`,
-          priority: "HIGH",
-          description: summaryText,
+          title: `${submittedByBoss ? "PRIORITY: Boss submitted - " : "Build workspace - "}${companyName}`,
+          priority: submittedByBoss ? "URGENT" : "HIGH",
+          description: submittedByBoss
+            ? `Submitted by Boss: ${user.name}\n\n${summaryText}`
+            : summaryText,
           dueDate: dueInHours(24),
           assignedTo: sde.id,
         },
@@ -88,8 +94,8 @@ export async function POST(
       sendEmail({
         to: sde.email,
         toName: sde.name,
-        subject: `Build workspace - ${companyName}`,
-        html: `<p>New workspace build request assigned to you.</p><pre style="white-space:pre-wrap">${summaryText}</pre><p><a href="https://iceconnect.in/sde/workspaces">Open build dashboard</a></p>`,
+        subject: `${submittedByBoss ? "PRIORITY: Boss submitted - " : "Build workspace - "}${companyName}`,
+        html: `<p>${submittedByBoss ? `Boss ${user.name} submitted this onboarding. Treat as priority.` : "New workspace build request assigned to you."}</p><pre style="white-space:pre-wrap">${summaryText}</pre><p><a href="https://iceconnect.in/sde/workspaces">Open build dashboard</a></p>`,
       }),
       sendEmail({
         to: user.email,
@@ -102,7 +108,7 @@ export async function POST(
             data: {
               businessId: internalBusiness.id,
               type: "action",
-              message: `New build request - ${companyName}, ${selectedPlan}. Assigned to ${sde.name}. Due in 24 hours.`,
+                message: `${submittedByBoss ? "Boss submitted priority build" : "New build request"} - ${companyName}, ${selectedPlan}. Assigned to ${sde.name}. Due in 24 hours.`,
               action: "Track onboarding",
             },
           })

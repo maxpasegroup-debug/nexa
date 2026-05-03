@@ -10,7 +10,6 @@ type InternalLead = {
   company: string | null;
   phone: string | null;
   email: string | null;
-  status: string;
   bdmStatus: string;
   score: number;
   value: number;
@@ -34,7 +33,6 @@ export function InternalLeadsHybrid() {
     phone: "",
     email: "",
     assignedTo: "",
-    status: "NEW",
     bdmStatus: "NEW",
     value: "0",
     notes: "",
@@ -63,7 +61,6 @@ export function InternalLeadsHybrid() {
       phone: lead.phone ?? "",
       email: lead.email ?? "",
       assignedTo: lead.assignedTo ?? "",
-      status: lead.status,
       bdmStatus: lead.bdmStatus,
       value: String(lead.value ?? 0),
       notes: lead.notes ?? "",
@@ -100,6 +97,15 @@ export function InternalLeadsHybrid() {
     await load();
   }
 
+  async function deleteLead() {
+    if (!selected) return;
+    if (!window.confirm(`Delete ${selected.company ?? selected.name} entirely from BGOS? This removes related lead notes, activities, onboarding session, and lead records.`)) return;
+    const response = await fetch(`/api/internal/leads/${selected.id}`, { method: "DELETE" });
+    if (!response.ok) return;
+    setSelected(null);
+    await load();
+  }
+
   async function startOnboarding(lead: InternalLead) {
     const response = await fetch(`/api/internal/leads/${lead.id}`, {
       method: "POST",
@@ -107,7 +113,7 @@ export function InternalLeadsHybrid() {
       body: JSON.stringify({ action: "start_onboarding" }),
     });
     if (!response.ok) return;
-    await load();
+    window.location.href = `/internal/onboarding/${lead.id}`;
   }
 
   return (
@@ -135,7 +141,6 @@ export function InternalLeadsHybrid() {
               <th className="px-4 py-3">Company</th>
               <th>Contact</th>
               <th>BDM</th>
-              <th>Lead status</th>
               <th>BDM status</th>
               <th>Onboarding</th>
               <th>Value</th>
@@ -148,7 +153,6 @@ export function InternalLeadsHybrid() {
                 <td className="px-4 py-4 font-bold text-white">{lead.company ?? "-"}</td>
                 <td className="text-zinc-300">{lead.name}<br /><span className="text-xs text-zinc-500">{lead.phone ?? lead.email ?? "-"}</span></td>
                 <td className="text-zinc-400">{lead.assignee?.name ?? "Unassigned"}</td>
-                <td>{lead.status}</td>
                 <td>{lead.bdmStatus}</td>
                 <td className="text-zinc-400">{lead.onboardingSession?.status ?? "Not started"}</td>
                 <td>₹{Number(lead.value || 0).toLocaleString("en-IN")}</td>
@@ -160,7 +164,7 @@ export function InternalLeadsHybrid() {
                 </td>
               </tr>
             ))}
-            {!filtered.length ? <tr><td colSpan={8} className="py-10 text-center text-zinc-500">No leads found.</td></tr> : null}
+            {!filtered.length ? <tr><td colSpan={7} className="py-10 text-center text-zinc-500">No leads found.</td></tr> : null}
           </tbody>
         </table>
       </div>
@@ -178,17 +182,15 @@ export function InternalLeadsHybrid() {
                 <option value="">Unassigned</option>
                 {team.filter((member) => member.role === "BDM").map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
               </select>
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="rounded-xl border border-white/10 bg-[#13131c] px-3 py-2 text-sm">
-                {["NEW", "CONTACTED", "DEMO", "PROPOSAL", "WON", "LOST"].map((item) => <option key={item}>{item}</option>)}
-              </select>
               <select value={form.bdmStatus} onChange={(e) => setForm({ ...form, bdmStatus: e.target.value })} className="rounded-xl border border-white/10 bg-[#13131c] px-3 py-2 text-sm">
-                {["NEW", "CONTACTED", "FOLLOW_UP", "ONBOARDING", "LOST"].map((item) => <option key={item}>{item}</option>)}
+                {["NEW", "CONTACTED", "FOLLOW_UP", "LOST"].map((item) => <option key={item}>{item}</option>)}
               </select>
               <input value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} type="number" placeholder="Value" className="rounded-xl border border-white/10 bg-[#13131c] px-3 py-2 text-sm" />
             </div>
             <textarea value={form.managementNotes} onChange={(e) => setForm({ ...form, managementNotes: e.target.value })} placeholder="Boss notes" className="mt-3 min-h-24 w-full rounded-xl border border-white/10 bg-[#13131c] px-3 py-2 text-sm" />
             <div className="mt-5 flex flex-wrap justify-end gap-3">
               <button onClick={() => setSelected(null)} className="rounded-xl border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300">Cancel</button>
+              <button onClick={() => void deleteLead()} className="rounded-xl bg-[#FF6B6B] px-4 py-2 text-sm font-bold text-black">Delete entirely</button>
               <button onClick={() => void save(false)} disabled={saving} className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-black disabled:opacity-50">Save</button>
               <button onClick={() => void save(true)} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] px-4 py-2 text-sm font-bold text-black disabled:opacity-50"><Shield className="h-4 w-4" />Save in Boss mode</button>
               <button onClick={() => void startOnboarding(selected)} className="inline-flex items-center gap-2 rounded-xl bg-[#7C6FFF] px-4 py-2 text-sm font-bold text-white"><UserPlus className="h-4 w-4" />Start onboarding</button>

@@ -63,6 +63,7 @@ export default async function SdeWorkspacesPage() {
     bdmName: build.bdm?.name ?? null,
     plan: build.selectedPlan,
     status: build.status,
+    submittedByBoss: Boolean(build.bdmNotes?.includes("[Submitted by Boss")),
     submittedAt: (build.submittedAt ?? build.updatedAt).toISOString(),
     completenessScore: build.completenessScore,
     summaryText: build.summaryText,

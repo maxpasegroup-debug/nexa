@@ -6,6 +6,7 @@ import {
   detectPlanType,
 } from "@/lib/commission";
 import { notifySlabAchievement } from "@/lib/commission-notify";
+import { isBdmLeadStatus } from "@/lib/bdm-lead-status";
 import {
   buildLeadUpdateData,
   getCrmContext,
@@ -19,12 +20,6 @@ type RouteContext = {
     id: string;
   };
 };
-
-const bdmLeadStatuses = ["NEW", "CONTACTED", "FOLLOW_UP", "ONBOARDING", "LOST"] as const;
-
-function isBdmLeadStatus(value: unknown): value is (typeof bdmLeadStatuses)[number] {
-  return typeof value === "string" && bdmLeadStatuses.includes(value as (typeof bdmLeadStatuses)[number]);
-}
 
 function trialEndDate() {
   const date = new Date();
