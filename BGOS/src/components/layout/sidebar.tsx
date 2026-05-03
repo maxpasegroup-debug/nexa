@@ -8,6 +8,7 @@ import {
   BarChart3,
   AlertTriangle,
   Bot,
+  Brain,
   Bug,
   CheckSquare,
   DollarSign,
@@ -58,9 +59,9 @@ const roleLinks: Record<string, NavItem[]> = {
   ],
   BDM: [
     { label: "My Leads", href: "/bdm", icon: Target },
+    { label: "🧠 Onboarding", href: "/bdm/onboarding", icon: Brain },
     { label: "🛒 Marketplace leads", href: "/bdm/marketplace-leads", icon: ShoppingCart },
     { label: "Earnings", href: "/bdm/commission", icon: DollarSign },
-    { label: "Onboarding", href: "/bdm/onboarding", icon: Users },
     { label: "Tasks", href: "/bdm/tasks", icon: CheckSquare },
     { label: "Performance", href: "/bdm/performance", icon: TrendingUp },
     { label: "Call Log", href: "/bdm/calls", icon: Phone },
@@ -263,12 +264,12 @@ export function Sidebar({ role, userName, businessName }: SidebarProps) {
     if (role !== "BDM") return;
 
     async function fetchOnboardingCount() {
-      const response = await fetch("/api/bdm/onboarding-leads", {
+      const response = await fetch("/api/bdm/leads?status=ONBOARDING", {
         cache: "no-store",
       });
       if (!response.ok) return;
-      const data = (await response.json()) as { unsubmittedCount?: number };
-      setOnboardingCount(data.unsubmittedCount ?? 0);
+      const data = (await response.json()) as { leads?: unknown[] };
+      setOnboardingCount(data.leads?.length ?? 0);
     }
 
     function refreshOnboarding() {

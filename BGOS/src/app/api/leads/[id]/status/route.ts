@@ -31,9 +31,6 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     }
 
     const lostReason = typeof body.lostReason === "string" ? body.lostReason.trim() : "";
-    if (bdmStatus === "LOST" && !lostReason) {
-      return NextResponse.json({ error: "lostReason is required when lead is lost." }, { status: 400 });
-    }
 
     const existingLead = await prisma.lead.findFirst({
       where: {
@@ -55,7 +52,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         ...(bdmStatus === "CONTACTED" || bdmStatus === "FOLLOW_UP"
           ? { lastContactedAt: now }
           : {}),
-        ...(bdmStatus === "LOST" ? { lostReason } : {}),
+        ...(bdmStatus === "LOST" ? { lostReason: lostReason || null } : {}),
         ...(bdmStatus === "ONBOARDING" ? { onboardingStarted: true } : {}),
       },
       include: {

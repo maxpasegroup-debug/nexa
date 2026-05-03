@@ -56,6 +56,7 @@ export async function GET(request: Request) {
     const search = searchParams.get("search");
     const source = searchParams.get("source");
     const overdue = searchParams.get("overdue") === "true";
+    const excludeOnboarding = searchParams.get("excludeOnboarding") === "true";
     const today = todayBounds();
 
     const leads = await prisma.lead.findMany({
@@ -73,10 +74,22 @@ export async function GET(request: Request) {
             }
           : {}),
         ...(isBdmLeadStatus(bdmStatus) ? { bdmStatus } : {}),
+        ...(excludeOnboarding ? { bdmStatus: { notIn: ["ONBOARDING" as const] } } : {}),
         ...sourceFilter(source),
         ...(overdue ? { followUpDate: { lt: today.start } } : {}),
       },
       include: {
+        onboardingSession: {
+          select: {
+            id: true,
+            status: true,
+            completenessScore: true,
+            submittedAt: true,
+            createdAt: true,
+            updatedAt: true,
+            buildStatus: true,
+          },
+        },
         callNotes: {
           orderBy: { createdAt: "desc" },
           take: 3,

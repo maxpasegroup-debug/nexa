@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 
 import { useToast } from "@/components/ui/toast";
 import { AddLeadForm } from "./add-lead-form";
 import { SimpleLeadCard } from "./simple-lead-card";
-import { BDMLeadStatus, bdmStatuses, LeadNoteView, SimpleLead } from "./simple-lead-types";
+import { BDMLeadStatus, LeadNoteView, SimpleLead } from "./simple-lead-types";
 
-type ActiveFilter = "ALL" | BDMLeadStatus | "COLD";
+type LeadListStatus = Exclude<BDMLeadStatus, "ONBOARDING">;
+type ActiveFilter = "ALL" | LeadListStatus | "COLD";
 
 type LeadListProps = {
   sourceFilter?: "marketplace";
@@ -17,6 +17,17 @@ type LeadListProps = {
   subtitle?: string;
   bdmName?: string;
 };
+
+const STATUS_FILTERS: Array<{ value: LeadListStatus; label: string; color: string }> = [
+  { value: "NEW", label: "New", color: "#6B6878" },
+  { value: "CONTACTED", label: "Contacted", color: "#7C6FFF" },
+  { value: "FOLLOW_UP", label: "Follow Up", color: "#F5A623" },
+  { value: "LOST", label: "Lost", color: "#FF6B6B" },
+];
+
+function statusLabel(status: BDMLeadStatus) {
+  return STATUS_FILTERS.find((item) => item.value === status)?.label ?? "Onboarding";
+}
 
 function normalizedSource(lead: SimpleLead) {
   return String(lead.source ?? "").toLowerCase();
@@ -27,14 +38,14 @@ function SourceBadge({ lead }: { lead: SimpleLead }) {
   if (source === "marketplace") {
     return (
       <span className="mt-2 inline-flex w-fit rounded-full border border-[#7C6FFF]/30 bg-[#7C6FFF]/10 px-2.5 py-1 text-[11px] font-bold text-[#c6c1ff]">
-        🛒 Marketplace{lead.agentInterest ? ` — ${lead.agentInterest}` : ""}
+        Marketplace{lead.agentInterest ? ` - ${lead.agentInterest}` : ""}
       </span>
     );
   }
   if (source === "landing_page" || source === "website") {
     return (
       <span className="mt-2 inline-flex w-fit rounded-full border border-[#22D9A0]/30 bg-[#22D9A0]/10 px-2.5 py-1 text-[11px] font-bold text-[#22D9A0]">
-        🌐 Website enquiry
+        Website enquiry
       </span>
     );
   }
@@ -57,20 +68,19 @@ export function LeadList({
   subtitle,
   bdmName,
 }: LeadListProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const [leads, setLeads] = useState<SimpleLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filter, setFilter] = useState<ActiveFilter>("ALL");
   const [search, setSearch] = useState("");
-  const [lostLead, setLostLead] = useState<SimpleLead | null>(null);
-  const [lostReason, setLostReason] = useState("");
+  const [exitingLeadIds, setExitingLeadIds] = useState<string[]>([]);
 
   const loadLeads = useCallback(async function loadLeads() {
     setLoading(true);
-    const query = sourceFilter ? `?source=${sourceFilter}` : "";
-    const response = await fetch(`/api/bdm/leads${query}`, { cache: "no-store" });
+    const params = new URLSearchParams({ excludeOnboarding: "true" });
+    if (sourceFilter) params.set("source", sourceFilter);
+    const response = await fetch(`/api/bdm/leads?${params.toString()}`, { cache: "no-store" });
     setLoading(false);
     if (!response.ok) return;
     const data = (await response.json()) as { leads: SimpleLead[] };
@@ -82,17 +92,14 @@ export function LeadList({
   }, [loadLeads]);
 
   const counts = useMemo(() => {
-    const values: Record<BDMLeadStatus, number> = {
-      NEW: 0,
-      CONTACTED: 0,
-      FOLLOW_UP: 0,
-      ONBOARDING: 0,
-      LOST: 0,
+    const visible = leads.filter((lead) => lead.bdmStatus !== "ONBOARDING");
+    return {
+      all: visible.length,
+      NEW: visible.filter((lead) => lead.bdmStatus === "NEW").length,
+      CONTACTED: visible.filter((lead) => lead.bdmStatus === "CONTACTED").length,
+      FOLLOW_UP: visible.filter((lead) => lead.bdmStatus === "FOLLOW_UP").length,
+      LOST: visible.filter((lead) => lead.bdmStatus === "LOST").length,
     };
-    leads.forEach((lead) => {
-      values[lead.bdmStatus] += 1;
-    });
-    return values;
   }, [leads]);
 
   const coldCount = useMemo(() => leads.filter(isCold).length, [leads]);
@@ -100,6 +107,7 @@ export function LeadList({
   const visibleLeads = useMemo(() => {
     const normalized = search.trim().toLowerCase();
     return leads.filter((lead) => {
+      if (lead.bdmStatus === "ONBOARDING") return false;
       const matchesFilter =
         filter === "ALL" ? true : filter === "COLD" ? isCold(lead) : lead.bdmStatus === filter;
       const matchesSearch =
@@ -127,7 +135,7 @@ export function LeadList({
           ? {
               ...item,
               bdmStatus,
-              lostReason: bdmStatus === "LOST" ? reason : item.lostReason,
+              lostReason: bdmStatus === "LOST" ? reason ?? item.lostReason : item.lostReason,
               lastContactedAt:
                 bdmStatus === "CONTACTED" || bdmStatus === "FOLLOW_UP"
                   ? new Date().toISOString()
@@ -151,15 +159,11 @@ export function LeadList({
 
     const data = (await response.json()) as { lead: SimpleLead };
     upsertLead(data.lead);
+    toast(`Status updated to ${statusLabel(bdmStatus)}`, "success");
   }
 
-  function handleStatusChange(lead: SimpleLead, status: BDMLeadStatus) {
-    if (status === "LOST") {
-      setLostLead(lead);
-      setLostReason(lead.lostReason ?? "");
-      return;
-    }
-    void saveStatus(lead, status);
+  function handleStatusChange(lead: SimpleLead, status: BDMLeadStatus, reason?: string) {
+    void saveStatus(lead, status, reason);
   }
 
   function handleNoteAdded(leadId: string, note: LeadNoteView) {
@@ -178,6 +182,16 @@ export function LeadList({
   }
 
   async function startOnboarding(lead: SimpleLead) {
+    const statusResponse = await fetch(`/api/leads/${lead.id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bdmStatus: "ONBOARDING" }),
+    });
+    if (!statusResponse.ok) {
+      toast("Could not move lead to onboarding", "error");
+      return;
+    }
+
     if (!lead.onboardingSessionId) {
       const response = await fetch("/api/onboarding/session", {
         method: "POST",
@@ -189,7 +203,17 @@ export function LeadList({
         return;
       }
     }
-    router.push(`/bdm/onboarding/${lead.id}`);
+
+    setExitingLeadIds((current) => [...current, lead.id]);
+    window.setTimeout(() => {
+      setLeads((current) => current.filter((item) => item.id !== lead.id));
+      setExitingLeadIds((current) => current.filter((id) => id !== lead.id));
+      window.dispatchEvent(new Event("bgos:onboarding-updated"));
+    }, 300);
+    toast(`${lead.company || lead.name} moved to onboarding. Continue in the Onboarding tab →`, "success", {
+      href: "/bdm/onboarding",
+      variant: "onboarding",
+    });
   }
 
   return (
@@ -201,7 +225,7 @@ export function LeadList({
             {subtitle ? <p className="mt-1 text-sm text-zinc-500">{subtitle}</p> : null}
           </div>
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold text-zinc-300">
-            {leads.length}
+            {counts.all}
           </span>
         </div>
         <button
@@ -219,7 +243,7 @@ export function LeadList({
           onClick={() => setFilter("COLD")}
           className="w-full rounded-2xl border border-[#F5A623]/30 bg-[#F5A623]/10 px-4 py-3 text-left text-sm font-bold text-[#F5A623]"
         >
-          ⚠️ {coldCount} leads need immediate follow-up — you have not contacted them in 3+ days.
+          {coldCount} leads need immediate follow-up - you have not contacted them in 3+ days.
         </button>
       ) : null}
 
@@ -228,16 +252,20 @@ export function LeadList({
           <button
             type="button"
             onClick={() => setFilter("ALL")}
-            className={`rounded-full border px-3 py-1.5 text-xs font-bold ${filter === "ALL" ? "border-white bg-white text-black" : "border-white/10 text-zinc-400"}`}
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
+              filter === "ALL" ? "border-white bg-white text-black" : "border-white/10 text-zinc-400"
+            }`}
           >
-            All ({leads.length})
+            All ({counts.all})
           </button>
-          {bdmStatuses.map((status) => (
+          {STATUS_FILTERS.map((status) => (
             <button
               key={status.value}
               type="button"
               onClick={() => setFilter(status.value)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold ${filter === status.value ? "border-white bg-white text-black" : "border-white/10 text-zinc-400"}`}
+              className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
+                filter === status.value ? "border-white bg-white text-black" : "border-white/10 text-zinc-400"
+              }`}
             >
               <span style={{ color: status.color }}>●</span> {status.label} ({counts[status.value]})
             </button>
@@ -266,7 +294,8 @@ export function LeadList({
               lead={lead}
               onStatusChange={handleStatusChange}
               onNoteAdded={handleNoteAdded}
-              onStartOnboarding={(item) => void startOnboarding(item)}
+              onStartOnboarding={(item) => startOnboarding(item)}
+              isExiting={exitingLeadIds.includes(lead.id)}
               sourceBadge={<SourceBadge lead={lead} />}
               bdmName={bdmName}
             />
@@ -289,43 +318,30 @@ export function LeadList({
 
       {drawerOpen ? <AddLeadForm onSuccess={upsertLead} onClose={() => setDrawerOpen(false)} /> : null}
 
-      {lostLead ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#13131c] p-5">
-            <h2 className="font-heading text-lg font-bold text-white">Why was this lead lost?</h2>
-            <textarea
-              value={lostReason}
-              onChange={(event) => setLostReason(event.target.value)}
-              rows={4}
-              className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-[#0e0e13] p-3 text-sm text-white outline-none focus:border-[#FF6B6B]"
-            />
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setLostLead(null);
-                  setLostReason("");
-                }}
-                className="flex-1 rounded-xl border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={!lostReason.trim()}
-                onClick={() => {
-                  void saveStatus(lostLead, "LOST", lostReason.trim());
-                  setLostLead(null);
-                  setLostReason("");
-                }}
-                className="flex-1 rounded-xl bg-[#FF6B6B] px-4 py-2 text-sm font-extrabold text-black disabled:opacity-50"
-              >
-                Save lost reason
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <style jsx global>{`
+        .lead-card-exit {
+          animation: slideOut 0.3s ease forwards;
+        }
+
+        @keyframes slideOut {
+          0% {
+            opacity: 1;
+            transform: translateX(0);
+            max-height: 300px;
+          }
+          50% {
+            opacity: 0;
+            transform: translateX(40px);
+          }
+          100% {
+            opacity: 0;
+            max-height: 0;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+          }
+        }
+      `}</style>
     </div>
   );
 }

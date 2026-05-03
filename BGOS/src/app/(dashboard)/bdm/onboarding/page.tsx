@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { OnboardingLeads } from "@/components/bdm/onboarding-leads";
+import { OnboardingList } from "@/components/bdm/onboarding-list";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import auth from "@/lib/auth";
@@ -33,7 +33,7 @@ export default async function BdmOnboardingPage() {
               Turn landing page enquiries into complete workspace build briefs.
             </p>
           </div>
-          <OnboardingLeads currentUserId={session.user.id} />
+          <OnboardingList />
         </div>
       </main>
     </div>

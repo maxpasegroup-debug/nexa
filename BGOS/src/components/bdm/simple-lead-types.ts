@@ -37,6 +37,15 @@ export type SimpleLead = {
   daysSinceContact?: number | null;
   onboardingStarted?: boolean;
   onboardingSessionId?: string | null;
+  onboardingSession?: {
+    id: string;
+    status: string;
+    completenessScore?: number | null;
+    submittedAt?: string | null;
+    createdAt?: string | null;
+    updatedAt?: string | null;
+    buildStatus?: string | null;
+  } | null;
   callNotes: LeadNoteView[];
   createdAt?: string;
   updatedAt?: string;

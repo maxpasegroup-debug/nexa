@@ -17,18 +17,25 @@ type Toast = {
   message: string;
   type: ToastType;
   exiting: boolean;
+  href?: string;
+  variant?: "default" | "onboarding";
 };
 
 type ToastContextValue = {
-  toast: (message: string, type: ToastType) => void;
+  toast: (message: string, type: ToastType, options?: ToastOptions) => void;
 };
 
-type ToastListener = (message: string, type: ToastType) => void;
+type ToastOptions = {
+  href?: string;
+  variant?: "default" | "onboarding";
+};
+
+type ToastListener = (message: string, type: ToastType, options?: ToastOptions) => void;
 
 const listeners = new Set<ToastListener>();
 
-function emitToast(message: string, type: ToastType) {
-  listeners.forEach((listener) => listener(message, type));
+function emitToast(message: string, type: ToastType, options?: ToastOptions) {
+  listeners.forEach((listener) => listener(message, type, options));
 }
 
 export const toast = {
@@ -44,6 +51,11 @@ const toastStyles: Record<ToastType, string> = {
   success: "border-[#22D9A0]/30 bg-[#22D9A0]/10 text-[#d8fff3]",
   error: "border-[#FF6B6B]/30 bg-[#FF6B6B]/10 text-[#ffdede]",
   warning: "border-[#F5A623]/30 bg-[#F5A623]/10 text-[#ffe9be]",
+};
+
+const variantStyles: Record<NonNullable<Toast["variant"]>, string> = {
+  default: "",
+  onboarding: "border-[#22D9A0]/40 bg-[#22D9A0]/20 text-[#eafff7] cursor-pointer",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -62,16 +74,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toast = useCallback(
-    (message: string, type: ToastType) => {
+    (message: string, type: ToastType, options?: ToastOptions) => {
       const id = crypto.randomUUID();
-      setToasts((current) => [...current, { id, message, type, exiting: false }]);
+      setToasts((current) => [
+        ...current,
+        {
+          id,
+          message,
+          type,
+          exiting: false,
+          href: options?.href,
+          variant: options?.variant ?? "default",
+        },
+      ]);
       window.setTimeout(() => removeToast(id), 3000);
     },
     [removeToast],
   );
 
   useEffect(() => {
-    const listener: ToastListener = (message, type) => toast(message, type);
+    const listener: ToastListener = (message, type, options) => toast(message, type, options);
     listeners.add(listener);
     return () => {
       listeners.delete(listener);
@@ -85,14 +107,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div className="fixed bottom-5 left-1/2 z-[100] flex w-[340px] max-w-[calc(100vw-40px)] -translate-x-1/2 flex-col gap-3">
         {toasts.map((item) => (
-          <div
+          <button
             key={item.id}
-            className={`rounded-xl border px-4 py-3 text-sm font-medium shadow-2xl shadow-black/30 backdrop-blur ${toastStyles[item.type]} ${
+            type="button"
+            onClick={() => {
+              if (item.href) window.location.href = item.href;
+            }}
+            className={`rounded-xl border px-4 py-3 text-left text-sm font-medium shadow-2xl shadow-black/30 backdrop-blur ${toastStyles[item.type]} ${
+              variantStyles[item.variant ?? "default"]
+            } ${
               item.exiting ? "toast-out" : "toast-in"
             }`}
           >
             {item.message}
-          </div>
+          </button>
         ))}
       </div>
       <style jsx>{`
