@@ -22,6 +22,151 @@
   --accent-border: rgba(245,158,11,0.3);
 }
 
+.marketing-page {
+  --marketing-bg: #05050A;
+  --marketing-panel: #0E0E16;
+  --marketing-muted: rgba(255, 255, 255, 0.6);
+  --marketing-border: rgba(255, 255, 255, 0.08);
+  min-height: 100vh;
+  background: var(--marketing-bg);
+  color: white;
+  font-family: var(--font-inter), sans-serif;
+}
+
+.marketing-page h1,
+.marketing-page h2,
+.marketing-page h3,
+.marketing-heading {
+  font-family: var(--font-plus-jakarta), sans-serif;
+}
+
+.marketing-shell {
+  margin: 0 auto;
+  width: min(1120px, calc(100% - 32px));
+}
+
+.marketing-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(5, 5, 10, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.marketing-card {
+  border: 1px solid var(--marketing-border);
+  border-radius: 16px;
+  background: var(--marketing-panel);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.marketing-gradient-panel {
+  border: 1px solid rgba(124, 111, 255, 0.22);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.22), transparent 34%),
+    linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(6, 182, 212, 0.08));
+}
+
+.marketing-button-primary,
+.marketing-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.marketing-button-primary {
+  background: #7C3AED;
+  color: white;
+}
+
+.marketing-button-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: white;
+}
+
+.marketing-button-primary:hover,
+.marketing-button-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.marketing-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid rgba(124, 111, 255, 0.4);
+  border-radius: 20px;
+  background: rgba(124, 111, 255, 0.1);
+  padding: 4px 14px;
+  color: #a89fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.agent-store-card {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: #0E0E16;
+  padding: 20px;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.agent-store-card:hover {
+  border-color: rgba(124, 111, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.counter::after {
+  content: counter(value);
+  counter-reset: value var(--count-value);
+}
+
+.counter-leads,
+.counter-customers,
+.counter-followups {
+  --count-value: 0;
+}
+
+@property --count-value {
+  syntax: "<integer>";
+  initial-value: 0;
+  inherits: false;
+}
+
+.mockup-visible .counter-leads {
+  animation: countLeads 1100ms ease-out forwards;
+}
+
+.mockup-visible .counter-customers {
+  animation: countCustomers 1100ms ease-out forwards;
+}
+
+.mockup-visible .counter-followups {
+  animation: countFollowups 1100ms ease-out forwards;
+}
+
+@keyframes countLeads {
+  from { --count-value: 0; }
+  to { --count-value: 124; }
+}
+
+@keyframes countCustomers {
+  from { --count-value: 0; }
+  to { --count-value: 38; }
+}
+
+@keyframes countFollowups {
+  from { --count-value: 0; }
+  to { --count-value: 7; }
+}
+
 :root[data-theme="dark"] {
   --bg-primary: #070709;
   --bg-secondary: #0e0e13;
