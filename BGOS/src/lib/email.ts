@@ -103,13 +103,13 @@ export async function sendWelcomeEmail({
           <p>Your account has been created at <strong>${safeCompany}</strong>.</p>
           <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px;margin:24px 0;">
             <h3 style="margin:0 0 8px 0;color:#166534;">Your Login Details</h3>
-            <p style="margin:4px 0;"><strong>Login URL:</strong> iceconnect.in</p>
+            <p style="margin:4px 0;"><strong>Login URL:</strong> bgos.online</p>
             <p style="margin:4px 0;"><strong>Email:</strong> ${safeEmail}</p>
             <p style="margin:4px 0;"><strong>Password:</strong> ${safePassword}</p>
             <p style="margin:4px 0;"><strong>Role:</strong> ${safeRole}</p>
           </div>
           <p style="color:#dc2626;">Please change your password after first login.</p>
-          <a href="https://iceconnect.in/login" style="display:inline-block;background:#06b6d4;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">Login to BGOS</a>
+          <a href="https://bgos.online/login" style="display:inline-block;background:#06b6d4;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">Login to BGOS</a>
           <p style="color:#6b7280;font-size:12px;margin-top:32px;">This email was sent by BGOS. If you have questions, contact your company administrator.</p>
         </div>
       </body>
@@ -146,7 +146,7 @@ export async function sendPasswordResetEmail({
             <p style="margin:4px 0;"><strong>New Password:</strong> ${safePassword}</p>
           </div>
           <p style="color:#dc2626;">Please change this password immediately after login.</p>
-          <a href="https://iceconnect.in/login" style="display:inline-block;background:#06b6d4;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Login Now</a>
+          <a href="https://bgos.online/login" style="display:inline-block;background:#06b6d4;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Login Now</a>
         </div>
       </body>
       </html>

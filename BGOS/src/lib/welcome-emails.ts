@@ -98,7 +98,7 @@ export async function sendEmployeeWelcomeEmails(businessId: string) {
               <h2 style="font-size:20px;margin:18px 0 8px">Your workspace is ready, ${safeName}</h2>
               <p style="line-height:1.7;color:#3f3f46">${escapeHtml(roleParagraph(`${user.role} ${onboardingEmployee?.title ?? ""}`))}</p>
               <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:18px;margin:24px 0">
-                <p style="margin:0 0 8px"><strong>Portal:</strong> https://iceconnect.in/login</p>
+                <p style="margin:0 0 8px"><strong>Portal:</strong> https://bgos.online/login</p>
                 <p style="margin:0 0 8px"><strong>Email:</strong> ${safeEmail}</p>
                 <p style="margin:0"><strong>Temporary password:</strong> ${safePassword}</p>
                 <p style="margin:10px 0 0;color:#166534;font-size:13px">Please change this password immediately after logging in.</p>
@@ -107,7 +107,7 @@ export async function sendEmployeeWelcomeEmails(businessId: string) {
                 <p style="margin:0 0 8px"><strong>Assigned pipelines:</strong> ${safePipelines}</p>
                 <p style="margin:0;line-height:1.6">${safeProcedures}</p>
               </div>
-              <a href="https://iceconnect.in/login" style="display:inline-block;background:#22D9A0;color:#07100b;padding:13px 18px;border-radius:10px;text-decoration:none;font-weight:700">Log in to your workspace -></a>
+              <a href="https://bgos.online/login" style="display:inline-block;background:#22D9A0;color:#07100b;padding:13px 18px;border-radius:10px;text-decoration:none;font-weight:700">Log in to your workspace -></a>
               <p style="margin-top:32px;color:#71717a;font-size:12px">${safeCompany} | Powered by BGOS</p>
             </div>
           </div>

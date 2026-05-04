@@ -44,13 +44,13 @@ function welcomeEmailHtml(name: string, email: string) {
         <h1 style="margin:28px 0 10px;font-family:Syne,Arial,sans-serif;font-size:26px;line-height:1.2;">Welcome to the team, ${safeName}!</h1>
         <p style="margin:0 0 20px;color:#B9B6C8;font-size:14px;line-height:1.7;">Your BGOS employee account has been created. Here are your login details:</p>
         <div style="background:#0e0e13;border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:18px;margin:20px 0;">
-          <p style="margin:0 0 8px;color:#B9B6C8;font-size:14px;"><strong style="color:#fff;">Portal:</strong> iceconnect.in</p>
+          <p style="margin:0 0 8px;color:#B9B6C8;font-size:14px;"><strong style="color:#fff;">Portal:</strong> bgos.online</p>
           <p style="margin:0 0 8px;color:#B9B6C8;font-size:14px;"><strong style="color:#fff;">Email:</strong> ${safeEmail}</p>
           <p style="margin:0;color:#B9B6C8;font-size:14px;"><strong style="color:#fff;">Password:</strong> <code style="color:#22D9A0;">${DEFAULT_PASSWORD}</code></p>
         </div>
         <p style="margin:0 0 24px;color:#F5A623;font-size:14px;font-weight:700;">Please change your password immediately after your first login.</p>
-        <a href="https://iceconnect.in/login" style="display:inline-block;background:#7C6FFF;color:#fff;text-decoration:none;border-radius:12px;padding:13px 18px;font-weight:800;">Login to your dashboard →</a>
-        <p style="margin:28px 0 0;color:#6B6878;font-size:12px;line-height:1.6;">This email was sent by BGOS management. If you did not expect this, please contact hello@iceconnect.in</p>
+        <a href="https://bgos.online/login" style="display:inline-block;background:#7C6FFF;color:#fff;text-decoration:none;border-radius:12px;padding:13px 18px;font-weight:800;">Login to your dashboard →</a>
+        <p style="margin:28px 0 0;color:#6B6878;font-size:12px;line-height:1.6;">This email was sent by BGOS management. If you did not expect this, please contact hello@bgos.online</p>
       </div>
     </div>
   `;

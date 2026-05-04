@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { bdmOnly } from "@/lib/api-auth";
 import { bdmLeadStatuses, isBdmLeadStatus } from "@/lib/bdm-lead-status";
 import { getBdmContext, todayBounds } from "@/lib/bdm/server";
 import { prisma } from "@/lib/prisma";
@@ -44,6 +45,7 @@ function agentColor(agentName?: string | null) {
 }
 
 export async function GET(request: Request) {
+  return bdmOnly(async () => {
   try {
     const context = await getBdmContext();
 
@@ -131,4 +133,5 @@ export async function GET(request: Request) {
       { status: 500 },
     );
   }
+  });
 }

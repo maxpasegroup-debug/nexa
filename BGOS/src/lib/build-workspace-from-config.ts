@@ -50,7 +50,7 @@ function jsonArray<T>(value: unknown): T[] {
 function normalizeRole(value: string | undefined) {
   const role = value?.toUpperCase();
   if (role === "BOSS" || role === "BDM" || role === "SDE" || role === "OWNER" || role === "ADMIN") return role;
-  return "BDM";
+  return "EMPLOYEE";
 }
 
 export async function buildWorkspaceFromConfig(sessionId: string) {
@@ -201,15 +201,21 @@ export async function buildWorkspaceFromConfig(sessionId: string) {
           password: passwordByEmail.get((employee.email || bossEmail).toLowerCase())!,
           role: normalizeRole(employee.systemRole),
           businessId: business.id,
+          theme: normalizeRole(employee.systemRole) === "EMPLOYEE" ? "light" : "dark",
+          isLegacyIceconnect: false,
+          isActive: true,
           defaultPassword: true,
-          active: false,
+          active: true,
         },
         update: {
           name: employee.name || employee.email || "Team member",
           role: normalizeRole(employee.systemRole),
           businessId: business.id,
+          theme: normalizeRole(employee.systemRole) === "EMPLOYEE" ? "light" : "dark",
+          isLegacyIceconnect: false,
+          isActive: true,
           defaultPassword: true,
-          active: false,
+          active: true,
         },
       }),
     ),

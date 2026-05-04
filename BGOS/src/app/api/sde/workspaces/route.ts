@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { OnboardingLeadStatus } from "@prisma/client";
 
-import { requireRole } from "@/lib/api-auth";
+import { sdeOnly } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 
 const activeStatuses: OnboardingLeadStatus[] = [
@@ -11,17 +11,13 @@ const activeStatuses: OnboardingLeadStatus[] = [
 ];
 
 export async function GET() {
+  return sdeOnly(async (session) => {
   try {
-    const authResult = await requireRole(["SDE", "OWNER"]);
-    if (authResult.response) {
-      return authResult.response;
-    }
-
     const leads = await prisma.onboardingLead.findMany({
       where:
-        authResult.user.role === "SDE"
+        session.user.role === "SDE"
           ? {
-              assignedSDEId: authResult.user.id,
+              assignedSDEId: session.user.id,
               status: { in: activeStatuses },
             }
           : { status: { in: activeStatuses } },
@@ -43,4 +39,5 @@ export async function GET() {
       { status: 500 },
     );
   }
+  });
 }

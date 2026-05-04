@@ -23,6 +23,7 @@ export function getRedirectForRole(role: string): string {
   if (role === "BOSS") return "/boss";
   if (role === "BDM") return "/bdm";
   if (role === "SDE") return "/sde";
+  if (role === "EMPLOYEE") return "/app";
   return "/login";
 }
 
