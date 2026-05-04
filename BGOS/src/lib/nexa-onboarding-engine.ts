@@ -9,23 +9,30 @@ function getOpenAI() {
 
 type JsonRecord = Record<string, unknown>;
 type ConfidenceScore = "low" | "medium" | "high";
+type ExtractionSource = "explicit" | "inferred";
 
 type ParsedField<T> = {
   value: T | null;
+  confidence: ConfidenceScore;
   confidence_score: ConfidenceScore;
+  source: ExtractionSource;
 };
 
 export type BusinessContext = {
   company_name: ParsedField<string>;
   business_type: ParsedField<string>;
+  industry: ParsedField<string>;
   products_services: ParsedField<string[]>;
   target_customers: ParsedField<string[]>;
   team_size: ParsedField<number>;
   location: ParsedField<string>;
   lead_sources: ParsedField<string[]>;
+  sales_process: ParsedField<string[]>;
   sales_flow: ParsedField<string[]>;
   follow_up_style: ParsedField<string>;
+  roles: ParsedField<Record<string, string>>;
   roles_mapping: ParsedField<Record<string, string>>;
+  pain_points: ParsedField<string[]>;
   problems_faced: ParsedField<string[]>;
 };
 
@@ -34,6 +41,8 @@ export type CompanyProfile = {
   business: JsonRecord;
   sales: JsonRecord;
   team: JsonRecord;
+  system: JsonRecord;
+  confidence_map: JsonRecord;
   requirements: JsonRecord;
 };
 
@@ -137,8 +146,18 @@ function confidenceRank(score: unknown) {
   return 1;
 }
 
-function field<T>(value: T | null, confidence_score: ConfidenceScore): ParsedField<T> {
-  return { value, confidence_score: value === null ? "low" : confidence_score };
+function field<T>(
+  value: T | null,
+  confidence: ConfidenceScore,
+  source: ExtractionSource = confidence === "high" ? "explicit" : "inferred",
+): ParsedField<T> {
+  const finalConfidence = value === null ? "low" : confidence;
+  return {
+    value,
+    confidence: finalConfidence,
+    confidence_score: finalConfidence,
+    source: value === null ? "inferred" : source,
+  };
 }
 
 function uniqueStrings(items: unknown[]) {
@@ -170,6 +189,20 @@ function matchKnown(input: string, options: string[]) {
 
 function guessBusinessType(input: string, products: string[]) {
   const lower = input.toLowerCase();
+  if (/\b(service|services|maintenance|installation|repair|support)\b/i.test(lower)) {
+    return field("service", "high", "explicit");
+  }
+  if (/\b(product|products|manufacturing|trading|distribution|retail)\b/i.test(lower)) {
+    return field("product", "high", "explicit");
+  }
+  if (products.length > 1 || /\b(sales?\s*(and|&)\s*service|supply\s*(and|&)\s*installation)\b/i.test(lower)) {
+    return field("hybrid", "medium", "inferred");
+  }
+  return field<string>(null, "low");
+}
+
+function guessIndustry(input: string, products: string[]) {
+  const lower = input.toLowerCase();
   const known = [
     "solar",
     "cctv",
@@ -188,8 +221,8 @@ function guessBusinessType(input: string, products: string[]) {
     "agency",
   ];
   const hits = known.filter((item) => lower.includes(item));
-  if (hits.length) return field(hits.slice(0, 3).join(" and "), "medium");
-  if (products.length) return field(`${products[0]} business`, "low");
+  if (hits.length) return field(hits.slice(0, 3).join(" and "), "medium", "inferred");
+  if (products.length) return field(`${products[0]} business`, "low", "inferred");
   return field<string>(null, "low");
 }
 
@@ -209,25 +242,25 @@ function inferTargetCustomers(input: string, businessType: string | null) {
     "offices",
     "retail shops",
   ]);
-  if (explicit.length) return field(explicit, "high");
+  if (explicit.length) return field(explicit, "high", "explicit");
   const lowerType = (businessType || "").toLowerCase();
   if (lowerType.includes("solar") || lowerType.includes("cctv") || lowerType.includes("electrical")) {
-    return field(["residential customers", "commercial clients"], "low");
+    return field(["residential customers", "commercial clients"], "low", "inferred");
   }
   return field<string[]>(null, "low");
 }
 
 function extractLocation(input: string) {
   const match = input.match(/\b(?:in|at|from|near)\s+([A-Z][A-Za-z .-]{2,40})(?:[,.]|$)/);
-  if (match?.[1]) return field(match[1].trim(), "medium");
+  if (match?.[1]) return field(match[1].trim(), "medium", "explicit");
   return field<string>(null, "low");
 }
 
 function extractCompanyName(input: string) {
   const match = input.match(/\b(?:company|business|firm|client)\s+(?:name\s+)?(?:is|:)?\s*([A-Z][A-Za-z0-9 &'().-]{2,60})/i);
-  if (match?.[1]) return field(match[1].trim(), "high");
+  if (match?.[1]) return field(match[1].trim(), "high", "explicit");
   const possessive = input.match(/\b([A-Z][A-Za-z0-9 &'().-]{2,60})'?s\s+(?:business|company|firm)\b/);
-  if (possessive?.[1]) return field(possessive[1].trim(), "medium");
+  if (possessive?.[1]) return field(possessive[1].trim(), "medium", "inferred");
   return field<string>(null, "low");
 }
 
@@ -235,7 +268,7 @@ function extractTeamSize(input: string) {
   const match =
     input.match(/\b(?:team|staff|employees?|members?|people)\s*(?:size)?\s*(?:is|of|:)?\s*(\d{1,4})\b/i) ||
     input.match(/\b(\d{1,4})\s*(?:people|members|staff|employees?|team)\b/i);
-  return match?.[1] ? field(Number(match[1]), "high") : field<number>(null, "low");
+  return match?.[1] ? field(Number(match[1]), "high", "explicit") : field<number>(null, "low");
 }
 
 function extractRoles(input: string) {
@@ -246,7 +279,7 @@ function extractRoles(input: string) {
   if (lower.includes("technician") || lower.includes("engineer")) roles.technical = "Installation/service execution";
   if (lower.includes("accounts") || lower.includes("payment")) roles.accounts = "Billing and collections";
   if (lower.includes("admin")) roles.admin = "Coordination and operations";
-  return field(Object.keys(roles).length ? roles : null, Object.keys(roles).length > 1 ? "medium" : "low");
+  return field(Object.keys(roles).length ? roles : null, Object.keys(roles).length > 1 ? "medium" : "low", "inferred");
 }
 
 function extractProblems(input: string) {
@@ -258,11 +291,15 @@ function extractProblems(input: string) {
   if (/(report|dashboard|visibility|track|monitor)/i.test(lower)) problems.push("management visibility");
   if (/(quotation|quote|estimate)/i.test(lower)) problems.push("quotation tracking");
   if (/(service|complaint|maintenance|amc)/i.test(lower)) problems.push("service and maintenance tracking");
-  return field(problems.length ? problems : null, problems.length > 1 ? "medium" : "low");
+  return field(problems.length ? problems : null, problems.length > 1 ? "medium" : "low", "inferred");
+}
+
+export function inputEngine(input: string) {
+  return String(input ?? "").trim();
 }
 
 export function parseBusinessContext(input: string): BusinessContext {
-  const safeInput = input || "";
+  const safeInput = inputEngine(input);
   const leadSources = matchKnown(safeInput, [
     "WhatsApp",
     "Instagram",
@@ -303,21 +340,32 @@ export function parseBusinessContext(input: string): BusinessContext {
   ]);
   const products = obviousProducts.length ? obviousProducts : phraseList(safeInput);
   const businessType = guessBusinessType(safeInput, products);
+  const industry = guessIndustry(safeInput, products);
+  const roles = extractRoles(safeInput);
+  const painPoints = extractProblems(safeInput);
+  const parsedSalesProcess = field(salesFlow.length ? salesFlow : null, salesFlow.length > 2 ? "high" : "medium", salesFlow.length ? "explicit" : "inferred");
 
   return {
     company_name: extractCompanyName(safeInput),
     business_type: businessType,
-    products_services: field(products.length ? products : null, obviousProducts.length ? "medium" : "low"),
-    target_customers: inferTargetCustomers(safeInput, businessType.value),
+    industry,
+    products_services: field(products.length ? products : null, obviousProducts.length ? "medium" : "low", obviousProducts.length ? "explicit" : "inferred"),
+    target_customers: inferTargetCustomers(safeInput, industry.value || businessType.value),
     team_size: teamSize,
     location: extractLocation(safeInput),
-    lead_sources: field(leadSources.length ? leadSources : null, leadSources.length > 1 ? "high" : "medium"),
-    sales_flow: field(salesFlow.length ? salesFlow : null, salesFlow.length > 2 ? "high" : "medium"),
-    follow_up_style: field(followUp.length ? followUp.join(" + ") : null, followUp.length > 1 ? "high" : "medium"),
-    roles_mapping: extractRoles(safeInput),
-    problems_faced: extractProblems(safeInput),
+    lead_sources: field(leadSources.length ? leadSources : null, leadSources.length > 1 ? "high" : "medium", leadSources.length ? "explicit" : "inferred"),
+    sales_process: parsedSalesProcess,
+    sales_flow: parsedSalesProcess,
+    follow_up_style: field(followUp.length ? followUp.join(" + ") : null, followUp.length > 1 ? "high" : "medium", followUp.length ? "explicit" : "inferred"),
+    roles,
+    roles_mapping: roles,
+    pain_points: painPoints,
+    problems_faced: painPoints,
   };
 }
+
+export const parseInput = parseBusinessContext;
+export const interpretationEngine = parseBusinessContext;
 
 function emptyProfile(): CompanyProfile {
   return {
@@ -325,6 +373,8 @@ function emptyProfile(): CompanyProfile {
     business: {},
     sales: {},
     team: {},
+    system: {},
+    confidence_map: {},
     requirements: {},
   };
 }
@@ -339,6 +389,8 @@ function getProfile(nexaConfig: unknown): CompanyProfile {
     business: asRecord(profile.business),
     sales: asRecord(profile.sales),
     team: asRecord(profile.team),
+    system: asRecord(profile.system),
+    confidence_map: asRecord(profile.confidence_map),
     requirements: asRecord(profile.requirements),
   };
 }
@@ -356,10 +408,29 @@ function setProfileField(section: JsonRecord, key: string, incoming: ParsedField
   if (!currentValue || confidenceRank(incoming.confidence_score) >= confidenceRank(currentConfidence)) {
     section[key] = {
       value: nextValue,
+      confidence: incoming.confidence,
       confidence_score: incoming.confidence_score,
+      source: incoming.source,
       updatedAt: new Date().toISOString(),
     };
   }
+}
+
+function updateConfidenceMap(profile: CompanyProfile) {
+  const confidenceMap: JsonRecord = {};
+  for (const [sectionName, section] of Object.entries(profile)) {
+    if (sectionName === "confidence_map") continue;
+    for (const [key, item] of Object.entries(asRecord(section))) {
+      const record = asRecord(item);
+      if (record.value !== undefined) {
+        confidenceMap[`${sectionName}.${key}`] = {
+          confidence: record.confidence ?? record.confidence_score ?? "low",
+          source: record.source ?? "inferred",
+        };
+      }
+    }
+  }
+  profile.confidence_map = confidenceMap;
 }
 
 export function mergeBusinessContextIntoProfile(
@@ -373,28 +444,38 @@ export function mergeBusinessContextIntoProfile(
     business: asRecord(asRecord(currentProfile).business),
     sales: asRecord(asRecord(currentProfile).sales),
     team: asRecord(asRecord(currentProfile).team),
+    system: asRecord(asRecord(currentProfile).system),
+    confidence_map: asRecord(asRecord(currentProfile).confidence_map),
     requirements: asRecord(asRecord(currentProfile).requirements),
   };
 
   setProfileField(profile.identity, "company_name", parsed.company_name as ParsedField<unknown>);
   setProfileField(profile.identity, "location", parsed.location as ParsedField<unknown>);
   setProfileField(profile.business, "business_type", parsed.business_type as ParsedField<unknown>);
+  setProfileField(profile.business, "industry", parsed.industry as ParsedField<unknown>);
   setProfileField(profile.business, "products_services", parsed.products_services as ParsedField<unknown>);
   setProfileField(profile.business, "target_customers", parsed.target_customers as ParsedField<unknown>);
   setProfileField(profile.team, "team_size", parsed.team_size as ParsedField<unknown>);
+  setProfileField(profile.team, "roles", parsed.roles as ParsedField<unknown>);
   setProfileField(profile.team, "roles_mapping", parsed.roles_mapping as ParsedField<unknown>);
   setProfileField(profile.sales, "lead_sources", parsed.lead_sources as ParsedField<unknown>);
+  setProfileField(profile.sales, "sales_process", parsed.sales_process as ParsedField<unknown>);
   setProfileField(profile.sales, "sales_flow", parsed.sales_flow as ParsedField<unknown>);
   setProfileField(profile.sales, "follow_up_style", parsed.follow_up_style as ParsedField<unknown>);
+  setProfileField(profile.requirements, "pain_points", parsed.pain_points as ParsedField<unknown>);
   setProfileField(profile.requirements, "problems_faced", parsed.problems_faced as ParsedField<unknown>);
+  updateConfidenceMap(profile);
 
   return profile;
 }
 
+export const memoryEngine = mergeBusinessContextIntoProfile;
+
 export function businessContextToCompanyData(parsed: BusinessContext): JsonRecord {
   const company: JsonRecord = {};
   if (parsed.company_name.value) company.name = parsed.company_name.value;
-  if (parsed.business_type.value) company.industry = parsed.business_type.value;
+  if (parsed.industry.value) company.industry = parsed.industry.value;
+  if (parsed.business_type.value) company.businessType = parsed.business_type.value;
   if (parsed.products_services.value) company.products = parsed.products_services.value;
   if (parsed.target_customers.value) company.targetCustomers = parsed.target_customers.value;
   if (parsed.team_size.value) company.employeeCount = parsed.team_size.value;
@@ -419,6 +500,7 @@ export function analyzeCompanyProfile(profile: CompanyProfile) {
   const required = [
     ["identity", "company_name"],
     ["business", "business_type"],
+    ["business", "industry"],
     ["business", "products_services"],
     ["business", "target_customers"],
     ["team", "team_size"],
@@ -446,6 +528,8 @@ export function analyzeCompanyProfile(profile: CompanyProfile) {
     decision: uncertain.length ? "confirm" : missing.length ? "ask" : "infer",
   };
 }
+
+export const decisionEngine = analyzeCompanyProfile;
 
 export function generateResponse(profile: CompanyProfile, lastInput: string) {
   const context = analyzeCompanyProfile(profile);
