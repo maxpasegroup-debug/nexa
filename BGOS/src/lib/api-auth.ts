@@ -42,7 +42,7 @@ export async function requireRole(roles: Role | Role[]): Promise<ApiAuthResult> 
   }
 
   const allowedRoles = Array.isArray(roles) ? roles : [roles];
-  if (!allowedRoles.includes(result.user.role)) {
+  if (!allowedRoles.includes(result.user.role as Role)) {
     return { response: forbidden() };
   }
 

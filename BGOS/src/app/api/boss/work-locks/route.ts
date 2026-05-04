@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       })
     : await activeBossWorkLocksForUser({
         id: session.user.id,
-        role: session.user.role,
+        role: session.user.role as Role,
         businessId: session.user.businessId,
       });
 

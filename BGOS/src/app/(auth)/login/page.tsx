@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { FormEvent, useState } from "react";
 
+import { getRoleRedirect } from "@/lib/role-redirect";
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -44,13 +46,9 @@ export default function LoginPage() {
       const session = (await response.json()) as {
         user?: { role?: string };
       };
-      const role = session?.user?.role;
+      const role = session?.user?.role || "EMPLOYEE";
 
-      if (role === "OWNER") router.push("/internal");
-      else if (role === "BOSS") router.push("/boss");
-      else if (role === "BDM") router.push("/bdm");
-      else if (role === "SDE") router.push("/sde");
-      else router.push("/onboarding");
+      router.push(getRoleRedirect(role));
       router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
@@ -80,11 +78,11 @@ export default function LoginPage() {
               marginBottom: "6px",
             }}
           >
-            <span style={{ color: "#F0EEF8" }}>BG</span>
-            <span style={{ color: "#7C6FFF" }}>OS</span>
+            <span style={{ color: "#F0EEF8" }}>Welcome to </span>
+            <span style={{ color: "#7C6FFF" }}>BGOS</span>
           </div>
           <div style={{ fontSize: "13px", color: "#6B6878", fontWeight: 300 }}>
-            Sign in to your account
+            Sign in to your workspace
           </div>
         </div>
 
@@ -202,9 +200,13 @@ export default function LoginPage() {
               disabled={loading}
               style={{ width: "100%", background: loading ? "#534AB7" : "#7C6FFF", color: "white", border: "none", borderRadius: "8px", padding: "13px", fontSize: "14px", fontWeight: 500, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif" }}
             >
-              {loading ? "Signing in..." : "Sign in →"}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
+
+          <p style={{ marginTop: "14px", textAlign: "center", fontSize: "12px", lineHeight: 1.6, color: "#8B8798" }}>
+            New employee? Use the login credentials sent to your email.
+          </p>
 
           <div style={{ textAlign: "center", marginTop: "20px", fontSize: "13px", color: "#6B6878" }}>
             No account yet?{" "}

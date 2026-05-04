@@ -1,40 +1,12 @@
-import type { DefaultSession } from "next-auth";
 import NextAuth from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
-import type { Role } from "@prisma/client";
 
 import { generateClientId } from "@/lib/client-id";
 import { prisma } from "@/lib/prisma";
-
-declare module "next-auth" {
-  interface User {
-    role?: Role;
-    businessId?: string | null;
-    defaultPassword?: boolean;
-  }
-
-  interface Session {
-    user: {
-      id: string;
-      role: Role;
-      businessId: string | null;
-      defaultPassword: boolean;
-    } & DefaultSession["user"];
-  }
-}
-
-declare module "@auth/core/jwt" {
-  interface JWT {
-    id?: string;
-    role?: Role;
-    businessId?: string | null;
-    defaultPassword?: boolean;
-  }
-}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -89,6 +61,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           role: user.role,
           businessId: user.businessId,
+          companyId: user.businessId,
+          theme: user.theme,
+          isActive: user.isActive,
           defaultPassword: user.defaultPassword,
         };
       },
@@ -148,18 +123,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true;
     },
     async jwt({ token, user, trigger, session }) {
-      if (user) {
-        const email = user.email?.toLowerCase();
-        const dbUser = email
-          ? await prisma.user.findUnique({ where: { email } })
-          : null;
+      if (user || !token.role) {
+        const email = (user?.email ?? token.email)?.toLowerCase();
+        const userId = user?.id ?? token.id ?? token.sub;
+        const dbUser = userId
+          ? await prisma.user.findUnique({
+              where: { id: userId },
+              select: {
+                id: true,
+                role: true,
+                businessId: true,
+                theme: true,
+                isActive: true,
+                defaultPassword: true,
+              },
+            })
+          : email
+            ? await prisma.user.findUnique({
+                where: { email },
+                select: {
+                  id: true,
+                  role: true,
+                  businessId: true,
+                  theme: true,
+                  isActive: true,
+                  defaultPassword: true,
+                },
+              })
+            : null;
 
-        token.id = dbUser?.id ?? user.id;
-        token.role = dbUser?.role ?? user.role;
-        token.businessId = dbUser?.businessId ?? user.businessId ?? null;
-        token.defaultPassword =
-          dbUser?.defaultPassword ?? user.defaultPassword ?? false;
+        token.id = dbUser?.id ?? user?.id ?? token.id ?? token.sub;
+        token.role = dbUser?.role ?? user?.role ?? "EMPLOYEE";
+        token.companyId = dbUser?.businessId ?? user?.companyId ?? user?.businessId ?? null;
+        token.businessId = dbUser?.businessId ?? user?.businessId ?? token.companyId ?? null;
+        token.theme = dbUser?.theme ?? user?.theme ?? "dark";
+        token.isActive = dbUser?.isActive ?? user?.isActive ?? true;
+        token.defaultPassword = dbUser?.defaultPassword ?? user?.defaultPassword ?? false;
+
+        if (user && dbUser?.id) {
+          await prisma.user.update({
+            where: { id: dbUser.id },
+            data: { lastLoginAt: new Date() },
+          });
+        }
       }
+
+      if (!token.role) token.role = "EMPLOYEE";
+      if (token.companyId === undefined) token.companyId = token.businessId ?? null;
+      if (token.businessId === undefined) token.businessId = token.companyId ?? null;
+      if (!token.theme) token.theme = "dark";
+      if (token.isActive === undefined) token.isActive = true;
 
       if (trigger === "update" && session?.user) {
         token.defaultPassword = Boolean(session.user.defaultPassword);
@@ -169,9 +182,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id ?? "";
-        session.user.role = token.role ?? "BDM";
+        session.user.id = token.id ?? token.sub ?? "";
+        session.user.role = token.role ?? "EMPLOYEE";
+        session.user.companyId = token.companyId ?? token.businessId ?? null;
         session.user.businessId = token.businessId ?? null;
+        session.user.theme = token.theme ?? "dark";
+        session.user.isActive = token.isActive ?? true;
         session.user.defaultPassword = token.defaultPassword ?? false;
       }
 

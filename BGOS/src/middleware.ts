@@ -4,10 +4,10 @@ import {
   BOSS_DOMAIN,
   EMPLOYEE_DOMAIN,
   getDomainType,
-  getRedirectForRole,
   isBossRole,
   isEmployeeRole,
 } from "@/lib/domain";
+import { getRoleRedirect } from "@/lib/role-redirect";
 
 const PUBLIC_ROUTES = [
   "/",
@@ -46,6 +46,15 @@ export default auth((req) => {
   const domainType = getDomainType(host);
   const session = req.auth;
   const isProd = process.env.NODE_ENV === "production";
+  const role = (session?.user?.role as string | undefined) || "EMPLOYEE";
+
+  if (pathname === "/" && session?.user) {
+    return NextResponse.redirect(new URL(getRoleRedirect(role), req.url));
+  }
+
+  if (pathname === "/login" && session?.user) {
+    return NextResponse.redirect(new URL(getRoleRedirect(role), req.url));
+  }
 
   if (isPublicRoute(pathname)) {
     return NextResponse.next();
@@ -68,18 +77,16 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const role = session.user.role as string;
-
   if (isProd) {
     if (domainType === "employee" && isBossRole(role)) {
-      const redirectPath = getRedirectForRole(role);
+      const redirectPath = getRoleRedirect(role);
       return NextResponse.redirect(
         new URL(redirectPath, `https://${BOSS_DOMAIN}`),
       );
     }
 
     if (domainType === "boss" && isEmployeeRole(role)) {
-      const redirectPath = getRedirectForRole(role);
+      const redirectPath = getRoleRedirect(role);
       return NextResponse.redirect(
         new URL(redirectPath, `https://${EMPLOYEE_DOMAIN}`),
       );
@@ -90,22 +97,32 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/internal", req.url));
   }
 
-  if (pathname.startsWith("/internal") && role !== "OWNER") {
-    return NextResponse.redirect(new URL(getRedirectForRole(role), req.url));
+  const protectedByRole: Record<string, string[]> = {
+    "/internal": ["OWNER", "ADMIN"],
+    "/bdm": ["BDM", "OWNER", "ADMIN"],
+    "/sde": ["SDE", "OWNER", "ADMIN"],
+    "/boss": ["BOSS", "OWNER", "ADMIN"],
+    "/app": ["EMPLOYEE", "OWNER", "ADMIN"],
+  };
+
+  for (const [prefix, allowedRoles] of Object.entries(protectedByRole)) {
+    if (pathname.startsWith(prefix) && !allowedRoles.includes(role)) {
+      return NextResponse.redirect(new URL(getRoleRedirect(role), req.url));
+    }
   }
 
   if (
     isEmployeeRole(role) &&
     (pathname.startsWith("/boss") || pathname.startsWith("/internal"))
   ) {
-    return NextResponse.redirect(new URL(getRedirectForRole(role), req.url));
+    return NextResponse.redirect(new URL(getRoleRedirect(role), req.url));
   }
 
   if (
     isBossRole(role) &&
     (pathname.startsWith("/bdm") || pathname.startsWith("/sde"))
   ) {
-    return NextResponse.redirect(new URL(getRedirectForRole(role), req.url));
+    return NextResponse.redirect(new URL(getRoleRedirect(role), req.url));
   }
 
   return NextResponse.next();

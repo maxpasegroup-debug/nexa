@@ -26,7 +26,7 @@ export function jsonArray<T>(value: unknown): T[] {
 
 export async function requireSessionUser(roles: Role[]) {
   const session = await auth();
-  if (!session?.user?.id || !roles.includes(session.user.role)) {
+  if (!session?.user?.id || !roles.includes(session.user.role as Role)) {
     return { error: jsonError("Forbidden", 403), user: null };
   }
 
