@@ -37,3 +37,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 edge-smoke-profile-2/ 
+edge-smoke-profile-2/

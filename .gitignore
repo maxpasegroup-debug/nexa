@@ -12,3 +12,4 @@ node_modules/
 .env.local
 */.env
 */.env.local
+**/edge-smoke-profile-2/
