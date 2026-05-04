@@ -174,7 +174,7 @@ export function BdeCommissionDashboard({
   }, [fetchCommission]);
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white">
       <Sidebar role="BDM" userName={user.name} businessName={user.businessName} />
       <Navbar title="Earnings" userName={user.name} />
 

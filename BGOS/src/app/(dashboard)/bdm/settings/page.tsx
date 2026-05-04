@@ -38,7 +38,7 @@ export default async function BdmSettingsPage() {
   if (!user?.business || user.role !== "BDM") redirect("/login");
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white">
       <Sidebar role="BDM" userName={user.name} businessName={user.business.name} />
       <Navbar title="Settings" userName={user.name} />
       <main className="pt-[60px]">

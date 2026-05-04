@@ -157,7 +157,7 @@ body {
   .show-mobile-flex { display: flex !important; }
   .show-mobile-grid { display: grid !important; }
 
-  [class*="pl-[240px]"] {
+  [class*="md:pl-[240px]"] {
     padding-left: 0 !important;
   }
 
@@ -232,7 +232,7 @@ body {
   .hide-tablet { display: none !important; }
   .show-tablet { display: block !important; }
 
-  [class*="pl-[240px]"] {
+  [class*="md:pl-[240px]"] {
     padding-left: 56px !important;
   }
 

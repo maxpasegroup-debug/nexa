@@ -31,7 +31,7 @@ export function WorkspaceBuildsPage({
   );
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white">
       <Sidebar role="SDE" userName={user.name} businessName={user.businessName} />
       <Navbar title={tab === "builds" ? "Workspace builds" : "Agent integrations"} userName={user.name} role={user.role} />
       <main className="pt-[60px]">

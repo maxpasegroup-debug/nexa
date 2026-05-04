@@ -28,7 +28,7 @@ export default async function BdmNexaPage() {
       <div className="show-mobile hidden">
         <MobileBDMNexa />
       </div>
-      <div className="hide-mobile min-h-screen bg-[#070709] pl-[240px] text-white">
+      <div className="hide-mobile min-h-screen bg-[#070709] md:pl-[240px] text-white">
         <Sidebar role="BDM" userName={user.name} businessName={user.business.name} />
         <Navbar title="NEXA" userName={user.name} role="BDM" />
         <main className="pt-[60px]">

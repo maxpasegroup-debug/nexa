@@ -71,7 +71,7 @@ export default async function BossAgentDetailPage({
   const locked = installation.status === "AWAITING_PAYMENT" || installation.status === "PENDING";
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white">
       <Sidebar role={user.role} userName={user.name} businessName={user.business.name} />
       <Navbar title={installation.agent.name} userName={user.name} role={user.role} />
 

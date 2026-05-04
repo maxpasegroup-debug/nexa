@@ -111,7 +111,7 @@ export function SdeDashboard({ user, initialMetrics, initialTasks, initialBugs, 
   }
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white md:pr-[320px]">
       <Sidebar role="SDE" userName={user.name} businessName={user.businessName} />
       <Navbar title="SDE Dashboard" userName={user.name} />
       {(criticalCount + urgentCount) > 0 ? <button onClick={() => document.getElementById("sde-issues")?.scrollIntoView({ behavior: "smooth" })} className="fixed right-[344px] top-3 z-40 rounded-xl bg-[#FF6B6B] px-3 py-2 text-sm font-bold text-white animate-pulse">{criticalCount + urgentCount} urgent</button> : null}

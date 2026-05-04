@@ -46,7 +46,7 @@ export default async function BossInboxPage() {
   const isConnected = Boolean(emailAccount);
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white">
       <Sidebar
         role={user.role}
         userName={user.name}

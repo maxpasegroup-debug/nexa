@@ -38,7 +38,7 @@ export default async function SdeSettingsPage() {
   if (!user?.business || user.role !== "SDE") redirect("/login");
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white">
       <Sidebar role="SDE" userName={user.name} businessName={user.business.name} />
       <Navbar title="Settings" userName={user.name} />
       <main className="pt-[60px]">

@@ -61,7 +61,7 @@ export default async function SdeBuildDashboardPage({
   if (!session) redirect("/sde/workspaces");
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white">
       <Sidebar role="SDE" userName={user.name} businessName={user.business.name} />
       <Navbar title="Build dashboard" userName={user.name} role={user.role} />
       <main className="pt-[60px]">

@@ -27,7 +27,7 @@ export default async function InternalNexaPage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white">
       <InternalSidebar user={owner} />
       <InternalTopbar user={owner} />
       <main className="pt-[60px]">

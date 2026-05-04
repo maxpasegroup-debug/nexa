@@ -79,7 +79,7 @@ export function BdmLeadsPage({ user, initialLeads }: BdmLeadsPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white md:pr-[320px]">
       <Sidebar role="BDM" userName={user.name} businessName={user.businessName} />
       <Navbar title="My Leads" userName={user.name} />
 

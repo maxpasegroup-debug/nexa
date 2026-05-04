@@ -490,7 +490,7 @@ export function InternalMarketplacePage({
   }
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white">
       <InternalSidebar user={user} />
       <InternalTopbar user={user} />
 

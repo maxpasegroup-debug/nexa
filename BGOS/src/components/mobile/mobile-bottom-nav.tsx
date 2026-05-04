@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 
 type Tab = {
   id: string;
@@ -68,8 +69,10 @@ function isActive(pathname: string, tab: Tab, activeTab?: string) {
 export function MobileBottomNav({ role, activeTab, onTabChange }: MobileBottomNavProps) {
   const pathname = usePathname();
   const tabs = tabsForRole(role);
+  const { data: session } = useSession();
   const [onboardingCount, setOnboardingCount] = useState(0);
   const [customerAtRiskCount, setCustomerAtRiskCount] = useState(0);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (role !== "BDM") return;
@@ -105,6 +108,39 @@ export function MobileBottomNav({ role, activeTab, onTabChange }: MobileBottomNa
   }, [role]);
 
   return (
+    <>
+    {moreOpen ? (
+      <button
+        type="button"
+        aria-label="Close profile menu"
+        onClick={() => setMoreOpen(false)}
+        className="fixed inset-0 z-[90] bg-black/50 md:hidden"
+      />
+    ) : null}
+    {moreOpen ? (
+      <section className="fixed inset-x-0 bottom-0 z-[100] rounded-t-2xl border-t border-white/[0.08] bg-[#13131c] px-4 pb-10 pt-5 shadow-2xl shadow-black/40 md:hidden">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-white">{session?.user?.name ?? "BGOS user"}</p>
+            <p className="mt-1 truncate text-xs text-[#6B6878]">{session?.user?.email ?? "Signed in"}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMoreOpen(false)}
+            className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-bold text-zinc-300"
+          >
+            Close
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => void signOut({ callbackUrl: "/login" })}
+          className="w-full rounded-[10px] border border-[#FF6B6B]/25 bg-[#FF6B6B]/10 p-3.5 text-center text-sm font-semibold text-[#FF6B6B]"
+        >
+          Sign out
+        </button>
+      </section>
+    ) : null}
     <nav className="fixed inset-x-0 bottom-0 z-50 flex h-[72px] border-t border-white/[0.08] bg-[rgba(13,13,20,0.97)] pb-safe backdrop-blur-[20px] md:hidden">
       {tabs.map((tab) => {
         const active = isActive(pathname, tab, activeTab);
@@ -114,6 +150,30 @@ export function MobileBottomNav({ role, activeTab, onTabChange }: MobileBottomNa
             : tab.badge === "customers"
               ? customerAtRiskCount
               : 0;
+        if (tab.id === "more") {
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                onTabChange?.(tab.id);
+                setMoreOpen(true);
+              }}
+              className={`flex flex-1 flex-col items-center justify-center gap-1 text-center transition ${
+                active || moreOpen ? "text-[#7C6FFF]" : "text-[#6B6878]"
+              }`}
+            >
+              <span
+                className="relative text-[20px] leading-none"
+                style={active || moreOpen ? { filter: "drop-shadow(0 0 8px rgba(124,111,255,0.8))" } : undefined}
+              >
+                {tab.icon}
+              </span>
+              <span className="text-[9px] font-bold leading-none">{tab.label}</span>
+            </button>
+          );
+        }
+
         return (
           <Link
             key={tab.id}
@@ -143,5 +203,6 @@ export function MobileBottomNav({ role, activeTab, onTabChange }: MobileBottomNa
         );
       })}
     </nav>
+    </>
   );
 }

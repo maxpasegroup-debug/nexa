@@ -33,7 +33,7 @@ export default async function BossMorePage() {
       <div className="show-mobile hidden">
         <MobileBossMore />
       </div>
-      <div className="hide-mobile min-h-screen bg-[#070709] pl-[240px] text-white">
+      <div className="hide-mobile min-h-screen bg-[#070709] md:pl-[240px] text-white">
         <Sidebar role={user.role} userName={user.name} businessName={user.business.name} />
         <Navbar title="More" userName={user.name} role={user.role} />
         <main className="pt-[60px]">

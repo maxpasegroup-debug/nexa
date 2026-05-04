@@ -138,7 +138,7 @@ export function InternalSidebar({ user }: { user: InternalUser }) {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col border-r border-[rgba(255,255,255,0.07)] bg-[#0d0d11]">
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[240px] flex-col border-r border-[rgba(255,255,255,0.07)] bg-[#0d0d11] md:flex">
       <div className="border-b border-white/10 px-6 py-5">
         <div className="font-heading text-xl font-bold tracking-normal">
           <span className="text-white">BG</span>
@@ -395,7 +395,7 @@ export function BgosInternalDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white md:pr-[320px]">
       <InternalSidebar user={user} />
       <InternalTopbar user={user} />
 

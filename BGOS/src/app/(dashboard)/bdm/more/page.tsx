@@ -26,7 +26,7 @@ export default async function BdmMorePage() {
       <div className="show-mobile hidden">
         <MobileBDMMore />
       </div>
-      <div className="hide-mobile min-h-screen bg-[#070709] pl-[240px] text-white">
+      <div className="hide-mobile min-h-screen bg-[#070709] md:pl-[240px] text-white">
         <Sidebar role="BDM" userName={user.name} businessName={user.business.name} />
         <Navbar title="More" userName={user.name} />
         <main className="pt-[60px]">

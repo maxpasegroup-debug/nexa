@@ -73,7 +73,7 @@ export default async function BossTeamPage() {
           }))}
         />
       </div>
-      <div className="hide-mobile min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
+      <div className="hide-mobile min-h-screen bg-[#070709] md:pl-[240px] text-white md:pr-[320px]">
         <Sidebar role="BOSS" userName={user.name} businessName={user.business.name} />
         <Navbar title="Team" userName={user.name} role="BOSS" />
 

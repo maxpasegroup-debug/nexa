@@ -221,7 +221,7 @@ export function BossDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-[#070709] pl-[240px] text-white md:pr-[320px]">
+    <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white md:pr-[320px]">
       <Sidebar
         role={user.role}
         userName={user.name}
