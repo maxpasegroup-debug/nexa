@@ -32,9 +32,9 @@ export async function POST(
       : rawBdmNotes;
 
     const completeness = calculateCompleteness(session);
-    if (!completeness.canSubmit) {
+    if (completeness.score < 60) {
       return jsonError(
-        completeness.blocked ?? "Complete all required onboarding data before submission.",
+        "Minimum 60% completeness required before submission.",
       );
     }
     if (!session.summaryText || !session.summaryJson || !session.summaryGenerated) {
@@ -70,7 +70,9 @@ export async function POST(
           completenessScore: completeness.score,
           completenessBreakdown: completeness.breakdown,
           canSubmit: true,
-          submissionBlocked: null,
+          submissionBlocked: completeness.missing.length
+            ? completeness.missing.join(" | ")
+            : null,
           summaryText: finalSummary.readable,
           summaryJson: finalSummary.json,
           generatedSummary: finalSummary.readable,

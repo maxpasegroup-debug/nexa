@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         bdmId: user.id,
         status: "COLLECTING",
       },
-      select: { id: true },
+      select: { id: true, clientId: true },
     });
 
     await prisma.lead.update({
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ sessionId: session.id });
+    return NextResponse.json({ sessionId: session.id, clientId: session.clientId });
   } catch (error) {
     console.error("[onboarding-session:create]", error);
     return jsonError("Unable to create onboarding session.", 500);
