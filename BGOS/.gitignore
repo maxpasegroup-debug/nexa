@@ -36,3 +36,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+edge-smoke-profile-2/ 
