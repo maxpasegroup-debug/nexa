@@ -29,7 +29,7 @@ function money(value: number) {
   return `₹${Math.round(value || 0).toLocaleString("en-IN")}`;
 }
 
-export function TargetHero() {
+export function TargetHero({ bdmSubType = "BDM" }: { bdmSubType?: string }) {
   const [data, setData] = useState<TargetData | null>(null);
 
   useEffect(() => {
@@ -66,6 +66,9 @@ export function TargetHero() {
 
   return (
     <section className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
+      <h2 className="mb-5 font-heading text-base font-bold text-white">
+        {bdmSubType === "MF" ? "MF Monthly Target" : "BDM Monthly Target"}
+      </h2>
       <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
         <div className="flex flex-col items-center">
           <div className="relative h-[150px] w-[150px]">

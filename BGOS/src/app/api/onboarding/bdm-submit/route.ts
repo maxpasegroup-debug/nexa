@@ -95,7 +95,7 @@ export async function POST(request: Request) {
             <p><strong>Company:</strong> ${lead.companyName}</p>
             <p><strong>Plan:</strong> ${selectedPlan}</p>
             <pre style="white-space:pre-wrap;background:#f4f4f4;padding:16px;border-radius:8px;">${description}</pre>
-            <p><a href="https://iceconnect.in/sde">Open workspace builder</a></p>
+            <p><a href="https://bgos.online/sde">Open workspace builder</a></p>
           </div>
         `,
       }),

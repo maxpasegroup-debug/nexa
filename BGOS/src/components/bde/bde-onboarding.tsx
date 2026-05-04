@@ -38,7 +38,7 @@ export function BdeOnboarding({ user, onComplete }: BdeOnboardingProps) {
         <span className="rounded-full border border-[#7C6FFF]/30 bg-[#7C6FFF]/10 px-2 py-1 text-xs font-bold text-[#c6c1ff]">
           {user.role}
         </span>
-        . iceconnect.in is your daily dashboard for leads, calls, targets,
+        . bgos.online is your daily dashboard for leads, calls, targets,
         earnings, and NEXA guidance.
       </p>
     </div>,

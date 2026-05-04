@@ -37,9 +37,6 @@ export async function POST(
         "Minimum 60% completeness required before submission.",
       );
     }
-    if (!session.summaryText || !session.summaryJson || !session.summaryGenerated) {
-      return jsonError("Generate the NEXA build-ready summary before submitting to SDE.");
-    }
 
     await prisma.onboardingSession.update({
       where: { id: params.id },
@@ -77,6 +74,8 @@ export async function POST(
           summaryJson: finalSummary.json,
           generatedSummary: finalSummary.readable,
           generatedJson: finalSummary.json,
+          summaryGenerated: true,
+          summaryGeneratedAt: new Date(),
         },
       }),
       prisma.task.create({
@@ -97,7 +96,7 @@ export async function POST(
         to: sde.email,
         toName: sde.name,
         subject: `${submittedByBoss ? "PRIORITY: Boss submitted - " : "Build workspace - "}${companyName}`,
-        html: `<p>${submittedByBoss ? `Boss ${user.name} submitted this onboarding. Treat as priority.` : "New workspace build request assigned to you."}</p><pre style="white-space:pre-wrap">${summaryText}</pre><p><a href="https://iceconnect.in/sde/workspaces">Open build dashboard</a></p>`,
+        html: `<p>${submittedByBoss ? `Boss ${user.name} submitted this onboarding. Treat as priority.` : "New workspace build request assigned to you."}</p><pre style="white-space:pre-wrap">${summaryText}</pre><p><a href="https://bgos.online/sde/workspaces">Open build dashboard</a></p>`,
       }),
       sendEmail({
         to: user.email,

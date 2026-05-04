@@ -4,6 +4,8 @@ import type { Prisma } from "@prisma/client";
 import {
   getBool,
   getAgentType,
+  getCareer7AgentType,
+  getCareer7MarketplaceStatus,
   getNumber,
   getString,
   isAgentCategory,
@@ -53,15 +55,29 @@ function updateData(
     data.type = type;
   }
 
-  for (const field of ["onboardingFee", "monthlyFee", "sortOrder"]) {
+  if ("career7Type" in body) {
+    const career7Type = getCareer7AgentType(body.career7Type);
+    if (!career7Type && body.career7Type !== null) {
+      return { error: "Invalid Career7 agent type." };
+    }
+    data.career7Type = career7Type ?? null;
+  }
+
+  if ("career7Status" in body || "status" in body) {
+    const career7Status = getCareer7MarketplaceStatus(body.career7Status ?? body.status);
+    if (!career7Status) return { error: "Invalid Career7 marketplace status." };
+    data.career7Status = career7Status;
+  }
+
+  for (const field of ["onboardingFee", "monthlyFee", "sortOrder", "creditPrice"]) {
     if (field in body) {
       const value = getNumber(body[field]);
       if (value === undefined) return { error: `Invalid ${field}.` };
-      mutable[field] = value;
+      mutable[field] = field === "creditPrice" ? Math.max(0, Math.round(value)) : value;
     }
   }
 
-  for (const field of ["isActive", "isFeatured"]) {
+  for (const field of ["isActive", "isFeatured", "isPrebuilt", "isRequestable", "canAddToGrowthBoard"]) {
     if (field in body) {
       const value = getBool(body[field]);
       if (value === undefined) return { error: `Invalid ${field}.` };

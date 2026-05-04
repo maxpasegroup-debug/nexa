@@ -1,6 +1,13 @@
 import crypto from "crypto";
 
-import type { AgentCategory, AgentType, MarketplaceAgent, Role } from "@prisma/client";
+import type {
+  AgentCategory,
+  AgentType,
+  Career7AgentType,
+  Career7MarketplaceStatus,
+  MarketplaceAgent,
+  Role,
+} from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { requireAuth, requireRole } from "@/lib/api-auth";
@@ -19,6 +26,24 @@ export const agentCategories: AgentCategory[] = [
 ];
 
 export const agentTypes: AgentType[] = ["UI", "BACKGROUND"];
+
+export const career7AgentTypes: Career7AgentType[] = [
+  "LEARNING",
+  "EARNING",
+  "CAREER",
+  "MIGRATION",
+  "LANGUAGE",
+  "EXAM",
+  "FINANCE",
+  "BLIZZWAY",
+];
+
+export const career7MarketplaceStatuses: Career7MarketplaceStatus[] = [
+  "DRAFT",
+  "ACTIVE",
+  "COMING_SOON",
+  "ARCHIVED",
+];
 
 export function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
@@ -55,6 +80,27 @@ export function isAgentType(value: unknown): value is AgentType {
 
 export function getAgentType(value: unknown) {
   return isAgentType(value) ? value : undefined;
+}
+
+export function isCareer7AgentType(value: unknown): value is Career7AgentType {
+  return typeof value === "string" && career7AgentTypes.includes(value as Career7AgentType);
+}
+
+export function getCareer7AgentType(value: unknown) {
+  const text = getString(value).toUpperCase();
+  return isCareer7AgentType(text) ? text : undefined;
+}
+
+export function isCareer7MarketplaceStatus(value: unknown): value is Career7MarketplaceStatus {
+  return (
+    typeof value === "string" &&
+    career7MarketplaceStatuses.includes(value as Career7MarketplaceStatus)
+  );
+}
+
+export function getCareer7MarketplaceStatus(value: unknown) {
+  const text = getString(value).toUpperCase();
+  return isCareer7MarketplaceStatus(text) ? text : undefined;
 }
 
 export function dueInHours(hours: number) {
@@ -370,7 +416,7 @@ export async function settleMarketplaceOnboardingPayment(installationId: string)
           <p><strong>Agent:</strong> ${escapeHtml(installation.agent.name)}</p>
           <p><strong>Business:</strong> ${escapeHtml(installation.business.name)}</p>
           <pre style="white-space:pre-wrap;background:#f4f4f4;padding:16px;border-radius:8px;">${escapeHtml(description)}</pre>
-          <p><a href="https://iceconnect.in/sde">Open SDE workspace</a></p>
+          <p><a href="https://bgos.online/sde">Open SDE workspace</a></p>
         </div>
       `,
     }),

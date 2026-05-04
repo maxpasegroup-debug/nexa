@@ -67,6 +67,8 @@ export async function GET(request: Request) {
               id: true,
               name: true,
               role: true,
+              bdmSubType: true,
+              bdmCode: true,
             },
           },
           callNotes: {
@@ -223,6 +225,8 @@ export async function POST(request: Request) {
             id: true,
             name: true,
             role: true,
+            bdmSubType: true,
+            bdmCode: true,
           },
         },
         callNotes: {
@@ -296,6 +300,8 @@ export async function POST(request: Request) {
               id: true,
               name: true,
               role: true,
+              bdmSubType: true,
+              bdmCode: true,
             },
           },
           callNotes: {
@@ -320,6 +326,8 @@ export async function POST(request: Request) {
             id: true,
             name: true,
             role: true,
+            bdmSubType: true,
+            bdmCode: true,
           },
         },
         callNotes: {

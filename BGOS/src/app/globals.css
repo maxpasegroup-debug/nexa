@@ -16,6 +16,12 @@
   --muted: #6B6878;
 }
 
+[data-subtype="MF"] {
+  --accent: #F59E0B;
+  --accent-muted: rgba(245,158,11,0.15);
+  --accent-border: rgba(245,158,11,0.3);
+}
+
 :root[data-theme="dark"] {
   --bg-primary: #070709;
   --bg-secondary: #0e0e13;

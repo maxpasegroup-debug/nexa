@@ -858,7 +858,7 @@ export function calculateCompleteness(session: EngineSession): CompletenessResul
 
   const score = Object.values(breakdown).reduce((sum, value) => sum + value, 0);
   const blocked = missing.length ? missing.join(" | ") : null;
-  const canSubmit = score >= 90 && missing.length === 0;
+  const canSubmit = score >= 60;
 
   return { score, breakdown, blocked, canSubmit, missing, warnings };
 }

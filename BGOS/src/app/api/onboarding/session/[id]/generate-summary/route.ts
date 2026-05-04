@@ -29,10 +29,9 @@ export async function POST(
     if (!session) return jsonError("Session not found.", 404);
 
     const completeness = calculateCompleteness(session);
-    if (!completeness.canSubmit) {
+    if (completeness.score < 60) {
       return jsonError(
-        completeness.blocked ??
-          "NEXA needs a complete build-ready brief before summary generation.",
+        "Minimum 60% completeness required before summary generation.",
       );
     }
 

@@ -87,7 +87,7 @@ export async function POST(request: Request) {
             <p><strong>Challenge:</strong> ${lead.challenge ?? "Not provided"}</p>
             <p><strong>Call them within 2 hours.</strong></p>
             <p>Their best time to call: ${getOptionalString(body.bestTimeToCall) ?? "Not provided"}.</p>
-            <p><a href="https://iceconnect.in/bdm">Open BGOS dashboard</a></p>
+            <p><a href="https://bgos.online/bdm">Open BGOS dashboard</a></p>
           </div>
         `,
       }),

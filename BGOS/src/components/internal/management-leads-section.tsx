@@ -12,7 +12,7 @@ type ManagementLead = {
   slaBreached: boolean;
   createdAt: string;
   lastContactedAt?: string | null;
-  assignee?: { name: string } | null;
+  assignee?: { name: string; bdmSubType?: string | null; bdmCode?: string | null } | null;
   managementNotes?: string | null;
   callNotes?: Array<{ content: string }>;
 };
@@ -26,6 +26,22 @@ function noteValue(lead: ManagementLead, label: string) {
   const text = lead.callNotes?.map((note) => note.content).join("\n") ?? "";
   const line = text.split(/\r?\n/).find((item) => item.toLowerCase().startsWith(prefix.toLowerCase()));
   return line?.slice(prefix.length).trim() ?? "-";
+}
+
+function assigneeBadge(assignee: ManagementLead["assignee"]) {
+  if (!assignee) return null;
+  const isMf = assignee.bdmSubType === "MF";
+  return (
+    <span className={`mt-1 inline-flex w-fit rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+      isMf
+        ? "border-[#F59E0B]/30 bg-[#F59E0B]/10 text-[#F59E0B]"
+        : "border-[#7C6FFF]/30 bg-[#7C6FFF]/10 text-[#c8c2ff]"
+    }`}
+    >
+      {isMf ? "MF Owner" : "BDM"}
+      {assignee.bdmCode ? ` · ${assignee.bdmCode}` : ""}
+    </span>
+  );
 }
 
 export function ManagementLeadsSection() {
@@ -76,7 +92,12 @@ export function ManagementLeadsSection() {
                 <tr key={lead.id} className="border-b border-white/5">
                   <td className="py-3 font-bold text-white">{lead.company ?? lead.name}</td>
                   <td className="text-zinc-400">{noteValue(lead, "Industry")}</td>
-                  <td className="text-zinc-400">{lead.assignee?.name ?? "Unassigned"}</td>
+                  <td>
+                    <div className="flex flex-col text-zinc-400">
+                      <span>{lead.assignee?.name ?? "Unassigned"}</span>
+                      {assigneeBadge(lead.assignee)}
+                    </div>
+                  </td>
                   <td>{lead.bdmStatus}</td>
                   <td className={tone}>{hours < 1 ? "<1h" : `${hours}h`}</td>
                   <td className="text-zinc-500">{lead.lastContactedAt ? new Date(lead.lastContactedAt).toLocaleDateString("en-IN") : "No contact"}</td>

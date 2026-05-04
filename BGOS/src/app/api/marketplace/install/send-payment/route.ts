@@ -13,7 +13,7 @@ function getString(value: unknown) {
 }
 
 function paymentPageUrl(agentSlug: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "https://iceconnect.in";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "https://bgos.online";
   return `${baseUrl.replace(/\/$/, "")}/boss/agents/${encodeURIComponent(agentSlug)}`;
 }
 

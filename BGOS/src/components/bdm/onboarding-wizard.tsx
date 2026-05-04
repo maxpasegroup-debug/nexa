@@ -192,7 +192,7 @@ const flowSteps = [
   {
     id: 8,
     title: "Team setup",
-    desc: "Name, email, and role for each employee on iceconnect.",
+    desc: "Name, email, and role for each employee on BGOS.",
     tag: "Important",
     tone: "amber",
     chips: ["Name", "Email", "Role picker", "Add more"],

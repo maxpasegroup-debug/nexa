@@ -7,6 +7,10 @@ import { EmployeeCard, type InternalEmployee } from "@/components/internal/emplo
 import { EmployeeEditDrawer } from "@/components/internal/employee-edit-drawer";
 
 const filters = ["All", "BDM", "SDE", "Active", "Archived", "Deletion bin"];
+const bdmTabs = [
+  { id: "BDM", label: "BDM" },
+  { id: "MF", label: "Micro Franchise" },
+] as const;
 
 export function TeamSection({
   onEmployeeClick,
@@ -15,6 +19,7 @@ export function TeamSection({
 }) {
   const [employees, setEmployees] = useState<InternalEmployee[]>([]);
   const [filter, setFilter] = useState("All");
+  const [bdmTab, setBdmTab] = useState<"BDM" | "MF">("BDM");
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<InternalEmployee | null>(null);
 
@@ -31,14 +36,20 @@ export function TeamSection({
   const visible = useMemo(
     () =>
       employees.filter((employee) => {
-        if (filter === "BDM" || filter === "SDE") return employee.role === filter;
+        if (filter === "BDM") {
+          return employee.role === "BDM" && (bdmTab === "MF" ? employee.bdmSubType === "MF" : employee.bdmSubType !== "MF");
+        }
+        if (filter === "SDE") return employee.role === filter;
         if (filter === "Deletion bin") return employee.status === "DELETED" || Boolean(employee.deletedAt);
         if (filter === "Active") return employee.status === "ACTIVE" && employee.active;
         if (filter === "Archived") return (employee.status === "ARCHIVED" || !employee.active) && employee.status !== "DELETED";
         return true;
       }),
-    [employees, filter],
+    [employees, filter, bdmTab],
   );
+
+  const bdmCount = employees.filter((employee) => employee.role === "BDM" && employee.bdmSubType !== "MF").length;
+  const mfCount = employees.filter((employee) => employee.role === "BDM" && employee.bdmSubType === "MF").length;
 
   function edit(employee: InternalEmployee) {
     onEmployeeClick?.(employee);
@@ -68,6 +79,29 @@ export function TeamSection({
           </button>
         ))}
       </div>
+      {filter === "BDM" ? (
+        <div className="mt-4 flex flex-wrap gap-2 rounded-xl border border-white/10 bg-black/20 p-1">
+          {bdmTabs.map((tab) => {
+            const count = tab.id === "MF" ? mfCount : bdmCount;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setBdmTab(tab.id)}
+                className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
+                  bdmTab === tab.id
+                    ? tab.id === "MF"
+                      ? "bg-[#F59E0B] text-black"
+                      : "bg-[#7C6FFF] text-white"
+                    : "text-zinc-400 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {tab.label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {visible.map((employee) => (
           <EmployeeCard key={employee.id} employee={employee} onEdit={edit} onRefresh={() => void load()} />

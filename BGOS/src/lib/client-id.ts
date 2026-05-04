@@ -6,3 +6,15 @@ export async function generateClientId(): Promise<string> {
   const padded = String(count + 1).padStart(3, "0");
   return `CLT-${year}-${padded}`;
 }
+
+export async function generateBdmCode(subType: "BDM" | "MF"): Promise<string> {
+  const prefix = subType === "MF" ? "BGOSMF" : "BDM";
+  const count = await prisma.user.count({
+    where: {
+      role: "BDM",
+      bdmSubType: subType,
+    },
+  });
+  const padded = String(count + 1).padStart(3, "0");
+  return `${prefix}${padded}`;
+}

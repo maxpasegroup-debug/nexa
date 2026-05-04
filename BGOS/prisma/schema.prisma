@@ -26,6 +26,8 @@ model User {
   purgeAfter        DateTime?
   defaultPassword   Boolean   @default(false)
   employeeCode      String?   @unique @default(cuid())
+  bdmSubType        String    @default("BDM")
+  bdmCode           String?
   businessId        String?
   business          Business? @relation(fields: [businessId], references: [id])
   resetToken        String?
@@ -71,6 +73,14 @@ model User {
   agentOnboardingSessions AgentOnboardingSession[] @relation("AgentOnboardingBDM")
   bossLocksCreated  BossWorkLock[] @relation("BossLockCreator")
   bossLocksFinished BossWorkLock[] @relation("BossLockFinisher")
+  career7GrowthBoardAgents Career7GrowthBoardAgent[]
+  career7CreditWallets Career7CreditWallet[]
+  career7CreditLedger Career7CreditLedger[]
+  bgosPaymentIntents BgosPaymentIntent[]
+
+  @@index([email])
+  @@index([role])
+  @@index([businessId])
 }
 
 enum Role {
@@ -200,7 +210,80 @@ model Business {
   pipelines        Pipeline[]
   agentInstallations AgentInstallation[]
   agentOnboardingSessions AgentOnboardingSession[]
+  career7GrowthBoardAgents Career7GrowthBoardAgent[]
+  career7CreditWallets Career7CreditWallet[]
+  career7CreditLedger Career7CreditLedger[]
+  paymentConfigs BusinessPaymentConfig[]
+  bgosPaymentIntents BgosPaymentIntent[]
   dataExports    CustomerDataExport[]
+}
+
+enum PaymentGatewayProvider {
+  RAZORPAY
+  STRIPE
+  PAYPAL
+  CASHFREE
+  MANUAL
+}
+
+enum BgosPaymentStatus {
+  CREATED
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+model BusinessPaymentConfig {
+  id                 String                   @id @default(cuid())
+  businessModel      String
+  businessId         String?
+  business           Business?                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  enabledGateways    PaymentGatewayProvider[] @default([MANUAL])
+  defaultGateway     PaymentGatewayProvider   @default(MANUAL)
+  currency           String                   @default("INR")
+  credentials        Json                     @default("{}")
+  config             Json                     @default("{}")
+  successCallback    String
+  failureCallback    String
+  creditTopUpMapping Json                     @default("{}")
+  paymentIntents     BgosPaymentIntent[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  @@unique([businessModel, businessId])
+  @@index([businessModel])
+  @@index([businessId])
+}
+
+model BgosPaymentIntent {
+  id                String                 @id @default(cuid())
+  businessModel     String
+  businessId        String
+  business          Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  configId          String?
+  config            BusinessPaymentConfig? @relation(fields: [configId], references: [id], onDelete: SetNull)
+  gateway           PaymentGatewayProvider
+  status            BgosPaymentStatus      @default(CREATED)
+  currency          String
+  amount            Int
+  credits           Int?
+  description       String
+  providerOrderId   String?
+  providerPaymentId String?
+  successCallback   String
+  failureCallback   String
+  metadata          Json                   @default("{}")
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  completedAt       DateTime?
+
+  @@index([businessModel, businessId, userId])
+  @@index([gateway, status])
+  @@index([providerOrderId])
+  @@index([createdAt])
 }
 
 model WebhookLog {
@@ -231,7 +314,10 @@ model MarketplaceAgent {
   description     String   @db.Text
   category        AgentCategory
   type            AgentType @default(BACKGROUND) @map("agentType")
+  career7Type     Career7AgentType?
+  creditPrice     Int      @default(0)
   icon            String
+  career7Status   Career7MarketplaceStatus @default(ACTIVE)
   colorPrimary    String
   colorSecondary  String
   gradient        String
@@ -239,6 +325,9 @@ model MarketplaceAgent {
   monthlyFee      Float
   isActive        Boolean  @default(true)
   isFeatured      Boolean  @default(false)
+  isPrebuilt      Boolean  @default(false)
+  isRequestable   Boolean  @default(true)
+  canAddToGrowthBoard Boolean @default(false)
   sortOrder       Int      @default(0)
   features        Json     @default("[]")
   benefits        Json     @default("[]")
@@ -249,8 +338,13 @@ model MarketplaceAgent {
   installations   AgentInstallation[]
   offers          AgentOffer[]
   notifyRequests  AgentNotifyRequest[]
+  career7GrowthBoardAgents Career7GrowthBoardAgent[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([career7Type])
+  @@index([career7Status])
+  @@index([canAddToGrowthBoard])
 }
 
 enum AgentCategory {
@@ -266,6 +360,96 @@ enum AgentCategory {
 enum AgentType {
   UI
   BACKGROUND
+}
+
+enum Career7AgentType {
+  LEARNING
+  EARNING
+  CAREER
+  MIGRATION
+  LANGUAGE
+  EXAM
+  FINANCE
+  BLIZZWAY
+}
+
+enum Career7MarketplaceStatus {
+  DRAFT
+  ACTIVE
+  COMING_SOON
+  ARCHIVED
+}
+
+enum Career7GrowthBoardPath {
+  LEARNING
+  EARNING
+}
+
+enum Career7GrowthBoardAgentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Career7GrowthBoardAgent {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId       String
+  agent         MarketplaceAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  path          Career7GrowthBoardPath
+  status        Career7GrowthBoardAgentStatus @default(ACTIVE)
+  addedAt       DateTime @default(now())
+  deactivatedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([businessId, userId, agentId, path])
+  @@index([businessId, userId, path, status])
+  @@index([agentId])
+}
+
+enum Career7CreditLedgerType {
+  TOP_UP
+  USAGE
+  ADJUSTMENT
+}
+
+model Career7CreditWallet {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance     Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([businessId, userId])
+  @@index([businessId])
+}
+
+model Career7CreditLedger {
+  id              String   @id @default(cuid())
+  businessModel   String   @default("career7")
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId        String?
+  type            Career7CreditLedgerType
+  amount          Int
+  balanceAfter    Int
+  agentId         String?
+  growthBoardItemId String?
+  description     String
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now())
+
+  @@index([businessModel, businessId, userId])
+  @@index([agentId])
+  @@index([createdAt])
 }
 
 model AgentInstallation {

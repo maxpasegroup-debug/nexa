@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { Input } from "@/components/ui/input";
 
 type Role = "BDM" | "SDE";
+type BdmSubType = "BDM" | "MF";
 
 type AddEmployeeFormProps = {
   onSuccess: () => void;
@@ -17,6 +18,7 @@ export function AddEmployeeForm({ onSuccess, onClose }: AddEmployeeFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("BDM");
+  const [bdmSubType, setBdmSubType] = useState<BdmSubType>("BDM");
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [error, setError] = useState("");
@@ -44,7 +46,7 @@ export function AddEmployeeForm({ onSuccess, onClose }: AddEmployeeFormProps) {
       const response = await fetch("/api/internal/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, role }),
+        body: JSON.stringify({ name, email, role, bdmSubType: role === "BDM" ? bdmSubType : "BDM" }),
       });
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
@@ -74,6 +76,7 @@ export function AddEmployeeForm({ onSuccess, onClose }: AddEmployeeFormProps) {
       setName("");
       setEmail("");
       setRole("BDM");
+      setBdmSubType("BDM");
       onSuccess();
       window.setTimeout(onClose, 2500);
     } catch (submitError) {
@@ -144,7 +147,10 @@ export function AddEmployeeForm({ onSuccess, onClose }: AddEmployeeFormProps) {
             </button>
             <button
               type="button"
-              onClick={() => setRole("SDE")}
+              onClick={() => {
+                setRole("SDE");
+                setBdmSubType("BDM");
+              }}
               className={`rounded-xl border px-4 py-4 text-left transition ${
                 role === "SDE"
                   ? "border-[#22D9A0] bg-[#22D9A0]/15 text-white"
@@ -157,13 +163,45 @@ export function AddEmployeeForm({ onSuccess, onClose }: AddEmployeeFormProps) {
           </div>
         </div>
 
+        {role === "BDM" ? (
+          <div>
+            <p className="mb-2 text-sm font-medium text-zinc-200">Team type</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setBdmSubType("BDM")}
+                className={`rounded-xl border px-4 py-3 text-left transition ${
+                  bdmSubType === "BDM"
+                    ? "border-[#7C6FFF] bg-[#7C6FFF]/15 text-white"
+                    : "border-white/10 bg-[#13131c] text-zinc-400 hover:text-white"
+                }`}
+              >
+                <span className="block text-sm font-bold">BDM</span>
+                <span className="mt-1 block text-xs">BDM001 format</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setBdmSubType("MF")}
+                className={`rounded-xl border px-4 py-3 text-left transition ${
+                  bdmSubType === "MF"
+                    ? "border-[#F59E0B] bg-[#F59E0B]/15 text-white"
+                    : "border-white/10 bg-[#13131c] text-zinc-400 hover:text-white"
+                }`}
+              >
+                <span className="block text-sm font-bold">Micro Franchise</span>
+                <span className="mt-1 block text-xs">BGOSMF001 format</span>
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="rounded-xl border border-white/10 bg-[#13131c] p-4">
           <p className="text-xs font-semibold text-zinc-500">
             Login credentials that will be sent:
           </p>
           <div className="mt-3 space-y-2 text-sm text-zinc-300">
             <p>
-              Portal: <span className="font-mono text-white">iceconnect.in</span>
+              Portal: <span className="font-mono text-white">bgos.online/login</span>
             </p>
             <p>
               Password: <span className="font-mono text-white">123456789</span>

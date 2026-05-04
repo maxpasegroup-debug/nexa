@@ -4,6 +4,8 @@ import type { Prisma } from "@prisma/client";
 import {
   getBool,
   getAgentType,
+  getCareer7AgentType,
+  getCareer7MarketplaceStatus,
   getNumber,
   getString,
   isAgentCategory,
@@ -28,6 +30,9 @@ function readAgentData(
   const onboardingFee = getNumber(body.onboardingFee);
   const monthlyFee = getNumber(body.monthlyFee);
   const type = getAgentType(body.type ?? body.agentType) ?? "BACKGROUND";
+  const career7Type = getCareer7AgentType(body.career7Type);
+  const creditPrice = getNumber(body.creditPrice);
+  const career7Status = getCareer7MarketplaceStatus(body.career7Status ?? body.status);
 
   if (
     !name ||
@@ -59,8 +64,14 @@ function readAgentData(
       gradient,
       onboardingFee,
       monthlyFee,
+      career7Type,
+      creditPrice: creditPrice === undefined ? 0 : Math.max(0, Math.round(creditPrice)),
+      career7Status: career7Status ?? "ACTIVE",
       isActive: getBool(body.isActive) ?? true,
       isFeatured: getBool(body.isFeatured) ?? false,
+      isPrebuilt: getBool(body.isPrebuilt) ?? false,
+      isRequestable: getBool(body.isRequestable) ?? true,
+      canAddToGrowthBoard: getBool(body.canAddToGrowthBoard) ?? false,
       sortOrder: getNumber(body.sortOrder) ?? 0,
       features: body.features ?? [],
       benefits: body.benefits ?? [],

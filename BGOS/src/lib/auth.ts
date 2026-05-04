@@ -13,6 +13,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
   },
   pages: {
     signIn: "/login",
@@ -65,6 +67,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           theme: user.theme,
           isActive: user.isActive,
           defaultPassword: user.defaultPassword,
+          bdmSubType: user.bdmSubType,
+          bdmCode: user.bdmCode,
         };
       },
     }),
@@ -126,21 +130,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user || !token.role) {
         const email = (user?.email ?? token.email)?.toLowerCase();
         const userId = user?.id ?? token.id ?? token.sub;
-        const dbUser = userId
-          ? await prisma.user.findUnique({
-              where: { id: userId },
-              select: {
-                id: true,
-                role: true,
-                businessId: true,
-                theme: true,
-                isActive: true,
-                defaultPassword: true,
-              },
-            })
-          : email
+        try {
+          const dbUser = userId
             ? await prisma.user.findUnique({
-                where: { email },
+                where: { id: userId },
                 select: {
                   id: true,
                   role: true,
@@ -148,23 +141,46 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                   theme: true,
                   isActive: true,
                   defaultPassword: true,
+                  bdmSubType: true,
+                  bdmCode: true,
                 },
               })
-            : null;
+            : email
+              ? await prisma.user.findUnique({
+                  where: { email },
+                  select: {
+                    id: true,
+                    role: true,
+                    businessId: true,
+                    theme: true,
+                    isActive: true,
+                    defaultPassword: true,
+                    bdmSubType: true,
+                    bdmCode: true,
+                  },
+                })
+              : null;
 
-        token.id = dbUser?.id ?? user?.id ?? token.id ?? token.sub;
-        token.role = dbUser?.role ?? user?.role ?? "EMPLOYEE";
-        token.companyId = dbUser?.businessId ?? user?.companyId ?? user?.businessId ?? null;
-        token.businessId = dbUser?.businessId ?? user?.businessId ?? token.companyId ?? null;
-        token.theme = dbUser?.theme ?? user?.theme ?? "dark";
-        token.isActive = dbUser?.isActive ?? user?.isActive ?? true;
-        token.defaultPassword = dbUser?.defaultPassword ?? user?.defaultPassword ?? false;
-
-        if (user && dbUser?.id) {
-          await prisma.user.update({
-            where: { id: dbUser.id },
-            data: { lastLoginAt: new Date() },
-          });
+          token.id = dbUser?.id ?? user?.id ?? token.id ?? token.sub;
+          token.role = dbUser?.role ?? user?.role ?? "EMPLOYEE";
+          token.companyId = dbUser?.businessId ?? user?.companyId ?? user?.businessId ?? null;
+          token.businessId = dbUser?.businessId ?? user?.businessId ?? token.companyId ?? null;
+          token.theme = dbUser?.theme ?? user?.theme ?? "dark";
+          token.isActive = dbUser?.isActive ?? user?.isActive ?? true;
+          token.defaultPassword = dbUser?.defaultPassword ?? user?.defaultPassword ?? false;
+          token.bdmSubType = dbUser?.bdmSubType ?? user?.bdmSubType ?? "BDM";
+          token.bdmCode = dbUser?.bdmCode ?? user?.bdmCode ?? null;
+        } catch (error) {
+          console.error("[auth:jwt] Failed to refresh token from database", error);
+          token.id = user?.id ?? token.id ?? token.sub;
+          token.role = user?.role ?? token.role ?? "EMPLOYEE";
+          token.companyId = user?.companyId ?? user?.businessId ?? token.companyId ?? null;
+          token.businessId = user?.businessId ?? token.businessId ?? token.companyId ?? null;
+          token.theme = user?.theme ?? token.theme ?? "dark";
+          token.isActive = user?.isActive ?? token.isActive ?? true;
+          token.defaultPassword = user?.defaultPassword ?? token.defaultPassword ?? false;
+          token.bdmSubType = user?.bdmSubType ?? token.bdmSubType ?? "BDM";
+          token.bdmCode = user?.bdmCode ?? token.bdmCode ?? null;
         }
       }
 
@@ -173,6 +189,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.businessId === undefined) token.businessId = token.companyId ?? null;
       if (!token.theme) token.theme = "dark";
       if (token.isActive === undefined) token.isActive = true;
+      if (!token.bdmSubType) token.bdmSubType = "BDM";
+      if (token.bdmCode === undefined) token.bdmCode = null;
 
       if (trigger === "update" && session?.user) {
         token.defaultPassword = Boolean(session.user.defaultPassword);
@@ -189,6 +207,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.theme = token.theme ?? "dark";
         session.user.isActive = token.isActive ?? true;
         session.user.defaultPassword = token.defaultPassword ?? false;
+        session.user.bdmSubType = token.bdmSubType ?? "BDM";
+        session.user.bdmCode = token.bdmCode ?? null;
       }
 
       return session;

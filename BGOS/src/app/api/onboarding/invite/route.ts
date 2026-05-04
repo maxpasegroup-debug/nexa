@@ -3,6 +3,7 @@ import type { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { requireRole } from "@/lib/api-auth";
+import { generateBdmCode } from "@/lib/client-id";
 import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
@@ -69,6 +70,7 @@ async function acceptInvite(body: {
   }
 
   const hashedPassword = await hash(password, 12);
+  const bdmCode = invite.role === "BDM" ? await generateBdmCode("BDM") : null;
   const user = await prisma.$transaction(async (tx) => {
     const createdUser = await tx.user.create({
       data: {
@@ -76,6 +78,8 @@ async function acceptInvite(body: {
         email: invite.email,
         password: hashedPassword,
         role: invite.role,
+        bdmSubType: "BDM",
+        bdmCode,
         businessId: invite.businessId,
       },
       select: {

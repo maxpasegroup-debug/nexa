@@ -6,7 +6,10 @@ export type MarketplaceAgentView = {
   description: string;
   category: string;
   type?: "UI" | "BACKGROUND";
+  career7Type?: string | null;
+  creditPrice?: number;
   icon: string;
+  career7Status?: string;
   colorPrimary: string;
   colorSecondary: string;
   gradient: string;
@@ -14,6 +17,9 @@ export type MarketplaceAgentView = {
   monthlyFee: number;
   isActive: boolean;
   isFeatured: boolean;
+  isPrebuilt?: boolean;
+  isRequestable?: boolean;
+  canAddToGrowthBoard?: boolean;
   sortOrder: number;
   features: unknown;
   benefits: unknown;

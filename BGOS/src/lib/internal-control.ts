@@ -99,7 +99,7 @@ export async function employeeStats(userId: string, month = new Date().getMonth(
   };
 }
 
-export function serializeEmployee(user: Pick<User, "id" | "name" | "email" | "role" | "active" | "status" | "phone" | "createdAt" | "updatedAt" | "joinedAt" | "archivedAt" | "deletedAt" | "purgeAfter" | "defaultPassword">, stats: Awaited<ReturnType<typeof employeeStats>>) {
+export function serializeEmployee(user: Pick<User, "id" | "name" | "email" | "role" | "active" | "status" | "phone" | "createdAt" | "updatedAt" | "joinedAt" | "archivedAt" | "deletedAt" | "purgeAfter" | "defaultPassword" | "bdmSubType" | "bdmCode">, stats: Awaited<ReturnType<typeof employeeStats>>) {
   return {
     id: user.id,
     name: user.name,
@@ -107,6 +107,8 @@ export function serializeEmployee(user: Pick<User, "id" | "name" | "email" | "ro
     email: user.email,
     phone: user.phone,
     role: user.role,
+    bdmSubType: user.bdmSubType,
+    bdmCode: user.bdmCode,
     isActive: user.active,
     active: user.active,
     status: user.status || (user.active ? "ACTIVE" : "ARCHIVED"),
@@ -159,7 +161,7 @@ export async function getCustomerRows(internalBusinessId: string, filters: URLSe
       onboardingLead: {
         select: {
           assignedBDMId: true,
-          assignedBDM: { select: { id: true, name: true } },
+          assignedBDM: { select: { id: true, name: true, bdmSubType: true, bdmCode: true } },
         },
       },
     },
@@ -174,11 +176,8 @@ export async function getCustomerRows(internalBusinessId: string, filters: URLSe
     const lastLoginAt = latestDate(...business.users.map((user) => user.updatedAt));
     const daysSinceLastLogin = daysSince(lastLoginAt);
     const openTickets = business.bugs.length + business.escalations.length;
-    const bdm =
-      business.onboardingLead?.assignedBDM ??
-      (business.leads.find((lead) => lead.assignedTo)?.assignedTo
-        ? { id: business.leads.find((lead) => lead.assignedTo)?.assignedTo ?? "", name: "BDM" }
-        : null);
+    const fallbackBdmId = business.leads.find((lead) => lead.assignedTo)?.assignedTo ?? "";
+    const bdm = business.onboardingLead?.assignedBDM ?? null;
 
     return {
       id: business.id,
@@ -193,8 +192,10 @@ export async function getCustomerRows(internalBusinessId: string, filters: URLSe
       lastLoginAt,
       daysSinceLastLogin,
       totalUsers: business.users.length,
-      bdmName: bdm?.name ?? "Unassigned",
-      bdmId: bdm?.id ?? business.onboardingLead?.assignedBDMId ?? "",
+      bdmName: bdm?.name ?? (fallbackBdmId ? "BDM" : "Unassigned"),
+      bdmSubType: bdm?.bdmSubType ?? "BDM",
+      bdmCode: bdm?.bdmCode ?? null,
+      bdmId: bdm?.id ?? business.onboardingLead?.assignedBDMId ?? fallbackBdmId,
       joinedAt: business.createdAt,
       totalLeads: business.leads.length,
       openTickets,

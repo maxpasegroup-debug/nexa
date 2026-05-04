@@ -13,6 +13,7 @@ type Target = {
 type TargetProgressProps = {
   target: Target;
   metrics: BdmMetrics;
+  bdmSubType?: string;
 };
 
 function formatCurrency(value: number) {
@@ -77,11 +78,13 @@ function ProgressBar({
   );
 }
 
-export function TargetProgress({ target, metrics }: TargetProgressProps) {
+export function TargetProgress({ target, metrics, bdmSubType = "BDM" }: TargetProgressProps) {
+  const title = bdmSubType === "MF" ? "MF Monthly Target" : "BDM Monthly Target";
+
   return (
     <section className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
       <h2 className="font-heading text-base font-bold text-white">
-        Monthly targets
+        {title}
       </h2>
       <div className="mt-5 space-y-5">
         <ProgressBar

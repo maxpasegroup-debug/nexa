@@ -302,6 +302,10 @@ function BgosTeamPanel({
   onEmployeesChange: (employees: InternalTeamMember[]) => void;
 }) {
   const [showForm, setShowForm] = useState(false);
+  const [teamType, setTeamType] = useState<"BDM" | "MF">("BDM");
+  const bdms = teamMembers.filter((member) => member.role === "BDM" && member.bdmSubType !== "MF");
+  const microFranchises = teamMembers.filter((member) => member.role === "BDM" && member.bdmSubType === "MF");
+  const visibleMembers = teamType === "MF" ? microFranchises : bdms;
 
   async function refreshEmployees() {
     const response = await fetch("/api/internal/employees", {
@@ -343,10 +347,29 @@ function BgosTeamPanel({
         </div>
       </div>
       <div className="mt-5">
+        <div className="mb-4 flex rounded-xl border border-white/10 bg-black/20 p-1">
+          {[
+            { id: "BDM" as const, label: `BDM (${bdms.length})` },
+            { id: "MF" as const, label: `Micro Franchise (${microFranchises.length})` },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setTeamType(tab.id)}
+              className={`flex-1 rounded-lg px-3 py-2 text-xs font-bold transition ${
+                teamType === tab.id
+                  ? tab.id === "MF"
+                    ? "bg-[#F59E0B] text-black"
+                    : "bg-[#7C6FFF] text-white"
+                  : "text-zinc-400 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         <EmployeeList
-          employees={teamMembers
-            .filter((member) => member.role === "BDM" || member.role === "SDE")
-            .slice(0, 4)}
+          employees={visibleMembers.slice(0, 4)}
           onResetPassword={() => void refreshEmployees()}
         />
       </div>

@@ -27,6 +27,8 @@ export default async function InternalTeamPage() {
       email: true,
       phone: true,
       role: true,
+      bdmSubType: true,
+      bdmCode: true,
       active: true,
       status: true,
       createdAt: true,

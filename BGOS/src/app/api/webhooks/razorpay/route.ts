@@ -4,6 +4,8 @@ import { transitionBusinessStatus } from "@/lib/business-status";
 import { notifyRenewalFailed } from "@/lib/churn-notifications";
 import { createAgentCommission, createPlanCommission } from "@/lib/commission-engine";
 import { sendEmail } from "@/lib/email";
+import "@/lib/payment-callbacks";
+import { markPaymentFailed, markPaymentSucceeded } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 import { sendEmployeeWelcomeEmails } from "@/lib/welcome-emails";
 
@@ -65,6 +67,14 @@ async function handleCaptured(payment?: RazorpayEntity) {
   const notes = payment?.notes ?? {};
   const paymentType = notes.paymentType;
   const businessId = notes.businessId;
+
+  if (notes.bgosPaymentIntentId) {
+    await markPaymentSucceeded(notes.bgosPaymentIntentId, payment?.id, {
+      source: "razorpay.webhook",
+      event: "payment.captured",
+    });
+    return;
+  }
 
   if (!businessId) {
     console.error("[razorpay:webhook] Missing businessId in payment notes");
@@ -180,6 +190,15 @@ async function handleCaptured(payment?: RazorpayEntity) {
 }
 
 async function handleFailed(payment?: RazorpayEntity) {
+  const bgosPaymentIntentId = payment?.notes?.bgosPaymentIntentId;
+  if (bgosPaymentIntentId) {
+    await markPaymentFailed(bgosPaymentIntentId, {
+      source: "razorpay.webhook",
+      event: "payment.failed",
+    });
+    return;
+  }
+
   const businessId = payment?.notes?.businessId;
   if (!businessId) return;
 

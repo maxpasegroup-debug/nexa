@@ -13,6 +13,8 @@ export type CustomerRow = {
   healthScore: number;
   mrr: number;
   bdmName: string;
+  bdmSubType?: string | null;
+  bdmCode?: string | null;
   joinedAt: string;
   isChurnRisk: boolean;
 };
@@ -43,6 +45,15 @@ function planClass(plan: string) {
   if (plan === "GROWTH") return "bg-[#7C6FFF]/15 text-[#c8c2ff]";
   if (plan === "TRIAL") return "bg-[#F5A623]/10 text-[#F5A623]";
   return "bg-zinc-500/10 text-zinc-300";
+}
+
+function bdmBadgeClass(customer: Pick<CustomerRow, "bdmSubType">) {
+  if (customer.bdmSubType === "MF") return "border-[#F59E0B]/30 bg-[#F59E0B]/10 text-[#F59E0B]";
+  return "border-[#7C6FFF]/30 bg-[#7C6FFF]/10 text-[#c8c2ff]";
+}
+
+function bdmRoleLabel(customer: Pick<CustomerRow, "bdmSubType">) {
+  return customer.bdmSubType === "MF" ? "MF Owner" : "BDM";
 }
 
 function healthColor(score: number) {
@@ -167,7 +178,17 @@ export function CustomerTable({
                 </td>
                 <td><span className={`rounded-full px-2 py-1 text-[11px] font-bold ${statusClass(customer.status)}`}>{statusLabel(customer.status)}</span></td>
                 <td>₹{Math.round(customer.mrr).toLocaleString("en-IN")}</td>
-                <td className="text-zinc-400">{customer.bdmName}</td>
+                <td>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-zinc-400">{customer.bdmName}</span>
+                    {customer.bdmName !== "Unassigned" ? (
+                      <span className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-[10px] font-bold ${bdmBadgeClass(customer)}`}>
+                        {bdmRoleLabel(customer)}
+                        {customer.bdmCode ? ` · ${customer.bdmCode}` : ""}
+                      </span>
+                    ) : null}
+                  </div>
+                </td>
                 <td className="text-zinc-500">{new Date(customer.joinedAt).toLocaleDateString("en-IN")}</td>
                 <td>
                   <div className="flex flex-wrap gap-1">

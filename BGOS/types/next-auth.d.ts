@@ -9,6 +9,8 @@ declare module "next-auth" {
     theme?: string;
     isActive?: boolean;
     defaultPassword?: boolean;
+    bdmSubType?: string;
+    bdmCode?: string | null;
   }
 
   interface Session {
@@ -20,6 +22,8 @@ declare module "next-auth" {
       theme: string;
       isActive: boolean;
       defaultPassword: boolean;
+      bdmSubType: string;
+      bdmCode: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -33,6 +37,8 @@ declare module "next-auth/jwt" {
     theme?: string;
     isActive?: boolean;
     defaultPassword?: boolean;
+    bdmSubType?: string;
+    bdmCode?: string | null;
   }
 }
 
@@ -45,5 +51,7 @@ declare module "@auth/core/jwt" {
     theme?: string;
     isActive?: boolean;
     defaultPassword?: boolean;
+    bdmSubType?: string;
+    bdmCode?: string | null;
   }
 }

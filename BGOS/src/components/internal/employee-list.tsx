@@ -8,6 +8,8 @@ export type EmployeeListItem = {
   name: string;
   email: string;
   role: string;
+  bdmSubType?: string;
+  bdmCode?: string | null;
   createdAt: string;
   defaultPassword: boolean;
   lastLoginAt: string | null;
@@ -39,16 +41,29 @@ function timeAgo(value: string | null) {
   return `${Math.floor(days / 30)}mo ago`;
 }
 
-function roleColor(role: string) {
+function isMf(employee: Pick<EmployeeListItem, "role" | "bdmSubType">) {
+  return employee.role === "BDM" && employee.bdmSubType === "MF";
+}
+
+function roleColor(employee: Pick<EmployeeListItem, "role" | "bdmSubType">) {
+  if (isMf(employee)) return "bg-[#F59E0B] text-[#1a1200]";
+  const role = employee.role;
   return role === "SDE"
     ? "bg-[#22D9A0] text-[#07120e]"
     : "bg-[#7C6FFF] text-white";
 }
 
-function roleBadge(role: string) {
+function roleBadge(employee: Pick<EmployeeListItem, "role" | "bdmSubType">) {
+  if (isMf(employee)) return "border-[#F59E0B]/30 bg-[#F59E0B]/10 text-[#F59E0B]";
+  const role = employee.role;
   return role === "SDE"
     ? "border-[#22D9A0]/30 bg-[#22D9A0]/10 text-[#22D9A0]"
     : "border-[#7C6FFF]/30 bg-[#7C6FFF]/10 text-[#c6c1ff]";
+}
+
+function roleLabel(employee: Pick<EmployeeListItem, "role" | "bdmSubType">) {
+  if (isMf(employee)) return "MF Owner";
+  return employee.role;
 }
 
 function EmployeeCard({
@@ -89,7 +104,7 @@ function EmployeeCard({
         <div className="flex min-w-0 items-start gap-3">
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${roleColor(
-              employee.role,
+              employee,
             )}`}
           >
             {initials(employee.name)}
@@ -103,11 +118,14 @@ function EmployeeCard({
             </p>
             <span
               className={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${roleBadge(
-                employee.role,
+                employee,
               )}`}
             >
-              {employee.role}
+              {roleLabel(employee)}
             </span>
+            {employee.bdmCode ? (
+              <p className="mt-1 font-mono text-[10px] text-zinc-500">{employee.bdmCode}</p>
+            ) : null}
           </div>
         </div>
 

@@ -8,6 +8,8 @@ export type InternalEmployee = {
   email: string;
   phone?: string | null;
   role: string;
+  bdmSubType?: string | null;
+  bdmCode?: string | null;
   status: string;
   active: boolean;
   isActive: boolean;
@@ -30,10 +32,27 @@ function initials(name: string) {
   return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
 }
 
-function roleGradient(role: string) {
-  if (role === "BDM") return "from-[#22D9A0] to-[#0ea572]";
-  if (role === "SDE") return "from-[#F5A623] to-[#7C6FFF]";
+function isMf(employee: Pick<InternalEmployee, "role" | "bdmSubType">) {
+  return employee.role === "BDM" && employee.bdmSubType === "MF";
+}
+
+function roleGradient(employee: Pick<InternalEmployee, "role" | "bdmSubType">) {
+  if (isMf(employee)) return "from-[#F59E0B] to-[#b45309]";
+  if (employee.role === "BDM") return "from-[#7C6FFF] to-[#5b50dc]";
+  if (employee.role === "SDE") return "from-[#F5A623] to-[#7C6FFF]";
   return "from-[#7C6FFF] to-[#22D9A0]";
+}
+
+function roleBadgeClass(employee: Pick<InternalEmployee, "role" | "bdmSubType">) {
+  if (isMf(employee)) return "border-[#F59E0B]/30 bg-[#F59E0B]/10 text-[#F59E0B]";
+  if (employee.role === "BDM") return "border-[#7C6FFF]/30 bg-[#7C6FFF]/15 text-[#c8c2ff]";
+  if (employee.role === "SDE") return "border-[#22D9A0]/30 bg-[#22D9A0]/10 text-[#22D9A0]";
+  return "border-white/10 bg-white/10 text-zinc-300";
+}
+
+function roleLabel(employee: Pick<InternalEmployee, "role" | "bdmSubType">) {
+  if (isMf(employee)) return "MF Owner";
+  return employee.role;
 }
 
 export function EmployeeCard({
@@ -87,12 +106,13 @@ export function EmployeeCard({
     <article className={`cursor-pointer rounded-[14px] border border-white/10 bg-[#13131c] p-4 transition hover:border-[#7C6FFF]/60 ${archived || deleted ? "opacity-60" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 gap-3">
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${roleGradient(employee.role)} text-sm font-bold text-black`}>
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${roleGradient(employee)} text-sm font-bold text-black`}>
             {initials(employee.name)}
           </div>
           <div className="min-w-0">
             <h3 className="truncate font-heading text-sm font-bold text-white">{employee.name}</h3>
-            <span className="mt-1 inline-flex rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-zinc-300">{employee.role}</span>
+            <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${roleBadgeClass(employee)}`}>{roleLabel(employee)}</span>
+            {employee.bdmCode ? <p className="mt-1 text-[10px] font-semibold text-zinc-500">{employee.bdmCode}</p> : null}
             <p className="mt-1 truncate text-[11px] text-zinc-500">{employee.email}</p>
           </div>
         </div>

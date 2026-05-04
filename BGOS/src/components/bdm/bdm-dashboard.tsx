@@ -36,6 +36,8 @@ type BdmUser = {
   name: string;
   email: string;
   role: string;
+  bdmSubType?: string;
+  bdmCode?: string | null;
   defaultPassword: boolean;
   businessId: string;
   businessName: string;
@@ -145,6 +147,10 @@ export function BdmDashboard({
   const [showOnboarding, setShowOnboarding] = useState(showBdeOnboarding);
   const [activeTab, setActiveTab] = useState<"overview" | "analysis">("overview");
   const overdueRef = useRef<HTMLDivElement>(null);
+  const isMf = user.bdmSubType === "MF";
+  const dashboardTitle = isMf ? "BGOS Micro Franchise" : "BDM Dashboard";
+  const subtypeLabel = isMf ? "MF Owner" : "BDM";
+  const displayCode = user.bdmCode ?? (isMf ? "BGOSMF---" : "BDM---");
   const teamMembers = useMemo<TeamMember[]>(
     () => [{ id: user.id, name: user.name, role: user.role }],
     [user.id, user.name, user.role],
@@ -281,7 +287,7 @@ export function BdmDashboard({
   return (
     <div className="min-h-screen bg-[#070709] md:pl-[240px] text-white md:pr-[320px]">
       <Sidebar role="BDM" userName={user.name} businessName={user.businessName} />
-      <Navbar title={`Good morning, ${user.name}`} userName={user.name} />
+      <Navbar title={dashboardTitle} userName={user.name} />
       {showOnboarding ? (
         <BdeOnboarding
           user={{ name: user.name, role: user.role }}
@@ -323,6 +329,25 @@ export function BdmDashboard({
               </Link>
             </div>
           ) : null}
+
+          <section className="rounded-2xl border border-[var(--accent-border,rgba(124,111,255,0.3))] bg-[var(--accent-muted,rgba(124,111,255,0.15))] p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-400">
+                  {subtypeLabel} ID {displayCode}
+                </p>
+                <h1 className="mt-2 font-heading text-2xl font-bold text-white">
+                  {dashboardTitle}
+                </h1>
+                <p className="mt-1 text-sm text-zinc-400">
+                  Good morning, {user.name}. Your leads, commissions, and onboarding flow are ready.
+                </p>
+              </div>
+              <span className="inline-flex w-fit rounded-full border border-[var(--accent-border,rgba(124,111,255,0.3))] bg-black/20 px-3 py-1 text-xs font-bold text-[var(--accent,#7C6FFF)]">
+                {subtypeLabel}
+              </span>
+            </div>
+          </section>
 
           <div className="flex gap-2 rounded-2xl border border-white/10 bg-[#13131c] p-1">
             {[
@@ -400,7 +425,7 @@ export function BdmDashboard({
                 </div>
 
                 <div className="space-y-6">
-                  <TargetProgress target={initialTarget} metrics={metrics} />
+                  <TargetProgress target={initialTarget} metrics={metrics} bdmSubType={user.bdmSubType} />
                   <PerformanceCard metrics={metrics} />
                 </div>
               </section>

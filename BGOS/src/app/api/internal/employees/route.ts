@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import cuid from "cuid";
 
 import { sendWelcomeEmail } from "@/lib/email";
+import { generateBdmCode } from "@/lib/client-id";
 import { employeeStats, serializeEmployee } from "@/lib/internal-control";
 import { requireInternalOwnerApi } from "@/lib/internal-owner";
 import { prisma } from "@/lib/prisma";
@@ -86,6 +87,8 @@ export async function GET(request: Request) {
         role: true,
         active: true,
         status: true,
+        bdmSubType: true,
+        bdmCode: true,
         createdAt: true,
         joinedAt: true,
         archivedAt: true,
@@ -156,12 +159,13 @@ export async function POST(request: Request) {
     }
     console.log("[ADD-EMP] Auth:", context.owner.id);
 
-    let body: { name?: string; email?: string; role?: string };
+    let body: { name?: string; email?: string; role?: string; bdmSubType?: string };
     try {
       body = (await request.json()) as {
         name?: string;
         email?: string;
         role?: string;
+        bdmSubType?: string;
       };
       console.log("[ADD-EMP] Body:", JSON.stringify(body));
     } catch (bodyError) {
@@ -175,6 +179,7 @@ export async function POST(request: Request) {
     const name = body.name?.trim();
     const email = body.email?.trim().toLowerCase();
     const role = body.role;
+    const bdmSubType = role === "BDM" && body.bdmSubType === "MF" ? "MF" : "BDM";
 
     if (!name || !email || (role !== "BDM" && role !== "SDE")) {
       console.warn("[ADD-EMP] Invalid employee details:", { name, email, role });
@@ -210,6 +215,8 @@ export async function POST(request: Request) {
       name: string;
       email: string;
       role: string;
+      bdmSubType: string;
+      bdmCode: string | null;
       createdAt: Date;
       defaultPassword: boolean;
     };
@@ -221,6 +228,8 @@ export async function POST(request: Request) {
           name,
           email,
           role,
+          bdmSubType,
+          bdmCode: role === "BDM" ? await generateBdmCode(bdmSubType) : null,
           password: hashedPassword,
           defaultPassword: true,
           businessId: context.business.id,
@@ -231,6 +240,8 @@ export async function POST(request: Request) {
           name: true,
           email: true,
           role: true,
+          bdmSubType: true,
+          bdmCode: true,
           createdAt: true,
           defaultPassword: true,
         },
@@ -252,7 +263,7 @@ export async function POST(request: Request) {
           action: "Employee account created",
           entity: "User",
           entityId: employee.id,
-          meta: { email: employee.email, role: employee.role },
+          meta: { email: employee.email, role: employee.role, bdmSubType: employee.bdmSubType, bdmCode: employee.bdmCode },
         },
       });
       console.log("[ADD-EMP] Membership/activity created");
