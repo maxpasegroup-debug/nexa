@@ -134,7 +134,7 @@ export function MobileBottomNav({ role, activeTab, onTabChange }: MobileBottomNa
         </div>
         <button
           type="button"
-          onClick={() => void signOut({ callbackUrl: "/login" })}
+          onClick={() => void signOut({ callbackUrl: "/" })}
           className="w-full rounded-[10px] border border-[#FF6B6B]/25 bg-[#FF6B6B]/10 p-3.5 text-center text-sm font-semibold text-[#FF6B6B]"
         >
           Sign out

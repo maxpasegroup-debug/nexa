@@ -1,26 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
   CalendarCheck,
-  PhoneCall,
   Plus,
-  Search,
   Target,
   Trophy,
 } from "lucide-react";
 
 import { BdeOnboarding } from "@/components/bde/bde-onboarding";
-import { CallLogHistory, type CallLog } from "@/components/bdm/call-log-history";
+import type { CallLog } from "@/components/bdm/call-log-history";
 import { DailyBrief } from "@/components/bdm/daily-brief";
 import { MobileBDMHome } from "@/components/bdm/mobile/mobile-bdm-home";
-import { MyPipeline, type BdmLead } from "@/components/bdm/my-pipeline";
-import { NexaBDMAnalysis } from "@/components/bdm/nexa-bdm-analysis";
+import type { BdmLead } from "@/components/bdm/my-pipeline";
 import { NewLeadForm } from "@/components/bdm/new-lead-form";
-import { PerformanceCard, type BdmMetrics } from "@/components/bdm/performance-card";
-import { TargetProgress } from "@/components/bdm/target-progress";
+import type { BdmMetrics } from "@/components/bdm/performance-card";
 import { MetricCard } from "@/components/boss/metric-card";
 import { NexaPanel } from "@/components/boss/nexa-panel";
 import { LeadDrawer } from "@/components/crm/lead-drawer";
@@ -131,7 +127,6 @@ export function BdmDashboard({
   initialBrief,
   initialMetrics,
   initialLeads,
-  initialCallLogs,
   initialTarget,
   initialCommission,
   showBdeOnboarding,
@@ -141,12 +136,9 @@ export function BdmDashboard({
   const [metrics, setMetrics] = useState(initialMetrics);
   const [leads, setLeads] = useState(initialLeads);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [revealedCards, setRevealedCards] = useState(0);
   const [newLeadOpen, setNewLeadOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(showBdeOnboarding);
-  const [activeTab, setActiveTab] = useState<"overview" | "analysis">("overview");
-  const overdueRef = useRef<HTMLDivElement>(null);
   const isMf = user.bdmSubType === "MF";
   const dashboardTitle = isMf ? "BGOS Micro Franchise" : "BDM Dashboard";
   const subtypeLabel = isMf ? "MF Owner" : "BDM";
@@ -190,16 +182,19 @@ export function BdmDashboard({
     return () => window.removeEventListener("bdm:open-lead", openLead);
   }, []);
 
-  const filteredLeads = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-    if (!normalizedSearch) return leads;
-
-    return leads.filter((lead) =>
-      [lead.name, lead.email, lead.phone, lead.company]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(normalizedSearch)),
-    );
-  }, [leads, search]);
+  const priorityLeads = useMemo(
+    () =>
+      [...leads]
+        .filter((lead) => !["WON", "LOST"].includes(lead.status))
+        .sort((a, b) => {
+          const aFollowUp = a.followUpDate ? new Date(a.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
+          const bFollowUp = b.followUpDate ? new Date(b.followUpDate).getTime() : Number.MAX_SAFE_INTEGER;
+          if (aFollowUp !== bFollowUp) return aFollowUp - bFollowUp;
+          return b.score - a.score;
+        })
+        .slice(0, 3),
+    [leads],
+  );
 
   function upsertLead(lead: CrmLead | BdmLead) {
     setLeads((current) =>
@@ -239,7 +234,7 @@ export function BdmDashboard({
 
   const metricCards = [
     {
-      title: "My Leads Total",
+      title: "Active Leads",
       value: metrics.myLeadsTotal,
       subtitle: `${metrics.myLeadsHot} hot leads`,
       icon: <Target className="h-4 w-4" />,
@@ -264,10 +259,10 @@ export function BdmDashboard({
       icon: <Trophy className="h-4 w-4" />,
     },
     {
-      title: "Calls Today",
-      value: metrics.callsToday,
-      subtitle: `${metrics.avgResponseTime} hours avg response`,
-      icon: <PhoneCall className="h-4 w-4" />,
+      title: "Earnings",
+      value: money(initialCommission.total),
+      subtitle: `${Math.round(initialCommission.progressPct)}% of ${money(initialCommission.target)}`,
+      icon: <Trophy className="h-4 w-4" />,
     },
   ];
 
@@ -297,7 +292,7 @@ export function BdmDashboard({
 
       <button
         type="button"
-        onClick={() => overdueRef.current?.scrollIntoView({ behavior: "smooth" })}
+        onClick={() => document.getElementById("bdm-priority-leads")?.scrollIntoView({ behavior: "smooth" })}
         className="fixed right-[344px] top-3 z-40 hidden items-center gap-2 rounded-xl border border-white/10 bg-[#13131c] px-3 py-2 text-sm font-bold text-zinc-300 shadow-xl transition hover:text-white md:flex"
       >
         <Bell className="h-4 w-4" />
@@ -349,98 +344,94 @@ export function BdmDashboard({
             </div>
           </section>
 
-          <div className="flex gap-2 rounded-2xl border border-white/10 bg-[#13131c] p-1">
-            {[
-              { id: "overview", label: "Overview" },
-              { id: "analysis", label: "NEXA Analysis" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id as "overview" | "analysis")}
-                className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-                  activeTab === tab.id
-                    ? "bg-white text-black"
-                    : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {activeTab === "analysis" ? (
-            <NexaBDMAnalysis />
-          ) : (
-            <>
-              <CompactEarningsCard data={initialCommission} />
-
-              <DailyBrief
-                brief={initialBrief}
-                loading={false}
-                animateLines={isFreshBrief(initialBrief.createdAt)}
-              />
-
-              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {metricCards.map((card, index) => (
-                  <MetricCard
-                    key={card.title}
-                    title={card.title}
-                    value={card.value}
-                    subtitle={card.subtitle}
-                    icon={card.icon}
-                    trend={card.trend}
-                    loading={revealedCards <= index}
-                  />
-                ))}
-              </section>
-
-              <section className="grid gap-6 xl:grid-cols-[65fr_35fr]">
-                <div ref={overdueRef} className="scroll-mt-24 rounded-2xl border border-white/10 bg-[#13131c] p-5">
-              <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h2 className="font-heading text-lg font-bold">My Leads</h2>
-                  <Link
-                    href="/bdm/leads"
-                    className="mt-1 inline-block text-sm font-semibold text-[#7C6FFF]"
-                  >
-                    View all
-                  </Link>
-                </div>
-                <div className="relative w-full md:max-w-xs">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search leads..."
-                    className="w-full rounded-xl border border-white/10 bg-[#0e0e13] py-2.5 pl-10 pr-3 text-sm text-white outline-none focus:border-[#7C6FFF]"
-                  />
-                </div>
+          <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+            <CompactEarningsCard data={initialCommission} />
+            <section className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+                Next milestone
+              </p>
+              <h2 className="mt-3 font-heading text-2xl font-bold text-white">
+                {metrics.wonTarget > 0 ? `${metrics.wonProgress}% of won target` : "Build your first target streak"}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                {metrics.followUpsDueToday > 0
+                  ? `Start with ${metrics.followUpsDueToday} follow-ups due today.`
+                  : "No urgent follow-ups. Use the time to create new conversations."}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link href="/bdm/leads" className="rounded-xl bg-[#7C6FFF] px-4 py-2 text-sm font-bold text-white">
+                  Open leads
+                </Link>
+                <Link href="/bdm/commission" className="rounded-xl border border-white/10 px-4 py-2 text-sm font-bold text-zinc-300">
+                  Earnings
+                </Link>
               </div>
-              <MyPipeline
-                leads={filteredLeads}
-                onLeadClick={(lead) => setSelectedLeadId(lead.id)}
-                onStatusChange={(lead, status) => void changeLeadStatus(lead, status)}
+            </section>
+          </section>
+
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {metricCards.map((card, index) => (
+              <MetricCard
+                key={card.title}
+                title={card.title}
+                value={card.value}
+                subtitle={card.subtitle}
+                icon={card.icon}
+                trend={card.trend}
+                loading={revealedCards <= index}
               />
-                </div>
+            ))}
+          </section>
 
-                <div className="space-y-6">
-                  <TargetProgress target={initialTarget} metrics={metrics} bdmSubType={user.bdmSubType} />
-                  <PerformanceCard metrics={metrics} />
-                </div>
-              </section>
+          <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+            <DailyBrief
+              brief={initialBrief}
+              loading={false}
+              animateLines={isFreshBrief(initialBrief.createdAt)}
+            />
 
-              <section className="rounded-2xl border border-white/10 bg-[#13131c] p-5">
-                <div className="mb-5 flex items-center justify-between">
-                  <h2 className="font-heading text-lg font-bold">Recent Calls</h2>
-                  <Link href="/bdm/calls" className="text-sm font-semibold text-[#7C6FFF]">
-                    View all
-                  </Link>
+            <section id="bdm-priority-leads" className="scroll-mt-24 rounded-2xl border border-white/10 bg-[#13131c] p-5">
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-heading text-lg font-bold">Hot leads today</h2>
+                  <p className="mt-1 text-sm text-zinc-500">Only the next 3 actions for this morning.</p>
                 </div>
-                <CallLogHistory callLogs={initialCallLogs.slice(0, 5)} />
-              </section>
-            </>
-          )}
+                <Link href="/bdm/leads" className="text-sm font-semibold text-[#7C6FFF]">
+                  View all
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {priorityLeads.length > 0 ? priorityLeads.map((lead) => (
+                  <article key={lead.id} className="rounded-xl border border-white/10 bg-[#0e0e13] p-4">
+                    <button type="button" onClick={() => setSelectedLeadId(lead.id)} className="w-full text-left">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <h3 className="truncate font-heading text-sm font-bold text-white">{lead.company ?? lead.name}</h3>
+                          <p className="mt-1 truncate text-xs text-zinc-500">{lead.name} · Score {lead.score}</p>
+                        </div>
+                        <span className="rounded-full bg-[#7C6FFF]/15 px-2 py-1 text-[10px] font-bold text-[#c8c2ff]">{lead.status}</span>
+                      </div>
+                      <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-400">{lead.notes ?? lead.scoreReason ?? "No note yet."}</p>
+                    </button>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => setSelectedLeadId(lead.id)} className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold text-white">
+                        Open
+                      </button>
+                      {lead.status !== "WON" && lead.status !== "LOST" ? (
+                        <button type="button" onClick={() => void changeLeadStatus(lead, lead.status === "NEW" ? "CONTACTED" : lead.status)} className="rounded-lg border border-[#22D9A0]/25 px-3 py-1.5 text-xs font-bold text-[#22D9A0]">
+                          Mark contacted
+                        </button>
+                      ) : null}
+                    </div>
+                  </article>
+                )) : (
+                  <p className="rounded-xl border border-white/10 bg-[#0e0e13] p-5 text-sm text-zinc-500">
+                    No active priority leads right now.
+                  </p>
+                )}
+              </div>
+            </section>
+          </section>
         </div>
       </main>
 
