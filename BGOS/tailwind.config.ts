@@ -13,8 +13,8 @@ const config: Config = {
         foreground: "var(--foreground)",
       },
       fontFamily: {
-        heading: ["var(--font-syne)", "sans-serif"],
-        sans: ["var(--font-dm-sans)", "sans-serif"],
+        heading: ["var(--font-heading)", "sans-serif"],
+        sans: ["var(--font-body)", "sans-serif"],
       },
     },
   },

@@ -14,6 +14,8 @@
   --coral: #FF6B6B;
   --text: #F0EEF8;
   --muted: #6B6878;
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
 }
 
 [data-subtype="MF"] {
@@ -30,14 +32,14 @@
   min-height: 100vh;
   background: var(--marketing-bg);
   color: white;
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-body), sans-serif;
 }
 
 .marketing-page h1,
 .marketing-page h2,
 .marketing-page h3,
 .marketing-heading {
-  font-family: var(--font-plus-jakarta), sans-serif;
+  font-family: var(--font-heading), sans-serif;
 }
 
 .marketing-shell {
@@ -201,7 +203,17 @@ body {
   margin: 0;
   background: #070709;
   color: #ffffff;
+  font-family: var(--font-body), sans-serif;
   animation: pageFadeIn 0.6s ease forwards;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), sans-serif;
 }
 
 ::-webkit-scrollbar {

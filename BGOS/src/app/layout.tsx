@@ -1,35 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Inter, Plus_Jakarta_Sans, Syne } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 
 import { ToastProvider } from "@/components/ui/toast";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
 
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-syne",
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-  display: "swap",
-});
-
-const plusJakarta = Plus_Jakarta_Sans({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "600", "800"],
-  variable: "--font-plus-jakarta",
-  display: "swap",
+  variable: "--font-heading",
 });
 
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500"],
-  variable: "--font-inter",
-  display: "swap",
+  variable: "--font-body",
 });
 
 export const metadata: Metadata = {
@@ -77,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmSans.variable} ${plusJakarta.variable} ${inter.variable}`}>
+    <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-[#070709] font-sans text-white antialiased">
         <SessionProvider>
           <ThemeProvider>
