@@ -10,6 +10,23 @@ function str(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function upsertLeadMeta(notes: string | null | undefined, updates: Record<string, string>) {
+  const lines = (notes ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const next = lines.filter((line) => {
+    const key = line.split(":")[0]?.trim().toLowerCase();
+    return !["country", "state", "district"].includes(key);
+  });
+
+  for (const [label, value] of Object.entries(updates)) {
+    if (value) next.push(`${label}: ${value}`);
+  }
+
+  return next.join("\n") || null;
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } },
@@ -23,9 +40,16 @@ export async function PATCH(
 
   const existing = await prisma.lead.findFirst({
     where: { id: params.id, businessId: context.business.id },
-    select: { id: true },
+    select: { id: true, managementNotes: true },
   });
   if (!existing) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
+
+  const hasLocationUpdate = ["country", "state", "district"].some((key) =>
+    Object.prototype.hasOwnProperty.call(body, key),
+  );
+  const managementNotes = Object.prototype.hasOwnProperty.call(body, "managementNotes")
+    ? str(body.managementNotes) || null
+    : existing.managementNotes;
 
   const lead = await prisma.lead.update({
     where: { id: existing.id },
@@ -35,7 +59,15 @@ export async function PATCH(
       ...(Object.prototype.hasOwnProperty.call(body, "phone") ? { phone: str(body.phone) || null } : {}),
       ...(Object.prototype.hasOwnProperty.call(body, "email") ? { email: str(body.email)?.toLowerCase() || null } : {}),
       ...(Object.prototype.hasOwnProperty.call(body, "notes") ? { notes: str(body.notes) || null } : {}),
-      ...(Object.prototype.hasOwnProperty.call(body, "managementNotes") ? { managementNotes: str(body.managementNotes) || null } : {}),
+      ...(Object.prototype.hasOwnProperty.call(body, "managementNotes") || hasLocationUpdate
+        ? {
+            managementNotes: upsertLeadMeta(managementNotes, {
+              Country: str(body.country),
+              State: str(body.state),
+              District: str(body.district),
+            }),
+          }
+        : {}),
       ...(typeof body.value === "number" ? { value: body.value } : {}),
       ...(isEditableBdmLeadStatus(bdmStatus) ? { bdmStatus } : {}),
       ...(Object.prototype.hasOwnProperty.call(body, "assignedTo") ? { assignedTo: assignedTo || null } : {}),
