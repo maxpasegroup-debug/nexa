@@ -54,7 +54,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#070709",
+  themeColor: "#7C3AED",
 };
 
 export default function RootLayout({
@@ -64,6 +64,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#7C3AED" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="BGOS" />
+        <link rel="apple-touch-icon" href="/images/nexa.jpeg" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+    })
+  }
+`,
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-[#070709] font-sans text-white antialiased">
         <SessionProvider>
           <ThemeProvider>
