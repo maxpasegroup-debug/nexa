@@ -1,16 +1,144 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  MailCheck,
+  PhoneCall,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Users,
+} from "lucide-react";
 
 import { LandingCtaButton } from "./landing-cta-button";
 
 const messages = [
-  "Lead conversion dropped 18%. I've reassigned 12 hot leads to your BDM team.",
-  "Ravi hasn't followed up with 6 leads in 3 days. Sending him a task now.",
-  "Your business health score improved from 62 to 74 this week. Revenue is up.",
-  "3 proposals have been pending for 5+ days. Want me to send follow-up emails?",
+  "Lead conversion dropped 18%. I moved 12 hot leads to today's call list.",
+  "Six follow-ups are overdue. I created owner-wise tasks for the BDM team.",
+  "Revenue health improved from 62 to 74. Two proposals still need attention.",
+  "Three inbox replies are ready. Review them before the day ends.",
 ];
+
+const signals = [
+  { label: "Hot leads", value: "24", tone: "text-[#22D9A0]", icon: Target },
+  { label: "Follow-ups", value: "18", tone: "text-[#F5A623]", icon: PhoneCall },
+  { label: "Team tasks", value: "12", tone: "text-[#7C6FFF]", icon: Users },
+];
+
+const pipeline = [
+  { name: "New", count: 38, color: "#7C6FFF" },
+  { name: "Contacted", count: 21, color: "#06B6D4" },
+  { name: "Proposal", count: 9, color: "#F5A623" },
+  { name: "Won", count: 6, color: "#22D9A0" },
+];
+
+function OperationsMock() {
+  return (
+    <div className="landing-up relative mx-auto w-full max-w-[520px] overflow-hidden rounded-[22px] border border-white/10 bg-[#101016] text-left shadow-2xl shadow-black/30 [animation-delay:0.55s]">
+      <div className="border-b border-white/10 bg-[#15151f] px-4 py-3 md:px-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#22D9A0]">
+              BGOS live workspace
+            </p>
+            <h2 className="mt-1 truncate font-heading text-sm font-extrabold text-white md:text-base">
+              Boss command center
+            </h2>
+          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#22D9A0]/25 bg-[#22D9A0]/10 px-2.5 py-1 text-[10px] font-bold text-[#22D9A0]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#22D9A0]" />
+            Live
+          </span>
+        </div>
+      </div>
+
+      <div className="grid gap-px bg-white/10 md:grid-cols-[0.86fr_1.14fr]">
+        <aside className="bg-[#0d0d13] p-4 md:p-5">
+          <div className="rounded-2xl border border-white/10 bg-[#14141d] p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-zinc-400">Business health</p>
+              <ArrowUpRight className="h-4 w-4 text-[#22D9A0]" />
+            </div>
+            <div className="mt-4 flex items-end gap-3">
+              <p className="font-heading text-5xl font-extrabold text-white">74</p>
+              <p className="pb-2 text-xs font-bold text-[#22D9A0]">+12 this week</p>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full w-[74%] rounded-full bg-[#22D9A0]" />
+            </div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2 md:grid-cols-1">
+            {signals.map((signal) => {
+              const Icon = signal.icon;
+              return (
+                <div key={signal.label} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                  <Icon className={`h-4 w-4 ${signal.tone}`} />
+                  <p className="mt-3 font-heading text-xl font-extrabold text-white">{signal.value}</p>
+                  <p className="mt-1 text-[10px] font-medium text-zinc-500">{signal.label}</p>
+                </div>
+              );
+            })}
+          </div>
+        </aside>
+
+        <div className="bg-[#111119] p-4 md:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7C6FFF]">
+                Sales pipeline
+              </p>
+              <p className="mt-1 text-sm font-bold text-white">Today&apos;s operating view</p>
+            </div>
+            <Sparkles className="h-5 w-5 text-[#F5A623]" />
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {pipeline.map((item) => (
+              <div key={item.name}>
+                <div className="mb-1.5 flex items-center justify-between text-xs">
+                  <span className="font-medium text-zinc-400">{item.name}</span>
+                  <span className="font-bold text-white">{item.count}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.min(item.count * 2.2, 100)}%`, backgroundColor: item.color }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-[#7C6FFF]/25 bg-[#7C6FFF]/10 p-4">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#a89fff]" />
+              <p className="text-xs font-bold text-[#F0EEF8]">NEXA action queue</p>
+            </div>
+            <div className="mt-3 space-y-2">
+              {[
+                ["Call 5 hot leads before 6 PM", Clock3],
+                ["Review 3 inbox drafts", MailCheck],
+                ["Resolve proposal follow-ups", CheckCircle2],
+              ].map(([label, Icon]) => {
+                const RowIcon = Icon as typeof Clock3;
+                return (
+                  <div key={label as string} className="flex items-center gap-2 text-xs text-zinc-300">
+                    <RowIcon className="h-3.5 w-3.5 text-[#22D9A0]" />
+                    <span>{label as string}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function HeroSection() {
   const [index, setIndex] = useState(0);
@@ -23,7 +151,7 @@ export default function HeroSection() {
     if (typed.length < current.length) {
       const timer = window.setTimeout(
         () => setTyped(current.slice(0, typed.length + 1)),
-        35,
+        28,
       );
       return () => window.clearTimeout(timer);
     }
@@ -34,121 +162,74 @@ export default function HeroSection() {
         setTyped("");
         setIndex((value) => (value + 1) % messages.length);
         setFading(false);
-      }, 260);
-    }, 3000);
+      }, 240);
+    }, 2600);
 
     return () => window.clearTimeout(pause);
   }, [index, typed]);
 
   return (
-    <section id="home" className="relative flex min-h-screen max-w-full items-center overflow-hidden overflow-x-hidden px-5 pb-16 pt-[96px] text-center md:px-12 md:pt-[120px] lg:text-left">
-      <div className="pointer-events-none absolute left-1/2 top-[-200px] z-0 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(124,111,255,0.10)_0%,transparent_65%)]" />
-      <div className="pointer-events-none absolute bottom-[-120px] right-[-120px] z-0 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(34,217,160,0.06)_0%,transparent_66%)]" />
-      <div className="landing-noise pointer-events-none absolute inset-0 z-0 opacity-[0.18]" />
+    <section
+      id="home"
+      className="relative overflow-hidden border-b border-white/10 bg-[#070709] px-5 pb-16 pt-[92px] text-center md:px-12 md:pb-20 md:pt-[118px] lg:text-left"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:44px_44px] opacity-30" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-[#111119] to-transparent" />
 
-      <div
-        className="relative z-10 mx-auto grid w-full max-w-[calc(100vw-40px)] items-center gap-10 md:max-w-6xl lg:grid-cols-[minmax(0,1fr)_480px]"
-        style={{ maxWidth: "min(72rem, calc(100vw - 40px))" }}
-      >
+      <div className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
         <div>
-          <div
-            className="landing-fade mx-auto inline-flex max-w-full justify-center whitespace-normal break-words rounded-full border border-[#7C6FFF]/30 bg-[#7C6FFF]/[0.08] px-3.5 py-1 text-center text-xs text-[#a89fff] [animation-delay:0.2s] lg:mx-0"
-            style={{ maxWidth: "min(100%, 335px)" }}
-          >
-            AI CRM and team dashboard for growing businesses
+          <div className="landing-fade mx-auto inline-flex max-w-full justify-center rounded-full border border-[#22D9A0]/25 bg-[#22D9A0]/10 px-3.5 py-1 text-center text-xs font-semibold text-[#92f0d0] [animation-delay:0.2s] lg:mx-0">
+            CRM, team execution, inbox, and AI decisions
           </div>
 
-        <h1 className="mx-auto mt-7 max-w-[335px] font-heading text-[32px] font-extrabold leading-[1.05] md:max-w-[760px] md:text-[56px] lg:mx-0 lg:max-w-none lg:text-[72px]">
-          <span className="landing-up block text-white [animation-delay:0.4s]">
-            Run leads, tasks,
-          </span>
-          <span className="landing-up block text-[#7C6FFF] [animation-delay:0.48s]">
-            and follow-ups in one place.
-          </span>
-        </h1>
+          <h1 className="mx-auto mt-7 max-w-[360px] font-heading text-[38px] font-extrabold leading-[1.02] tracking-normal text-white md:max-w-[780px] md:text-[64px] lg:mx-0 lg:max-w-none lg:text-[76px]">
+            <span className="landing-up block [animation-delay:0.35s]">
+              Run your business
+            </span>
+            <span className="landing-up block text-[#22D9A0] [animation-delay:0.45s]">
+              from one clean dashboard.
+            </span>
+          </h1>
 
-        <p className="landing-up mx-auto mt-7 max-w-[335px] text-base font-light leading-[1.65] text-[#A5A1B3] [animation-delay:0.6s] md:max-w-[620px] md:text-lg lg:mx-0">
-          BGOS gives business owners a clean operating dashboard for CRM, team
-          execution, inbox follow-ups, and daily AI recommendations from NEXA.
-        </p>
-        <p className="landing-up mx-auto mt-3 max-w-[335px] text-sm font-light leading-6 text-[#F0EEF8] [animation-delay:0.68s] md:max-w-[620px] lg:mx-0">
-          BGOS is your business dashboard. NEXA is the AI assistant inside it.
-        </p>
-
-        <div className="landing-up mt-9 flex flex-col items-center justify-center gap-3 [animation-delay:0.8s] sm:flex-row lg:justify-start">
-          <LandingCtaButton className="rounded-lg bg-[#7C6FFF] px-8 py-3.5 text-[15px] font-medium text-white transition hover:-translate-y-0.5 hover:bg-[#9186FF]" />
-          <a
-            href="#how-it-works"
-            className="rounded-lg border border-white/15 px-8 py-3.5 text-[15px] font-medium text-white transition hover:-translate-y-0.5 hover:border-[#7C6FFF]/50 hover:text-[#a89fff]"
-          >
-            See how it works
-          </a>
-        </div>
-
-        <div className="landing-fade mt-8 [animation-delay:1s]">
-          <p
-            className="mx-auto text-center text-xs font-light text-[#A5A1B3] lg:mx-0 lg:text-left"
-            style={{ maxWidth: "min(100%, 335px)" }}
-          >
-            Guided setup during trial | Our team contacts you within 2 hours
+          <p className="landing-up mx-auto mt-6 max-w-[360px] text-base font-light leading-[1.65] text-[#A5A1B3] [animation-delay:0.58s] md:max-w-[640px] md:text-lg lg:mx-0">
+            BGOS gives owners a professional operating system for leads, team tasks,
+            customer follow-ups, and daily decisions. NEXA turns the noise into
+            precise next steps.
           </p>
-        </div>
 
-        </div>
-
-        <div className="landing-up relative mx-auto flex h-[280px] w-[280px] items-end justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#0f0f14] shadow-2xl shadow-[#7C6FFF]/10 [animation-delay:0.55s] md:h-[360px] md:w-[360px] lg:h-[480px] lg:w-[480px]">
-          <div className="absolute h-48 w-48 rounded-full bg-[#7C6FFF]/25 blur-[56px] md:h-64 md:w-64 lg:h-80 lg:w-80" />
-          <Image
-            src="/images/nexa.jpeg"
-            alt="NEXA AI avatar"
-            width={480}
-            height={480}
-            unoptimized
-            priority
-            className="relative z-10 h-full w-full object-cover object-top"
-          />
-        </div>
-
-        <div className="landing-up mx-auto w-full max-w-[560px] rounded-2xl border border-white/10 bg-[#13131c] p-5 text-left shadow-2xl shadow-[#7C6FFF]/5 [animation-delay:1.2s] lg:mx-0">
-          <div className="mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#22D9A0]">
-                <span className="absolute inset-0 animate-ping rounded-full bg-[#22D9A0]" />
-              </span>
-              <span className="font-heading font-bold text-white">NEXA</span>
-            </div>
-            <span className="text-[11px] font-bold text-[#22D9A0]">Live</span>
+          <div className="landing-up mt-8 flex flex-col items-center justify-center gap-3 [animation-delay:0.72s] sm:flex-row lg:justify-start">
+            <LandingCtaButton className="rounded-lg bg-[#22D9A0] px-8 py-3.5 text-[15px] font-bold text-black transition hover:-translate-y-0.5 hover:bg-[#41efb8]" />
+            <a
+              href="#how-it-works"
+              className="rounded-lg border border-white/15 px-8 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:border-[#22D9A0]/50 hover:text-[#92f0d0]"
+            >
+              See the workflow
+            </a>
           </div>
-          <p
-            className={`min-h-[72px] text-[15px] leading-7 text-[#F0EEF8] transition-opacity duration-300 ${
-              fading ? "opacity-0" : "opacity-100"
-            }`}
-          >
-            {typed}
-            <span className="landing-cursor ml-1 inline-block h-5 w-px translate-y-1 bg-[#7C6FFF]" />
-          </p>
-          <div className="mt-5 grid gap-2 sm:grid-cols-3">
-            {[
-              ["84 leads managed", "#7C6FFF"],
-              ["12 tasks assigned", "#22D9A0"],
-              ["3 alerts resolved", "#F5A623"],
-            ].map(([label, color]) => (
-              <div
-                key={label}
-                className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] text-[#A5A1B3]"
-              >
-                <span className="h-2 w-2 rounded-full" style={{ background: color }} />
-                {label}
+
+          <div className="landing-up mx-auto mt-8 w-full max-w-[560px] rounded-2xl border border-white/10 bg-[#111119] p-4 text-left shadow-2xl shadow-black/20 [animation-delay:0.88s] lg:mx-0">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#22D9A0]" />
+                <span className="font-heading text-sm font-bold text-white">NEXA brief</span>
               </div>
-            ))}
+              <span className="text-[11px] font-bold text-[#F5A623]">Updated now</span>
+            </div>
+            <p
+              className={`min-h-[56px] text-sm leading-7 text-[#F0EEF8] transition-opacity duration-300 md:text-[15px] ${
+                fading ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              {typed}
+              <span className="landing-cursor ml-1 inline-block h-5 w-px translate-y-1 bg-[#22D9A0]" />
+            </p>
           </div>
         </div>
+
+        <OperationsMock />
       </div>
 
       <style jsx>{`
-        .landing-noise {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
-        }
         .landing-up,
         .landing-fade {
           opacity: 0;
