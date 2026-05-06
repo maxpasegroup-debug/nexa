@@ -46,7 +46,7 @@ const bossTabs: Tab[] = [
 const internalTabs: Tab[] = [
   { id: "home", icon: "🏠", label: "Overview", href: "/internal" },
   { id: "customers", icon: "🏢", label: "Customers", href: "/internal/customers" },
-  { id: "pipeline", icon: "📋", label: "Onboarding", href: "/internal/onboarding" },
+  { id: "pipeline", icon: "📋", label: "Onboarding", href: "/internal/leads" },
   { id: "team", icon: "👥", label: "Team", href: "/internal/team" },
   { id: "more", icon: "⚙️", label: "More", href: "/internal/settings" },
 ];

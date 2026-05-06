@@ -9,6 +9,7 @@ type MobileInternalMetrics = {
   totalUsers: number;
   totalLeads: number;
   newThisMonth: number;
+  activeTrials: number;
   marketplaceLeadsToday: number;
 };
 
@@ -50,7 +51,7 @@ export function MobileInternalDashboard({
 
   const cards = [
     { label: "Total customers", value: metrics.totalCustomers, color: "#7C6FFF" },
-    { label: "Active trials", value: metrics.newThisMonth, color: "#F5A623" },
+    { label: "Active trials", value: metrics.activeTrials, color: "#F5A623" },
     { label: "MRR this month", value: "₹0", color: "#22D9A0" },
     { label: "New leads today", value: metrics.marketplaceLeadsToday, color: "#22D9A0" },
   ];
@@ -85,7 +86,7 @@ export function MobileInternalDashboard({
           {statusCounts.map((item) => (
             <Link
               key={item.status}
-              href="/internal/onboarding"
+              href="/internal/leads"
               className="snap-start min-w-[130px] rounded-[16px] border border-white/10 bg-[var(--card)] p-4"
             >
               <p className="font-heading text-2xl font-extrabold text-[#7C6FFF]">{item.count}</p>

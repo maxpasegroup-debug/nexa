@@ -56,6 +56,7 @@ type InternalMetrics = {
   totalUsers: number;
   totalLeads: number;
   newThisMonth: number;
+  activeTrials: number;
   marketplaceLeadsToday: number;
 };
 

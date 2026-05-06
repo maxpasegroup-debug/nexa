@@ -3,8 +3,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Send, X } from "lucide-react";
 
-import { NexaAvatar } from "@/components/nexa/nexa-avatar";
-
 type ChatMessage = {
   id: string;
   role: "nexa" | "user";
@@ -306,7 +304,9 @@ export function NexaCaptureWidget() {
   return (
     <section className="fixed bottom-5 right-5 z-50 flex h-[480px] w-[calc(100vw-32px)] max-w-[360px] flex-col overflow-hidden overflow-x-hidden rounded-3xl border border-white/10 bg-[#0f0f14] text-white shadow-2xl shadow-black/50">
       <header className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
-        <NexaAvatar size="sm" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#22D9A0]/15 font-heading text-sm font-bold text-[#22D9A0]">
+          N
+        </div>
         <div className="min-w-0 flex-1">
           <h2 className="font-heading text-sm font-bold">NEXA</h2>
           <div className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">

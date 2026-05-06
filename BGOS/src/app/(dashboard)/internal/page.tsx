@@ -5,6 +5,7 @@ import {
   type InternalBusiness,
   type InternalTeamMember,
 } from "@/components/internal/bgos-internal-dashboard";
+import { customerListStatuses } from "@/lib/business-status";
 
 function latestDate(...values: Array<Date | null | undefined>) {
   const timestamps = values
@@ -38,6 +39,7 @@ export default async function InternalPage() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const customerBusinessWhere = {
     id: { not: internalBusiness.id },
+    status: { in: customerListStatuses },
   };
 
   const [
@@ -45,6 +47,7 @@ export default async function InternalPage() {
     totalUsers,
     totalLeads,
     newThisMonth,
+    activeTrials,
     recentBusinesses,
     teamMembers,
     savedInsights,
@@ -58,6 +61,12 @@ export default async function InternalPage() {
       where: {
         ...customerBusinessWhere,
         createdAt: { gte: startOfMonth },
+      },
+    }),
+    prisma.business.count({
+      where: {
+        ...customerBusinessWhere,
+        status: "TRIAL",
       },
     }),
     prisma.business.findMany({
@@ -226,6 +235,7 @@ export default async function InternalPage() {
         totalUsers,
         totalLeads,
         newThisMonth,
+        activeTrials,
         marketplaceLeadsToday,
       }}
       businesses={businesses}
