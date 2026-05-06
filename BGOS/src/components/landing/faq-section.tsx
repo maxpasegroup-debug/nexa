@@ -25,7 +25,7 @@ const faqs = [
 
 export default function FaqSection() {
   return (
-    <section className="mx-auto max-w-[1000px] px-5 py-24 md:px-12">
+    <section className="mx-auto max-w-full overflow-x-hidden px-5 py-24 md:max-w-[1000px] md:px-12">
       <div className="text-center">
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7C6FFF]">
           FAQ

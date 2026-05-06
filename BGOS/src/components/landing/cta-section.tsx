@@ -4,7 +4,7 @@ import { LandingCtaButton } from "./landing-cta-button";
 
 export default function CtaSection() {
   return (
-    <section className="mx-auto max-w-[800px] px-5 py-28 text-center md:px-12">
+    <section className="mx-auto max-w-full overflow-x-hidden px-5 py-28 text-center md:max-w-[800px] md:px-12">
       <div className="rounded-[24px] border border-[#7C6FFF]/30 bg-[radial-gradient(circle_at_center,rgba(124,111,255,0.06),transparent_70%)] px-6 py-16 md:px-12">
         <h2 className="font-heading text-[clamp(32px,5vw,52px)] font-extrabold leading-tight text-white">
           Ready to bring your leads and team into one dashboard?

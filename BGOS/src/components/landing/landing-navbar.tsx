@@ -20,7 +20,7 @@ export default function LandingNavbar() {
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 h-16 transition-all duration-300 ${
+      className={`fixed left-0 right-0 top-0 z-50 h-16 max-w-full overflow-x-hidden transition-all duration-300 ${
         scrolled
           ? "border-b border-white/10 bg-[#070709]/90 backdrop-blur-[20px]"
           : "border-b border-transparent bg-transparent"
@@ -40,12 +40,20 @@ export default function LandingNavbar() {
             <a
               key={label}
               href={href}
-              className="text-[10px] font-medium text-[#A5A1B3] transition hover:text-white md:text-sm"
+              className={`text-[10px] font-medium text-[#A5A1B3] transition hover:text-white md:text-sm ${
+                label === "Marketplace" ? "hidden md:inline" : ""
+              }`}
             >
               {label}
             </a>
           ))}
-          <LandingCtaButton className="shrink-0 rounded-md bg-[#7C6FFF] px-2.5 py-2 text-[10px] font-medium text-white transition hover:bg-[#9186FF] md:px-5 md:text-sm" />
+          <a
+            href="/login"
+            className="text-[10px] font-medium text-[#A5A1B3] transition hover:text-white md:hidden"
+          >
+            Login
+          </a>
+          <LandingCtaButton className="hidden shrink-0 rounded-md bg-[#7C6FFF] px-2.5 py-2 text-[10px] font-medium text-white transition hover:bg-[#9186FF] md:block md:px-5 md:text-sm" />
         </div>
       </nav>
     </header>

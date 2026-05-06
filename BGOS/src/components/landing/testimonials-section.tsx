@@ -17,14 +17,14 @@ const trustItems = [
 
 export default function TestimonialsSection() {
   return (
-    <section className="mx-auto max-w-[1000px] px-5 py-24 md:px-12">
+    <section className="mx-auto max-w-full overflow-x-hidden px-5 py-24 md:max-w-[1000px] md:px-12">
       <h2 className="text-center font-heading text-4xl font-extrabold text-white md:text-5xl">
         Built honestly, with the first customers.
       </h2>
       <p className="mx-auto mt-4 max-w-[620px] text-center text-base font-light leading-7 text-[#A5A1B3]">
         BGOS is early-stage software with hands-on setup support. The promise is simple: help owner-led teams bring scattered sales and operations work into one clear dashboard.
       </p>
-      <div className="mt-12 grid gap-5 md:grid-cols-3">
+      <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {trustItems.map((item) => (
           <article key={item.title} className="rounded-[14px] border border-white/10 bg-[#13131c] p-7">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7C6FFF]/15 font-heading text-sm font-extrabold text-[#a89fff]">

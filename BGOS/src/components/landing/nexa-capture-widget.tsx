@@ -304,7 +304,7 @@ export function NexaCaptureWidget() {
   }
 
   return (
-    <section className="fixed bottom-5 right-5 z-50 flex h-[480px] w-[calc(100vw-32px)] max-w-[360px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0f0f14] text-white shadow-2xl shadow-black/50">
+    <section className="fixed bottom-5 right-5 z-50 flex h-[480px] w-[calc(100vw-32px)] max-w-[360px] flex-col overflow-hidden overflow-x-hidden rounded-3xl border border-white/10 bg-[#0f0f14] text-white shadow-2xl shadow-black/50">
       <header className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
         <NexaAvatar size="sm" />
         <div className="min-w-0 flex-1">

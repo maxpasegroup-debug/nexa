@@ -12,7 +12,7 @@ import TestimonialsSection from "./testimonials-section";
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#070709]">
+    <main className="min-h-screen max-w-full overflow-x-hidden bg-[#070709]">
       <LandingNavbar />
       <HeroSection />
       <ProductProofSection />

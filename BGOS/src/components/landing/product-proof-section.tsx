@@ -14,7 +14,7 @@ const rows = [
 
 export default function ProductProofSection() {
   return (
-    <section className="mx-auto max-w-[1120px] px-5 pb-12 pt-4 md:px-12 md:pb-20">
+    <section className="mx-auto max-w-full overflow-x-hidden px-5 pb-12 pt-4 md:max-w-[1120px] md:px-12 md:pb-20">
       <div className="rounded-[22px] border border-white/10 bg-[#101018] p-4 shadow-2xl shadow-black/25 md:p-6">
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#070709]">
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
@@ -61,7 +61,7 @@ export default function ProductProofSection() {
                 </span>
               </div>
 
-              <div className="mt-6 grid gap-3 md:grid-cols-3">
+              <div className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {["CRM pipeline", "Team work", "NEXA alerts"].map((label) => (
                   <div key={label} className="h-24 rounded-xl border border-white/10 bg-white/[0.03] p-4">
                     <div className="h-2 w-16 rounded-full bg-[#7C6FFF]/50" />

@@ -45,7 +45,7 @@ export default function NexaDemoSection() {
   }, []);
 
   return (
-    <section id="how-it-works" ref={ref} className="mx-auto max-w-[1100px] px-5 py-24 md:px-12">
+    <section id="how-it-works" ref={ref} className="mx-auto max-w-full overflow-x-hidden px-5 py-24 md:max-w-[1100px] md:px-12">
       <div className={`text-center ${visible ? "animate-[fadeUp_0.8s_ease_forwards]" : "opacity-0"}`}>
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7C6FFF]">
           HOW NEXA WORKS
@@ -58,9 +58,9 @@ export default function NexaDemoSection() {
         </p>
       </div>
 
-      <div className="mt-16 flex flex-col gap-8 md:flex-row md:items-start md:justify-center">
+      <div className="mt-16 grid gap-8 md:grid-cols-2 lg:flex lg:items-start lg:justify-center">
         {steps.map((step, index) => (
-          <div key={step.number} className="contents md:flex md:contents-auto md:items-start">
+          <div key={step.number} className="contents lg:flex lg:items-start">
             <article
               className={`max-w-sm flex-1 rounded-2xl border border-white/10 bg-[#13131c] p-7 transition ${
                 visible ? "animate-[fadeUp_0.8s_ease_forwards]" : "opacity-0"
@@ -81,7 +81,7 @@ export default function NexaDemoSection() {
               </p>
             </article>
             {index < steps.length - 1 ? (
-              <div className="mt-20 hidden h-px w-20 border-t border-dashed border-[#7C6FFF]/30 md:block" />
+              <div className="mt-20 hidden h-px w-20 border-t border-dashed border-[#7C6FFF]/30 lg:block" />
             ) : null}
           </div>
         ))}

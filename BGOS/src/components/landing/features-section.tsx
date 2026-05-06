@@ -58,7 +58,7 @@ export default function FeaturesSection() {
   }, []);
 
   return (
-    <section id="features" ref={ref} className="bg-white/[0.015] px-5 py-24 md:px-12">
+    <section id="features" ref={ref} className="max-w-full overflow-x-hidden bg-white/[0.015] px-5 py-24 md:px-12">
       <div className="mx-auto max-w-[1100px]">
         <div className="text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7C6FFF]">

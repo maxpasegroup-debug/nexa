@@ -111,7 +111,7 @@ function PlanCard({ plan }: { plan: Plan }) {
 
 export default function PricingSection() {
   return (
-    <section id="pricing" className="mx-auto max-w-[1100px] px-5 py-[60px] text-center md:px-12 md:py-[100px]">
+    <section id="pricing" className="mx-auto max-w-full overflow-x-hidden px-5 py-[60px] text-center md:max-w-[1100px] md:px-12 md:py-[100px]">
       <p className="text-center text-[11px] font-bold uppercase tracking-[0.15em] text-[#7C6FFF]">
         PRICING
       </p>

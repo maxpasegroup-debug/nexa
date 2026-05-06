@@ -41,7 +41,7 @@ export default function HeroSection() {
   }, [index, typed]);
 
   return (
-    <section id="home" className="relative flex min-h-screen items-center overflow-hidden px-5 pb-16 pt-[96px] text-center md:px-12 md:pt-[120px] lg:text-left">
+    <section id="home" className="relative flex min-h-screen max-w-full items-center overflow-hidden overflow-x-hidden px-5 pb-16 pt-[96px] text-center md:px-12 md:pt-[120px] lg:text-left">
       <div className="pointer-events-none absolute left-1/2 top-[-200px] z-0 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(124,111,255,0.10)_0%,transparent_65%)]" />
       <div className="pointer-events-none absolute bottom-[-120px] right-[-120px] z-0 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(34,217,160,0.06)_0%,transparent_66%)]" />
       <div className="landing-noise pointer-events-none absolute inset-0 z-0 opacity-[0.18]" />
@@ -58,7 +58,7 @@ export default function HeroSection() {
             AI CRM and team dashboard for growing businesses
           </div>
 
-        <h1 className="mx-auto mt-7 max-w-[335px] font-heading text-[34px] font-extrabold leading-[1.05] md:max-w-[760px] md:text-[56px] lg:mx-0 lg:max-w-none lg:text-[72px]">
+        <h1 className="mx-auto mt-7 max-w-[335px] font-heading text-[32px] font-extrabold leading-[1.05] md:max-w-[760px] md:text-[56px] lg:mx-0 lg:max-w-none lg:text-[72px]">
           <span className="landing-up block text-white [animation-delay:0.4s]">
             Run leads, tasks,
           </span>

@@ -14,7 +14,7 @@ const policyLinks = [
 
 export default function LandingFooter() {
   return (
-    <footer className="border-t border-white/10 bg-[#070709] px-5 pb-8 pt-16 md:px-12">
+    <footer className="max-w-full overflow-x-hidden border-t border-white/10 bg-[#070709] px-5 pb-8 pt-16 md:px-12">
       <div className="mx-auto grid max-w-[1100px] gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div>
           <div className="font-heading text-[22px] font-extrabold">
