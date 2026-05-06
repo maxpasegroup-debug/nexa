@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import {
   Career7Badge,
   Career7Sidebar,
+  NexaAssistant,
   type Career7NavItem,
 } from "@/components/career7";
 
@@ -24,6 +25,16 @@ const mobileNavItems = [
   { label: "Wallet", href: "/wallet" },
 ];
 
+const nexaEnabledRoutes = new Set([
+  "/dashboard",
+  "/growth-board",
+  "/agent-store",
+  "/quick-boosts",
+  "/blizzway",
+  "/wallet",
+  "/growth-vault",
+]);
+
 type Career7DashboardShellProps = {
   activeHref: string;
   eyebrow?: string;
@@ -40,7 +51,7 @@ export function Career7DashboardShell({
   children,
 }: Career7DashboardShellProps) {
   return (
-    <main className="c7-shell bg-[#f7f9ff] md:grid md:grid-cols-[280px_1fr]">
+    <main className="c7-shell overflow-x-hidden bg-[#f7f9ff] md:grid md:grid-cols-[280px_1fr]">
       <Career7Sidebar
         items={dashboardNavItems}
         activeHref={activeHref}
@@ -55,7 +66,7 @@ export function Career7DashboardShell({
         }
       />
 
-      <section className="min-w-0 px-4 pb-24 pt-4 sm:px-6 md:px-8 md:pb-8 md:py-6 lg:px-10">
+      <section className="w-full min-w-0 max-w-full overflow-x-hidden px-4 pb-24 pt-4 sm:px-6 md:px-8 md:pb-8 md:py-6 lg:px-10">
         <div className="mb-4 flex items-center justify-between gap-3 md:hidden">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-xs font-black text-white">
@@ -66,7 +77,6 @@ export function Career7DashboardShell({
               <p className="text-xs font-semibold c7-muted">Dashboard</p>
             </div>
           </div>
-          <Career7Badge tone="cyan">2,400 credits</Career7Badge>
         </div>
 
         <header className="rounded-[28px] bg-white/86 p-4 shadow-sm ring-1 ring-slate-200/70 backdrop-blur">
@@ -90,7 +100,7 @@ export function Career7DashboardShell({
                 />
               </label>
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-cyan-50 px-4 py-2 text-sm font-black text-cyan-700">
+                <span className="rounded-full bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 sm:px-4">
                   2,400 credits
                 </span>
                 <button
@@ -108,7 +118,7 @@ export function Career7DashboardShell({
           </div>
         </header>
 
-        <nav className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 md:hidden" aria-label="Career7 sections">
+        <nav className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-2 md:hidden" aria-label="Career7 sections">
           {dashboardNavItems.map((item) => (
             <a
               key={item.href}
@@ -139,6 +149,8 @@ export function Career7DashboardShell({
             </a>
           ))}
         </nav>
+
+        {nexaEnabledRoutes.has(activeHref) ? <NexaAssistant /> : null}
       </section>
     </main>
   );

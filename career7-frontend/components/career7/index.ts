@@ -18,3 +18,5 @@ export { Career7StatCard } from "./Career7StatCard";
 export type { Career7StatCardProps } from "./Career7StatCard";
 export { Career7Topbar } from "./Career7Topbar";
 export type { Career7TopbarProps } from "./Career7Topbar";
+export { Career7ProgressTracker } from "./Career7ProgressTracker";
+export { NexaAssistant } from "./NexaAssistant";
