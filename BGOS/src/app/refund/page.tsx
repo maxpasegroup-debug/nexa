@@ -5,7 +5,7 @@ const companyName = "MIB - MAKE IT BEAUTIFUL LLP";
 const brandName = "BGOS";
 const contactEmail = "hello@bgos.online";
 const registeredAddress =
-  "Suite No. A74, Door No. 63/700, D Space, 6th Floor, Sky Tower, Mavoor Road Junction, Bank Road, Kozhikode-673001, Kerala, India";
+  "Registered office details are available on request";
 const updatedAt = "May 3, 2026";
 
 const sections = [
@@ -67,7 +67,7 @@ const sections = [
   {
     title: "9. Processing Timelines",
     body: [
-      "Approved refunds are normally initiated within 7 to 10 business days after verification. The time for the amount to reflect in your account depends on your bank, card issuer, UPI provider, or payment gateway.",
+      "Approved refunds are normally initiated within 7 to 10 business days after verification. The time for the amount to reflect in your account depends on your bank, card issuer, payment provider, or payment gateway.",
       "Gateway charges, taxes, bank charges, or already-incurred third-party costs may be deducted where applicable and lawful.",
     ],
   },

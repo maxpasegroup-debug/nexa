@@ -143,8 +143,8 @@ async function main() {
     {
       slug: "taxmate",
       name: "TaxMate",
-      tagline: "GST, TDS, invoices - all on autopilot.",
-      description: "Every Indian compliance requirement automated and never missed. TaxMate handles GST filing reminders, TDS alerts, invoice generation, and payment tracking.",
+      tagline: "Taxes, invoices, and payments - all on autopilot.",
+      description: "Every business compliance requirement automated and never missed. TaxMate handles Tax filing reminders, withholding tax alerts, invoice generation, and payment tracking.",
       category: "FINANCE",
       type: "BACKGROUND",
       icon: "🧾",
@@ -154,7 +154,7 @@ async function main() {
       onboardingFee: 1999,
       monthlyFee: 799,
       sortOrder: 3,
-      features: ["GST filing reminders", "TDS alerts", "Automated invoice generation", "Payment tracking", "Outstanding follow-ups", "India-specific compliance", "Tally integration", "Monthly tax summary"]
+      features: ["Tax filing reminders", "withholding tax alerts", "Automated invoice generation", "Payment tracking", "Outstanding follow-ups", "business compliance", "accounting integration", "Monthly tax summary"]
     },
     {
       slug: "peopledesk",

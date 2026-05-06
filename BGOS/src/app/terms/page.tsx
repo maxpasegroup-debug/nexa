@@ -5,7 +5,7 @@ const companyName = "MIB - MAKE IT BEAUTIFUL LLP";
 const brandName = "BGOS";
 const contactEmail = "hello@bgos.online";
 const registeredAddress =
-  "Suite No. A74, Door No. 63/700, D Space, 6th Floor, Sky Tower, Mavoor Road Junction, Bank Road, Kozhikode-673001, Kerala, India";
+  "Registered office details are available on request";
 const updatedAt = "May 3, 2026";
 
 const sections = [
@@ -20,7 +20,7 @@ const sections = [
     title: "2. About BGOS",
     body: [
       `${brandName} is operated by ${companyName}. Our registered address is ${registeredAddress}. You may contact us at ${contactEmail}.`,
-      `${brandName} provides business operating software for Indian SMEs, including lead management, team workflows, dashboards, AI-assisted recommendations, onboarding, marketplace agents, and related business automation tools.`,
+      `${brandName} provides business operating software for growing businesses, including lead management, team workflows, dashboards, AI-assisted recommendations, onboarding, marketplace agents, and related business automation tools.`,
     ],
   },
   {
@@ -34,7 +34,7 @@ const sections = [
     title: "4. Subscription, Setup, and Marketplace Services",
     body: [
       "BGOS may include subscription plans, one-time onboarding or setup fees, trial access, marketplace agent installations, and add-on services.",
-      "Pricing, plan features, billing cycles, setup timelines, and add-on availability may be shown on the website, dashboard, invoice, payment page, or commercial proposal. Taxes, including GST where applicable, may be charged in addition to listed prices.",
+      "Pricing, plan features, billing cycles, setup timelines, and add-on availability may be shown on the website, dashboard, invoice, payment page, or commercial proposal. Taxes, including applicable taxes, may be charged in addition to listed prices.",
     ],
   },
   {
@@ -96,7 +96,7 @@ const sections = [
   {
     title: "13. Governing Law and Jurisdiction",
     body: [
-      "These Terms are governed by the laws of India. Subject to applicable law, courts having jurisdiction over Kozhikode, Kerala, India will have jurisdiction over disputes arising from these Terms or use of BGOS.",
+      "These Terms are governed by the applicable laws. Subject to applicable law, courts having jurisdiction over the applicable jurisdiction will have jurisdiction over disputes arising from these Terms or use of BGOS.",
     ],
   },
   {

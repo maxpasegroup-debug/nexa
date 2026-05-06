@@ -14,8 +14,6 @@
   --coral: #FF6B6B;
   --text: #F0EEF8;
   --muted: #6B6878;
-  --font-heading: var(--font-heading);
-  --font-body: var(--font-body);
 }
 
 [data-subtype="MF"] {
@@ -193,6 +191,8 @@
 html,
 body {
   min-height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 html {

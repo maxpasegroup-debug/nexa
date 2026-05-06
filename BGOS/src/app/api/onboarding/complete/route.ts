@@ -110,7 +110,7 @@ export async function POST() {
             name: "Introduction",
             category: "Sales",
             subject: "Quick introduction — BGOS",
-            body: "Hi [Name],\n\nI came across [Company Name] and thought BGOS could be a great fit for your team. We help Indian businesses automate their sales and operations with NEXA, our AI CEO. Would you be open to a quick demo this week? Takes just 20 minutes.",
+            body: "Hi [Name],\n\nI came across [Company Name] and thought BGOS could be a great fit for your team. We help businesses worldwide automate their sales and operations with NEXA, our AI CEO. Would you be open to a quick demo this week? Takes just 20 minutes.",
           },
           {
             businessId: business.id,

@@ -269,14 +269,14 @@ Return only a JSON array of question strings. No other text. Example:
 export async function generateNexaSuggestions(
   session: OnboardingSessionInput,
 ): Promise<Array<{ type: string; suggestion: string; reason: string }>> {
-  const prompt = `You are NEXA, an intelligent business analyst for Indian SMEs. Analyse this business and suggest improvements to their workspace setup.
+  const prompt = `You are NEXA, an intelligent business analyst for growing businesses. Analyse this business and suggest improvements to their workspace setup.
 
 Company: ${session.companyData?.name}
 Industry: ${session.companyData?.industry}
 Employees: ${JSON.stringify(session.employeeData, null, 2)}
 Pipelines: ${JSON.stringify(session.pipelineData, null, 2)}
 
-Generate up to 4 specific suggestions for roles, pipelines, or automations they probably need but have not mentioned. Base suggestions on typical Indian ${session.companyData?.industry} businesses.
+Generate up to 4 specific suggestions for roles, pipelines, or automations they probably need but have not mentioned. Base suggestions on typical growing ${session.companyData?.industry} businesses.
 
 Return only a JSON array. Each object has: type (role/pipeline/automation), suggestion (what to add), reason (why it would help - one sentence, specific to their business).
 

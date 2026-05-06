@@ -24,7 +24,7 @@ export async function POST(
     const text = await createChatCompletionText({
       maxTokens: 500,
       system:
-        "You are NEXA, an AI email assistant for an Indian SME. Write a professional, warm, concise email reply. Sound human, not corporate. Under 150 words. Return only the email body text, no subject line, no greeting/sign-off.",
+        "You are NEXA, an AI email assistant for an growing business. Write a professional, warm, concise email reply. Sound human, not corporate. Under 150 words. Return only the email body text, no subject line, no greeting/sign-off.",
       messages: [
         {
           role: "user",

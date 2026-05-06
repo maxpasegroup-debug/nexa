@@ -193,7 +193,7 @@ export function AgentOnboardingSession({ session }: { session: AgentSessionView 
                     All set! NEXA has collected everything needed to set up {session.agent.name}.
                   </h2>
                   <p className="mt-3 text-sm leading-6 text-zinc-300">
-                    Next step: Send payment link to {session.bossName}. They pay {money(total)} (setup + first month + GST) and we start the integration.
+                    Next step: Send payment link to {session.bossName}. They pay {money(total)} (setup + first month + taxes) and we start the integration.
                   </p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button

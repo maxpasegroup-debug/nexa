@@ -26,37 +26,26 @@ export default function LandingNavbar() {
           : "border-b border-transparent bg-transparent"
       }`}
     >
-      <nav className="mx-auto flex h-full max-w-[1280px] items-center justify-between px-5 md:px-12">
-        <Link href="/" className="font-heading text-[22px] font-extrabold">
+      <nav className="mx-auto flex h-full max-w-[1280px] items-center justify-between gap-1 px-2 md:gap-2 md:px-12">
+        <Link href="/" className="shrink-0 font-heading text-[18px] font-extrabold md:text-[22px]">
           <span className="text-white">BG</span>
           <span className="text-[#7C6FFF]">OS</span>
         </Link>
 
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="flex min-w-0 items-center justify-end gap-1.5 md:gap-4">
           {[
-            ["Features", "#features"],
-            ["How it works", "#how-it-works"],
-            ["Pricing", "#pricing"],
             ["Marketplace", "/marketplace"],
+            ["Pricing", "#pricing"],
           ].map(([label, href]) => (
             <a
               key={label}
               href={href}
-              className="text-sm font-medium text-[#A5A1B3] transition hover:text-white"
+              className="text-[10px] font-medium text-[#A5A1B3] transition hover:text-white md:text-sm"
             >
               {label}
             </a>
           ))}
-        </div>
-
-        <div className="flex items-center gap-2 md:gap-3">
-          <Link
-            href="/login"
-            className="rounded-md px-2 py-2 text-sm font-medium text-white transition hover:text-[#a89fff] md:border md:border-white/15 md:px-5"
-          >
-            Sign in
-          </Link>
-          <LandingCtaButton className="rounded-md bg-[#7C6FFF] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#9186FF] md:px-5" />
+          <LandingCtaButton className="shrink-0 rounded-md bg-[#7C6FFF] px-2.5 py-2 text-[10px] font-medium text-white transition hover:bg-[#9186FF] md:px-5 md:text-sm" />
         </div>
       </nav>
     </header>

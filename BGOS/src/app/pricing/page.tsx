@@ -89,7 +89,7 @@ export default function PricingPage() {
             </article>
           ))}
         </div>
-        <p className="mt-10 text-center text-xs text-white/40">All plans include 18% GST · Autopay · Cancel anytime</p>
+        <p className="mt-10 text-center text-xs text-white/40">All plans include applicable taxes · Autopay · Cancel anytime</p>
       </section>
 
       <section className="bg-[#080810] py-20">

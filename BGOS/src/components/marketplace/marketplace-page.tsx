@@ -26,6 +26,7 @@ type AgentResponse = {
 declare global {
   interface Window {
     openNexaWidget?: () => void;
+    openMobileNexaChat?: () => void;
     openMarketplaceWidget?: () => void;
   }
 }

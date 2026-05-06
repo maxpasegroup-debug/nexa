@@ -128,12 +128,12 @@ export function AgentPaymentCard({
       <div className="mt-6 rounded-2xl border border-white/10 bg-[#0e0e13] p-5 text-sm">
         <div className="flex justify-between py-2"><span>Onboarding fee (one-time):</span><span>{money(setup)}</span></div>
         <div className="flex justify-between py-2"><span>First month subscription:</span><span>{money(monthly)}</span></div>
-        <div className="flex justify-between py-2"><span>GST 18%:</span><span>{money(gst)}</span></div>
+        <div className="flex justify-between py-2"><span>Tax:</span><span>{money(gst)}</span></div>
         <div className="mt-2 flex justify-between border-t border-white/10 pt-4 font-heading text-lg font-extrabold">
           <span>Total today:</span><span className="text-[#F5A623]">{money(total)}</span>
         </div>
       </div>
-      <p className="mt-4 text-sm text-zinc-400">Then {money(monthlyWithGst)}/month ({money(monthly)} + 18% GST) via autopay</p>
+      <p className="mt-4 text-sm text-zinc-400">Then {money(monthlyWithGst)}/month ({money(monthly)} + applicable taxes) via autopay</p>
       {error ? <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p> : null}
       <button
         type="button"

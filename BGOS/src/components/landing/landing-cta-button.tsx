@@ -17,7 +17,7 @@ export function LandingCtaButton({ className }: LandingCtaButtonProps) {
       onClick={() => window.openNexaWidget?.()}
       className={className}
     >
-      Get a free BGOS setup
+      Get Started
     </button>
   );
 }

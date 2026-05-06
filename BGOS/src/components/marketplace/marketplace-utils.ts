@@ -134,7 +134,7 @@ const positioningBySlug: Record<string, { problem: string; does: string; setup: 
   },
   taxmate: {
     problem: "Stop losing track of finance reminders",
-    does: "Tracks invoices, GST tasks, outstanding payments, and renewals.",
+    does: "Tracks invoices, tax tasks, outstanding payments, and renewals.",
     setup: "Setup in 1-2 days",
   },
 };

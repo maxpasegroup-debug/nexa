@@ -16,10 +16,10 @@ export const AGENT_QUESTIONS: Record<string, string[]> = {
     "What is the business owner's name so NEXA addresses them correctly?",
   ],
   taxmate: [
-    "GST registration number?",
+    "Tax registration number?",
     "Business PAN number?",
-    "Which accounting software are you using — Tally, Busy, or none?",
-    "What are your main GST filing due dates?",
+    "Which accounting software are you using — accounting software, spreadsheets, or none?",
+    "What are your main Tax filing due dates?",
   ],
   sitesync: [
     "How many active projects are running currently?",

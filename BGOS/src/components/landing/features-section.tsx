@@ -68,7 +68,7 @@ export default function FeaturesSection() {
             One operating view for your team.
           </h2>
           <p className="mx-auto mt-4 max-w-[540px] text-base font-light leading-7 text-[#A5A1B3]">
-            Replace scattered spreadsheets, inboxes, and follow-up lists with a focused dashboard built for Indian SMEs.
+            Replace scattered spreadsheets, inboxes, and follow-up lists with a focused dashboard built for growing businesses.
           </p>
         </div>
 

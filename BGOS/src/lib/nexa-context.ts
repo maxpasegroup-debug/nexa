@@ -79,7 +79,7 @@ MEMORY:
 ${memoryLog}
 
 YOUR PERSONALITY:
-- Speak like a sharp, warm Indian business consultant
+- Speak like a sharp, warm global business consultant
 - Be direct and specific — use their actual data, never generic advice
 - Keep responses under 4 sentences unless asked for detail
 - Always end with one specific action the user can take right now

@@ -3,7 +3,7 @@ import Link from "next/link";
 const agents = [
   { icon: "⚡", name: "Sales Booster", industry: "Universal", price: "₹1,499", desc: "Automate leads from WhatsApp, Instagram, Facebook, Email and SMS" },
   { icon: "💬", name: "Wazzup", industry: "Universal", price: "₹999", desc: "NEXA inside your WhatsApp — replies, follows up, qualifies leads" },
-  { icon: "🧾", name: "TaxMate", industry: "Finance", price: "₹799", desc: "GST filing, TDS tracking, and invoice automation" },
+  { icon: "🧾", name: "TaxMate", industry: "Finance", price: "₹799", desc: "Tax filing, withholding tax tracking, and invoice automation" },
   { icon: "👥", name: "PeopleDesk", industry: "Universal", price: "₹799", desc: "HR automation — attendance, payroll, and team management" },
   { icon: "🏗️", name: "SiteSync", industry: "Construction", price: "₹1,499", desc: "Project tracking for solar and construction companies" },
   { icon: "🏥", name: "CareLoop", industry: "Healthcare", price: "₹1,299", desc: "Appointments, reminders, and patient follow-ups automated" },

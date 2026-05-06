@@ -115,7 +115,7 @@ export function ActivateTrialClient({
 
   function validateAutopayStep() {
     if (paymentMethod === "upi" && !upiId.trim()) {
-      setError("Enter your UPI ID to send the mandate request.");
+      setError("Enter your Autopay ID to send the mandate request.");
       return false;
     }
     if (paymentMethod === "card" && (!cardNumber.trim() || !cardExpiry.trim() || !cardCvv.trim())) {
@@ -319,7 +319,7 @@ export function ActivateTrialClient({
 
               <div className="mt-5 grid gap-4 md:grid-cols-3">
                 {[
-                  { key: "upi" as const, title: "UPI Autopay", subtitle: "Most popular in India" },
+                  { key: "upi" as const, title: "Autopay", subtitle: "Most popular autopay option" },
                   { key: "card" as const, title: "Credit or Debit card", subtitle: "Saved for recurring billing" },
                   { key: "netbanking" as const, title: "Net Banking", subtitle: "Bank mandate approval" },
                 ].map((option) => (
@@ -349,7 +349,7 @@ export function ActivateTrialClient({
               <div className="mt-5 rounded-2xl border border-white/10 bg-[#0d0d12] p-5">
                 {paymentMethod === "upi" ? (
                   <label className="text-sm font-medium text-zinc-300">
-                    UPI ID
+                    Autopay ID
                     <input
                       value={upiId}
                       onChange={(event) => setUpiId(event.target.value)}
@@ -357,7 +357,7 @@ export function ActivateTrialClient({
                       className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-[#2ECC8A]"
                     />
                     <span className="mt-3 block text-xs leading-5 text-zinc-500">
-                      Open your UPI app and approve the mandate request. It will appear as BGOS -{" "}
+                      Open your payment app and approve the mandate request. It will appear as BGOS -{" "}
                       {formatAmount(selectedPlanPrice)} autopay mandate.
                     </span>
                   </label>

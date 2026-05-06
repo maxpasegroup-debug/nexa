@@ -60,7 +60,7 @@ async function main() {
         "0": "AI SaaS Platform",
         "1": "2-5 people",
         "2": "Growing customer base",
-        "3": "Kochi, Kerala",
+        "3": "Metro region",
         "4": "Setup complete",
       },
     },

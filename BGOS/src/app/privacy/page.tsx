@@ -5,7 +5,7 @@ const companyName = "MIB - MAKE IT BEAUTIFUL LLP";
 const brandName = "BGOS";
 const contactEmail = "hello@bgos.online";
 const registeredAddress =
-  "Suite No. A74, Door No. 63/700, D Space, 6th Floor, Sky Tower, Mavoor Road Junction, Bank Road, Kozhikode-673001, Kerala, India";
+  "Registered office details are available on request";
 const updatedAt = "May 3, 2026";
 
 const sections = [
@@ -47,7 +47,7 @@ const sections = [
   {
     title: "6. Payments",
     body: [
-      "Payment information may be processed by third-party payment gateways such as Razorpay. BGOS does not store complete card, UPI, banking, or payment instrument details unless expressly shown and permitted through a compliant payment provider.",
+      "Payment information may be processed by third-party payment gateways such as Razorpay. BGOS does not store complete card, banking or payment instrument details unless expressly shown and permitted through a compliant payment provider.",
     ],
   },
   {
@@ -87,7 +87,7 @@ const sections = [
   {
     title: "12. International Processing",
     body: [
-      "Some service providers may process data outside India. Where this occurs, we take reasonable steps to ensure appropriate contractual, technical, and organizational protections.",
+      "Some service providers may process data outside your region. Where this occurs, we take reasonable steps to ensure appropriate contractual, technical, and organizational protections.",
     ],
   },
   {

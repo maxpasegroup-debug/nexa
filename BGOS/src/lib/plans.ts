@@ -4,7 +4,7 @@ export const PLANS = {
     price: 799,
     priceDisplay: "₹799",
     period: "/month",
-    gstNote: "+ 18% GST · autopay",
+    gstNote: "+ applicable taxes · autopay",
     users: 3,
     usersDisplay: "Up to 3 users",
     description:
@@ -26,7 +26,7 @@ export const PLANS = {
     price: 2499,
     priceDisplay: "₹2,499",
     period: "/month",
-    gstNote: "+ 18% GST · autopay",
+    gstNote: "+ applicable taxes · autopay",
     users: 15,
     usersDisplay: "Up to 15 users",
     badge: "★ Most popular",
@@ -50,7 +50,7 @@ export const PLANS = {
     price: 6999,
     priceDisplay: "₹6,999",
     period: "/month",
-    gstNote: "+ 18% GST · autopay",
+    gstNote: "+ applicable taxes · autopay",
     users: 50,
     usersDisplay: "Up to 50 users",
     description:
@@ -100,4 +100,4 @@ export const PLAN_ORDER: PlanKey[] = ["STARTER", "GROWTH", "SCALE", "ENTERPRISE"
 export const BOTTOM_NOTE =
   "Every plan includes a custom workspace built by our team — pipelines, role dashboards, and NEXA configured for your specific business. Not a self-serve tool. 7-day free trial on all plans.";
 
-export const GST_NOTE = "All prices + 18% GST · Autopay · Cancel anytime";
+export const TAX_NOTE = "All prices + applicable taxes · Autopay · Cancel anytime";

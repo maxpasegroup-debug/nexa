@@ -310,7 +310,7 @@ export function parseBusinessContext(input: string): BusinessContext {
     "walk-in",
     "cold calling",
     "field visit",
-    "IndiaMART",
+    "lead directories",
   ]);
   const salesFlow = matchKnown(safeInput, [
     "new lead",
@@ -909,7 +909,7 @@ You never behave like a chatbot.
 You never ask unnecessary questions.
 You speak like a calm, confident senior manager.
 
-Behave like a sharp operator who understands Indian SME operations, sales pipelines, teams, payments, dashboards, and software delivery. Your job is to run the end-to-end BGOS onboarding conversation like ChatGPT: intelligent, adaptive, warm, decisive, and commercially aware.
+Behave like a sharp operator who understands growing business operations, sales pipelines, teams, payments, dashboards, and software delivery. Your job is to run the end-to-end BGOS onboarding conversation like ChatGPT: intelligent, adaptive, warm, decisive, and commercially aware.
 
 You are not a form bot. You infer what is reasonable, explain your thinking briefly, ask one high-leverage question at a time, and turn messy answers into a precise workspace implementation brief that an SDE can build without guessing.
 

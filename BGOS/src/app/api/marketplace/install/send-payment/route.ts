@@ -144,7 +144,7 @@ export async function POST(request: Request) {
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.7">
           <p>${escapeHtml(user.name)} has set up <strong>${escapeHtml(agent.name)}</strong> for <strong>${escapeHtml(business.name)}</strong>.</p>
-          <p>Pay now to activate. Total: <strong>₹${total.toLocaleString("en-IN")}</strong> (₹${onboardingFee.toLocaleString("en-IN")} setup + ₹${monthlyFee.toLocaleString("en-IN")} first month + ₹${gst.toLocaleString("en-IN")} GST).</p>
+          <p>Pay now to activate. Total: <strong>₹${total.toLocaleString("en-IN")}</strong> (₹${onboardingFee.toLocaleString("en-IN")} setup + ₹${monthlyFee.toLocaleString("en-IN")} first month + ₹${gst.toLocaleString("en-IN")} tax).</p>
           <p>After payment our team will integrate it within 24 hours.</p>
           <p><a href="${escapeHtml(paymentUrl)}" style="display:inline-block;background:#F5A623;color:#000;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:bold">Pay now</a></p>
         </div>

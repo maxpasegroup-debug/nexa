@@ -8,6 +8,13 @@ import type { AgentOfferView, MarketplaceAgentView } from "./types";
 import { MarketplaceNexaWidget } from "./marketplace-nexa-widget";
 import { benefitsFor, featuresFor, money, stepsFor } from "./marketplace-utils";
 
+declare global {
+  interface Window {
+    openMobileNexaChat?: () => void;
+    openMarketplaceWidget?: () => void;
+  }
+}
+
 type AgentLandingPageProps = {
   agent: MarketplaceAgentView;
   isInstalled: boolean;
@@ -96,7 +103,7 @@ function MetricsMockup({ agent }: { agent: MarketplaceAgentView }) {
     REAL_ESTATE: ["Site visits", "Matched leads", "Agreements"],
     CONSTRUCTION: ["Milestones", "Site visits", "Delays flagged"],
     RETAIL: ["Orders", "Dealers", "Payments"],
-    FINANCE: ["Invoices", "GST reminders", "Outstanding"],
+    FINANCE: ["Invoices", "Tax reminders", "Outstanding"],
   };
   const selected = labels[agent.category] ?? ["Tasks", "Automations", "Insights"];
 
@@ -199,7 +206,7 @@ export function AgentLandingPage({
             Get {agent.name}
           </button>
           <p className="mt-3 text-[11px] text-zinc-500 md:mt-4 md:text-xs">
-            {money(agent.onboardingFee)} one-time setup + {money(agent.monthlyFee)}/mo · +18% GST · Autopay - cancel anytime
+            {money(agent.onboardingFee)} one-time setup + {money(agent.monthlyFee)}/mo · +applicable taxes · Autopay - cancel anytime
           </p>
         </div>
         <div className="relative z-10 max-h-[280px] overflow-y-auto md:max-h-none md:overflow-visible">
@@ -248,7 +255,7 @@ export function AgentLandingPage({
           <p className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: agent.colorPrimary }}>Pricing</p>
           <h2 className="mt-4 font-heading text-5xl font-extrabold tracking-[-1px]" style={{ color: agent.colorPrimary }}>
             {money(agent.monthlyFee)}
-            <span className="text-xl text-zinc-500">/month + 18% GST</span>
+            <span className="text-xl text-zinc-500">/month + applicable taxes</span>
           </h2>
           <p className="mt-4 text-sm text-zinc-400">
             {money(agent.onboardingFee)} one-time onboarding fee · Set up by our team in 24 hours
@@ -270,7 +277,7 @@ export function AgentLandingPage({
             Get started
           </button>
           <p className="mt-4 text-xs text-zinc-500">
-            Requires active BGOS subscription · Autopay setup · Cancel anytime · +18% GST on all charges
+            Requires active BGOS subscription · Autopay setup · Cancel anytime · +applicable taxes on all charges
           </p>
         </div>
       </section>

@@ -22,7 +22,7 @@ export default function LandingFooter() {
             <span className="text-[#7C6FFF]">OS</span>
           </div>
           <p className="mt-4 max-w-xs text-sm text-[#A5A1B3]">
-            BGOS helps Indian SME owners manage leads, follow-ups, team work,
+            BGOS helps growing business owners manage leads, follow-ups, team work,
             and daily NEXA recommendations from one dashboard.
           </p>
         </div>
@@ -49,7 +49,7 @@ export default function LandingFooter() {
             >
               hello@bgos.online
             </a>
-            <p className="text-sm text-[#A5A1B3]">Made in India for Indian SMEs.</p>
+            <p className="text-sm text-[#A5A1B3]">Built for growing businesses worldwide.</p>
           </div>
         </div>
         <div>

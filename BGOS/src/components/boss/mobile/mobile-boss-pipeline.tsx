@@ -137,7 +137,7 @@ export function MobileBossPipeline({ pipelines, leads = [] }: MobileBossPipeline
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="truncate font-heading text-[13px] font-bold">{lead.company || lead.name}</h2>
-                  <p className="mt-1 truncate text-[11px] text-[var(--muted)]">{lead.name} · India</p>
+                  <p className="mt-1 truncate text-[11px] text-[var(--muted)]">{lead.name} · Global</p>
                 </div>
                 <span
                   className="rounded-full px-2.5 py-1 font-heading text-xs font-extrabold"

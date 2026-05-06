@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { BOTTOM_NOTE, GST_NOTE, PLAN_ORDER, PLANS, type Plan } from "@/lib/plans";
+import { BOTTOM_NOTE, PLAN_ORDER, PLANS, TAX_NOTE, type Plan } from "@/lib/plans";
 
 const teaserAgents = [
   { icon: "⚡", name: "Sales Booster", price: "₹1,499/mo" },
@@ -121,7 +121,7 @@ export default function PricingSection() {
       <p className="mx-auto mt-3 max-w-xl text-center text-sm font-light leading-6 text-[var(--muted)]">
         Every plan includes a custom workspace built by our team. 7-day free trial.
       </p>
-      <p className="mt-2 text-center text-[11px] text-[var(--muted)] opacity-70">{GST_NOTE}</p>
+      <p className="mt-2 text-center text-[11px] text-[var(--muted)] opacity-70">{TAX_NOTE}</p>
 
       <div className="mt-10 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {PLAN_ORDER.map((key) => (

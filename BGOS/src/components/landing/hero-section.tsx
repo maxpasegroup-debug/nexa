@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { LandingCtaButton } from "./landing-cta-button";
@@ -40,17 +41,24 @@ export default function HeroSection() {
   }, [index, typed]);
 
   return (
-    <section id="home" className="relative flex min-h-screen items-center overflow-hidden px-5 pb-20 pt-[120px] text-center md:px-12">
+    <section id="home" className="relative flex min-h-screen items-center overflow-hidden px-5 pb-16 pt-[96px] text-center md:px-12 md:pt-[120px] lg:text-left">
       <div className="pointer-events-none absolute left-1/2 top-[-200px] z-0 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(124,111,255,0.10)_0%,transparent_65%)]" />
       <div className="pointer-events-none absolute bottom-[-120px] right-[-120px] z-0 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(34,217,160,0.06)_0%,transparent_66%)]" />
       <div className="landing-noise pointer-events-none absolute inset-0 z-0 opacity-[0.18]" />
 
-      <div className="relative z-10 mx-auto max-w-6xl">
-        <div className="landing-fade mx-auto inline-flex rounded-full border border-[#7C6FFF]/30 bg-[#7C6FFF]/[0.08] px-3.5 py-1 text-xs text-[#a89fff] [animation-delay:0.2s]">
-          AI CRM and team dashboard for Indian SMEs
-        </div>
+      <div
+        className="relative z-10 mx-auto grid w-full max-w-[calc(100vw-40px)] items-center gap-10 md:max-w-6xl lg:grid-cols-[minmax(0,1fr)_480px]"
+        style={{ maxWidth: "min(72rem, calc(100vw - 40px))" }}
+      >
+        <div>
+          <div
+            className="landing-fade mx-auto inline-flex max-w-full justify-center whitespace-normal break-words rounded-full border border-[#7C6FFF]/30 bg-[#7C6FFF]/[0.08] px-3.5 py-1 text-center text-xs text-[#a89fff] [animation-delay:0.2s] lg:mx-0"
+            style={{ maxWidth: "min(100%, 335px)" }}
+          >
+            AI CRM and team dashboard for growing businesses
+          </div>
 
-        <h1 className="mt-7 font-heading text-[clamp(38px,11vw,56px)] font-extrabold leading-[1.05] md:text-[clamp(56px,7vw,82px)]">
+        <h1 className="mx-auto mt-7 max-w-[335px] font-heading text-[34px] font-extrabold leading-[1.05] md:max-w-[760px] md:text-[56px] lg:mx-0 lg:max-w-none lg:text-[72px]">
           <span className="landing-up block text-white [animation-delay:0.4s]">
             Run leads, tasks,
           </span>
@@ -59,15 +67,15 @@ export default function HeroSection() {
           </span>
         </h1>
 
-        <p className="landing-up mx-auto mt-7 max-w-[620px] text-lg font-light leading-[1.65] text-[#A5A1B3] [animation-delay:0.6s]">
+        <p className="landing-up mx-auto mt-7 max-w-[335px] text-base font-light leading-[1.65] text-[#A5A1B3] [animation-delay:0.6s] md:max-w-[620px] md:text-lg lg:mx-0">
           BGOS gives business owners a clean operating dashboard for CRM, team
           execution, inbox follow-ups, and daily AI recommendations from NEXA.
         </p>
-        <p className="landing-up mx-auto mt-3 max-w-[620px] text-sm font-light leading-6 text-[#F0EEF8] [animation-delay:0.68s]">
+        <p className="landing-up mx-auto mt-3 max-w-[335px] text-sm font-light leading-6 text-[#F0EEF8] [animation-delay:0.68s] md:max-w-[620px] lg:mx-0">
           BGOS is your business dashboard. NEXA is the AI assistant inside it.
         </p>
 
-        <div className="landing-up mt-9 flex flex-col items-center justify-center gap-3 [animation-delay:0.8s] sm:flex-row">
+        <div className="landing-up mt-9 flex flex-col items-center justify-center gap-3 [animation-delay:0.8s] sm:flex-row lg:justify-start">
           <LandingCtaButton className="rounded-lg bg-[#7C6FFF] px-8 py-3.5 text-[15px] font-medium text-white transition hover:-translate-y-0.5 hover:bg-[#9186FF]" />
           <a
             href="#how-it-works"
@@ -78,12 +86,30 @@ export default function HeroSection() {
         </div>
 
         <div className="landing-fade mt-8 [animation-delay:1s]">
-          <p className="text-center text-xs font-light text-[#A5A1B3]">
+          <p
+            className="mx-auto text-center text-xs font-light text-[#A5A1B3] lg:mx-0 lg:text-left"
+            style={{ maxWidth: "min(100%, 335px)" }}
+          >
             Guided setup during trial | Our team contacts you within 2 hours
           </p>
         </div>
 
-        <div className="landing-up mx-auto mt-12 max-w-[560px] rounded-2xl border border-white/10 bg-[#13131c] p-5 text-left shadow-2xl shadow-[#7C6FFF]/5 [animation-delay:1.2s]">
+        </div>
+
+        <div className="landing-up relative mx-auto flex h-[280px] w-[280px] items-end justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#0f0f14] shadow-2xl shadow-[#7C6FFF]/10 [animation-delay:0.55s] md:h-[360px] md:w-[360px] lg:h-[480px] lg:w-[480px]">
+          <div className="absolute h-48 w-48 rounded-full bg-[#7C6FFF]/25 blur-[56px] md:h-64 md:w-64 lg:h-80 lg:w-80" />
+          <Image
+            src="/images/nexa.jpeg"
+            alt="NEXA AI avatar"
+            width={480}
+            height={480}
+            unoptimized
+            priority
+            className="relative z-10 h-full w-full object-cover object-top"
+          />
+        </div>
+
+        <div className="landing-up mx-auto w-full max-w-[560px] rounded-2xl border border-white/10 bg-[#13131c] p-5 text-left shadow-2xl shadow-[#7C6FFF]/5 [animation-delay:1.2s] lg:mx-0">
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#22D9A0]">

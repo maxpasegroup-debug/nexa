@@ -90,7 +90,7 @@ export function WorkspacePreviewClient({ token }: { token: string }) {
   const planKey = data.lead?.selectedPlan && data.lead.selectedPlan in PLANS ? (data.lead.selectedPlan as PlanKey) : "GROWTH";
   const plan = PLANS[planKey];
   const trialNote = plan.price
-    ? `${plan.priceDisplay}/month after 7-day free trial · + 18% GST · Autopay · Cancel anytime`
+    ? `${plan.priceDisplay}/month after 7-day free trial · + applicable taxes · Autopay · Cancel anytime`
     : "Custom plan after 7-day free trial · Annual contract";
 
   return (

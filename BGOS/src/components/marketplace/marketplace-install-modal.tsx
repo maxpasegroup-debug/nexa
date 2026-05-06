@@ -161,9 +161,9 @@ export function InstallModal({
               <h3 className="font-heading text-2xl font-extrabold text-white">Confirm installation</h3>
               <div className="mt-5 space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm">
                 <div className="flex justify-between"><span className="text-zinc-400">Setup fee</span><span>{money(agent.onboardingFee)}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-400">GST 18%</span><span>{money(gst)}</span></div>
+                <div className="flex justify-between"><span className="text-zinc-400">Tax</span><span>{money(gst)}</span></div>
                 <div className="flex justify-between border-t border-white/10 pt-3 font-heading text-lg font-extrabold"><span>Total today</span><span style={{ color: agent.colorPrimary }}>{money(total)}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-400">Monthly autopay</span><span>{money(agent.monthlyFee)} + GST</span></div>
+                <div className="flex justify-between"><span className="text-zinc-400">Monthly autopay</span><span>{money(agent.monthlyFee)} + taxes</span></div>
               </div>
             </div>
           ) : null}
@@ -178,7 +178,7 @@ export function InstallModal({
           {step === 3 ? (
             <div>
               <h3 className="font-heading text-2xl font-extrabold text-white">Autopay setup</h3>
-              <p className="mt-3 text-sm leading-6 text-zinc-400">Your card will be charged {money(agent.monthlyFee)} + GST every month. Cancel anytime from your dashboard.</p>
+              <p className="mt-3 text-sm leading-6 text-zinc-400">Your card will be charged {money(agent.monthlyFee)} + taxes every month. Cancel anytime from your dashboard.</p>
             </div>
           ) : null}
 

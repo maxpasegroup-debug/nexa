@@ -19,15 +19,15 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BGOS - AI Operating System for Indian SMEs",
+  title: "BGOS - AI Operating System for growing businesses",
   description:
-    "BGOS helps Indian SME owners manage leads, team tasks, follow-ups, inboxes, and daily AI recommendations from one operating dashboard.",
+    "BGOS helps growing business owners manage leads, team tasks, follow-ups, inboxes, and daily AI recommendations from one operating dashboard.",
   keywords:
-    "AI CRM India, business automation India, SME software India, lead management India, WhatsApp CRM",
+    "AI CRM, business automation, SME software, lead management, WhatsApp CRM",
   openGraph: {
-    title: "BGOS - AI Operating System for Indian SMEs",
+    title: "BGOS - AI Operating System for growing businesses",
     description:
-      "CRM, team tasks, follow-ups, inboxes, and AI recommendations - built for Indian SMEs.",
+      "CRM, team tasks, follow-ups, inboxes, and AI recommendations - built for growing businesses.",
     url: "https://your-railway-domain.up.railway.app",
     siteName: "BGOS",
     locale: "en_IN",
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BGOS - AI Operating System for Indian SMEs",
-    description: "CRM, team tasks, follow-ups, inboxes, and AI recommendations for Indian SMEs.",
+    title: "BGOS - AI Operating System for growing businesses",
+    description: "CRM, team tasks, follow-ups, inboxes, and AI recommendations for growing businesses.",
   },
   robots: {
     index: true,

@@ -58,7 +58,7 @@ function initialMessage(): ChatMessage {
     id: id(),
     role: "nexa",
     content:
-      "Hi! I am NEXA. I help Indian businesses organize leads, follow-ups, and team work in BGOS. What is your name?",
+      "Hi! I am NEXA. I help businesses worldwide organize leads, follow-ups, and team work in BGOS. What is your name?",
   };
 }
 

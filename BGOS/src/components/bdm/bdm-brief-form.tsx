@@ -37,7 +37,7 @@ const planCommissions = {
 } as const;
 
 const roleSuggestions = ["Owner", "Manager", "Sales Executive", "Technical", "Support"];
-const toolSuggestions = ["Excel", "WhatsApp", "Google Sheets", "Tally", "Zoho"];
+const toolSuggestions = ["Excel", "WhatsApp", "Google Sheets", "Accounting software", "Zoho"];
 
 function emptyRole() {
   return { roleName: "", count: "1", reportsTo: "" };

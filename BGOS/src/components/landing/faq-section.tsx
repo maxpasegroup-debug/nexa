@@ -3,7 +3,7 @@
 const faqs = [
   {
     question: "Who is this for?",
-    answer: "Indian service businesses with 5-50 employees that need clearer lead follow-up, team visibility, and owner-level control.",
+    answer: "service businesses with 5-50 employees that need clearer lead follow-up, team visibility, and owner-level control.",
   },
   {
     question: "How long does setup take?",

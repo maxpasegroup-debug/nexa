@@ -38,7 +38,7 @@ export function TrialActivationBanner({
             Free trial active: {daysRemaining} day{daysRemaining === 1 ? "" : "s"} remaining
           </p>
           <p className="mt-1 text-xs text-zinc-400">
-            You are on the {plan.name} plan · {plan.priceDisplay}/month + 18% GST · Trial ends {date}
+            You are on the {plan.name} plan · {plan.priceDisplay}/month + applicable taxes · Trial ends {date}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
