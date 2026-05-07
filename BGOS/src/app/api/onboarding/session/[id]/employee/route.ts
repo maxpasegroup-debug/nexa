@@ -37,6 +37,7 @@ function employeePayload(body: Record<string, unknown>) {
   const completeness = {
     score: Math.max(0, 100 - missing.length * 30),
     flags: missing,
+    missing,
   };
 
   return {

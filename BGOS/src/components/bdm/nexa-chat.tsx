@@ -21,14 +21,16 @@ export default function NexaChat({ sessionId, initialMessages, isComplete }: Pro
   const [done, setDone] = useState(isComplete);
   const [submitting, setSubmitting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const hasSentInitialMessage = useRef(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    if (messages.length === 0) {
-      void sendMessage("Hello");
+    if (!hasSentInitialMessage.current && initialMessages.length === 0 && messages.length === 0) {
+      hasSentInitialMessage.current = true;
+      void sendMessage("start");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

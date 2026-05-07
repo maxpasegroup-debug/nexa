@@ -66,6 +66,20 @@ export default async function OnboardingPage({ params }: { params: { leadId: str
     });
   }
 
+  if (onboarding && !onboarding.isComplete) {
+    const msgs = Array.isArray(onboarding.messages) ? onboarding.messages : [];
+    const firstMessage = msgs[0] as Record<string, unknown> | undefined;
+    const hasOldData = msgs.length === 0 || firstMessage?.type !== undefined;
+
+    if (hasOldData) {
+      await prisma.onboardingSession.update({
+        where: { id: onboarding.id },
+        data: { messages: [], status: "COLLECTING" },
+      });
+      onboarding = { ...onboarding, messages: [] };
+    }
+  }
+
   return (
     <NexaChat
       sessionId={onboarding.id}
