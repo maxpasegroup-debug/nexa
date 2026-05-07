@@ -1,6 +1,4 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { createChatCompletionText } from "@/lib/openai";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -35,13 +33,13 @@ Rules:
 export async function nexaChat(messages: ChatMessage[], newMessage: string): Promise<string> {
   const conversation = [...messages, { role: "user" as const, content: newMessage }];
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    max_tokens: 300,
-    messages: [{ role: "system", content: SYSTEM_PROMPT }, ...conversation],
+  const response = await createChatCompletionText({
+    system: SYSTEM_PROMPT,
+    messages: conversation,
+    maxTokens: 300,
   });
 
-  return response.choices[0].message.content || "Sorry, I didn't catch that. Can you say that again?";
+  return response || "Sorry, I didn't catch that. Can you say that again?";
 }
 
 export async function generateSummary(
@@ -52,9 +50,9 @@ export async function generateSummary(
     .map((message) => `${message.role === "user" ? "BDM" : "NEXA"}: ${message.content}`)
     .join("\n");
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    max_tokens: 1500,
+  const raw = await createChatCompletionText({
+    system: "Return only valid JSON. No markdown.",
+    maxTokens: 1500,
     messages: [
       {
         role: "user",
@@ -86,7 +84,6 @@ Return ONLY valid JSON. No markdown.`,
     ],
   });
 
-  const raw = response.choices[0].message.content || "{}";
   const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim()) as Record<string, unknown>;
 
   return {
