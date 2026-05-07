@@ -58,7 +58,6 @@ function sessionState(lead: SimpleLead) {
   }
 
   const status = lead.onboardingSession?.status ?? "COLLECTING";
-  const score = lead.onboardingSession?.completenessScore ?? 0;
 
   if (["DELIVERED", "SDE_APPROVED"].includes(status) || lead.onboardingSession?.buildStatus === "PREVIEW") {
     return {
@@ -124,14 +123,8 @@ function sessionState(lead: SimpleLead) {
     started: `Started onboarding: ${timeLabel(lead.onboardingSession?.createdAt ?? lead.updatedAt)}`,
     body: (
       <>
-        <div className="flex items-center gap-3">
-          <span>Completeness:</span>
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.08]">
-            <div className="h-full rounded-full bg-[#7C6FFF]" style={{ width: `${Math.min(100, score)}%` }} />
-          </div>
-          <span>{score}%</span>
-        </div>
-        <p>Status: Session in progress</p>
+        <p>Status: NEXA chat in progress</p>
+        <p>Continue the conversation to submit the workspace brief.</p>
       </>
     ),
     actions: (

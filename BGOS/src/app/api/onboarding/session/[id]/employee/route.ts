@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
-import { checkEmployeeCompleteness } from "@/lib/nexa-onboarding-intelligence";
 import { getString } from "@/lib/onboarding-flow";
 import {
   asRecord,
@@ -30,16 +29,15 @@ function employeePayload(body: Record<string, unknown>) {
   const decisionAuthority = asStringArray(body.decisionAuthority);
   const directReports = asStringArray(body.directReports);
   const communicationPrefs = asRecord(body.communicationPrefs);
-  const completeness = checkEmployeeCompleteness({
-    name,
-    title,
-    email,
-    phone,
-    reportsTo,
-    operatingProcedures,
-    assignedPipelines,
-    decisionAuthority,
-  });
+  const missing = [
+    !name ? "Employee name is missing" : "",
+    !title ? "Employee role is missing" : "",
+    !email ? "Employee email is missing" : "",
+  ].filter(Boolean);
+  const completeness = {
+    score: Math.max(0, 100 - missing.length * 30),
+    flags: missing,
+  };
 
   return {
     data: {

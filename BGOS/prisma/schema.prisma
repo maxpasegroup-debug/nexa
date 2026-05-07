@@ -1108,6 +1108,9 @@ model NexaInsight {
 model OnboardingSession {
   id           String   @id @default(cuid())
   clientId     String?
+  messages     Json     @default("[]")
+  isComplete   Boolean  @default(false)
+  completedAt  DateTime?
   userId       String?  @unique
   user         User?    @relation(fields: [userId], references: [id])
   leadId       String?  @unique

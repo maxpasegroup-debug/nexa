@@ -1,5 +1,7 @@
+import type { Prisma } from "@prisma/client";
+
 import { sendEmail } from "@/lib/email";
-import { calculateCompleteness, generateFinalSummary } from "@/lib/nexa-onboarding-engine";
+import { generateSummary } from "@/lib/nexa-chat";
 import { findLeastLoadedSDE, getInternalBusiness, getString } from "@/lib/onboarding-flow";
 import {
   dueInHours,
@@ -10,6 +12,23 @@ import {
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+type StoredMessage = {
+  role: string;
+  content: string;
+};
+
+function asMessages(value: unknown): StoredMessage[] {
+  return Array.isArray(value)
+    ? value.filter(
+        (message): message is StoredMessage =>
+          message &&
+          typeof message === "object" &&
+          typeof (message as StoredMessage).role === "string" &&
+          typeof (message as StoredMessage).content === "string",
+      )
+    : [];
+}
 
 export async function POST(
   request: Request,
@@ -31,29 +50,22 @@ export async function POST(
       ? `[Submitted by Boss: ${user.name}]\n${rawBdmNotes}`.trim()
       : rawBdmNotes;
 
-    const completeness = calculateCompleteness(session);
-    if (completeness.score < 60) {
-      return jsonError(
-        "Minimum 60% completeness required before submission.",
-      );
+    const messages = asMessages(session.messages);
+    if (messages.length < 4) {
+      return jsonError("Not enough information collected yet.");
     }
 
-    await prisma.onboardingSession.update({
-      where: { id: params.id },
-      data: { selectedPlan, bdmNotes },
-    });
-    const finalSummary = await generateFinalSummary(params.id);
-
+    const finalSummary = await generateSummary(messages, session.clientId || "");
     const internalBusiness = await getInternalBusiness();
     const sde = await findLeastLoadedSDE(internalBusiness?.id ?? user.businessId);
     if (!sde) return jsonError("No SDE available for assignment.", 503);
 
     const companyName =
-      String((session.companyData as Record<string, unknown>)?.name ?? "") ||
+      String(finalSummary.json.companyName || "") ||
       session.lead?.company ||
       session.lead?.name ||
       "Client";
-    const summaryText = finalSummary.readable;
+    const summaryText = finalSummary.text;
 
     const [, task] = await prisma.$transaction([
       prisma.onboardingSession.update({
@@ -64,18 +76,14 @@ export async function POST(
           selectedPlan,
           bdmNotes,
           sdeId: sde.id,
-          completenessScore: completeness.score,
-          completenessBreakdown: completeness.breakdown,
-          canSubmit: true,
-          submissionBlocked: completeness.missing.length
-            ? completeness.missing.join(" | ")
-            : null,
-          summaryText: finalSummary.readable,
-          summaryJson: finalSummary.json,
-          generatedSummary: finalSummary.readable,
-          generatedJson: finalSummary.json,
+          summaryText,
+          summaryJson: finalSummary.json as Prisma.InputJsonObject,
+          generatedSummary: summaryText,
+          generatedJson: finalSummary.json as Prisma.InputJsonObject,
           summaryGenerated: true,
           summaryGeneratedAt: new Date(),
+          isComplete: true,
+          completedAt: new Date(),
         },
       }),
       prisma.task.create({
@@ -108,15 +116,26 @@ export async function POST(
         ? prisma.nexaInsight.create({
             data: {
               businessId: internalBusiness.id,
-              type: "action",
-                message: `${submittedByBoss ? "Boss submitted priority build" : "New build request"} - ${companyName}, ${selectedPlan}. Assigned to ${sde.name}. Due in 24 hours.`,
+              type: "NEW_BUILD_REQUEST",
+              title: `New build request - ${companyName}`,
+              content: `Onboarding submitted by ${user.name}. Summary ready in /sde/workspaces.`,
+              message: `${submittedByBoss ? "Boss submitted priority build" : "New build request"} - ${companyName}, ${selectedPlan}. Assigned to ${sde.name}. Due in 24 hours.`,
+              targetUserId: sde.id,
+              priority: submittedByBoss ? "URGENT" : "HIGH",
               action: "Track onboarding",
             },
           })
         : Promise.resolve(null),
     ]);
 
-    return Response.json({ success: true, sde, task });
+    if (session.leadId) {
+      await prisma.lead.update({
+        where: { id: session.leadId },
+        data: { bdmStatus: "ONBOARDING" },
+      });
+    }
+
+    return Response.json({ success: true, sde, task, summary: summaryText });
   } catch (error) {
     console.error("[onboarding-session:submit]", error);
     return jsonError("Unable to submit onboarding session.", 500);
