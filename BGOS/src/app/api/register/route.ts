@@ -1,6 +1,8 @@
 import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
+import { CAREER7_AUTH_MODEL, getAuthBusinessModel } from "@/lib/auth-business-model";
+import { CAREER7_BUSINESS_MODEL } from "@/lib/career7-wallet";
 import { generateClientId } from "@/lib/client-id";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
@@ -14,8 +16,10 @@ export async function POST(request: Request) {
   if (limited) return limited;
 
   try {
-    const { name, email, password } = await request.json();
+    const { name, email, password, businessModel: rawBusinessModel } = await request.json();
     const userName = String(name ?? "").trim();
+    const businessModel = getAuthBusinessModel(rawBusinessModel);
+    const isCareer7 = businessModel === CAREER7_AUTH_MODEL;
 
     if (!userName || !email || !password) {
       return NextResponse.json(
@@ -42,16 +46,17 @@ export async function POST(request: Request) {
       const business = await tx.business.create({
         data: {
           clientId,
-          name: `${userName}'s Business`,
-          type: "Not set",
-          teamSize: "Not set",
-          goal: "Not set",
+          name: isCareer7 ? `${userName}'s Career7 Workspace` : `${userName}'s Business`,
+          type: isCareer7 ? CAREER7_BUSINESS_MODEL : "Not set",
+          teamSize: isCareer7 ? "1" : "Not set",
+          goal: isCareer7 ? "Career growth" : "Not set",
           healthScore: 50,
+          plan: isCareer7 ? "CAREER7_STARTER" : "STARTER",
         },
         select: { id: true },
       });
 
-      return tx.user.create({
+      const createdUser = await tx.user.create({
         data: {
           name: userName,
           email: normalizedEmail,
@@ -69,6 +74,37 @@ export async function POST(request: Request) {
           updatedAt: true,
         },
       });
+
+      if (isCareer7) {
+        await tx.businessPaymentConfig.upsert({
+          where: {
+            businessModel_businessId: {
+              businessModel: CAREER7_BUSINESS_MODEL,
+              businessId: business.id,
+            },
+          },
+          create: {
+            businessModel: CAREER7_BUSINESS_MODEL,
+            businessId: business.id,
+            enabledGateways: ["MANUAL"],
+            defaultGateway: "MANUAL",
+            currency: "INR",
+            successCallback: "career7.payment.success",
+            failureCallback: "career7.payment.failure",
+          },
+          update: {},
+        });
+
+        await tx.career7CreditWallet.create({
+          data: {
+            businessId: business.id,
+            userId: createdUser.id,
+            balance: 0,
+          },
+        });
+      }
+
+      return createdUser;
     });
 
     return NextResponse.json({ user }, { status: 201 });

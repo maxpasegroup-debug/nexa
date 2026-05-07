@@ -20,3 +20,4 @@ export { Career7Topbar } from "./Career7Topbar";
 export type { Career7TopbarProps } from "./Career7Topbar";
 export { Career7ProgressTracker } from "./Career7ProgressTracker";
 export { NexaAssistant } from "./NexaAssistant";
+export { Career7AuthBoundary } from "./Career7AuthBoundary";

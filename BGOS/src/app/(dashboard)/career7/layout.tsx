@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import auth from "@/lib/auth";
+import { isCareer7Business } from "@/lib/career7-auth";
 import { Career7Sidebar, Career7Topbar, NexaGuide } from "@/components/career7";
+import { prisma } from "@/lib/prisma";
 
 export default async function Career7Layout({
   children,
@@ -10,7 +12,18 @@ export default async function Career7Layout({
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/login");
+    redirect("/login?businessModel=career7&callbackUrl=/career7/dashboard");
+  }
+
+  const business = session.user.businessId
+    ? await prisma.business.findUnique({
+        where: { id: session.user.businessId },
+        select: { type: true, plan: true },
+      })
+    : null;
+
+  if (!isCareer7Business(business)) {
+    redirect("/");
   }
 
   return (

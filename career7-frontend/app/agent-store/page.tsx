@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Career7Badge, Career7Button, Career7Card, Career7EmptyState } from "@/components/career7";
+import { career7Api, getApiErrorMessage, type Career7Agent } from "@/lib/api";
 import { Career7DashboardShell } from "../dashboard-shell";
 
 type AgentCategory =
@@ -17,18 +18,20 @@ type AgentCategory =
   | "Blizzway";
 
 type StoreTab = "All" | AgentCategory;
+type AgentAccent = "indigo" | "cyan" | "emerald" | "amber" | "rose" | "violet" | "slate" | "teal";
 
-type Agent = {
+type StoreAgent = {
   id: string;
+  slug: string;
   icon: string;
   title: string;
   category: AgentCategory;
   description: string;
   price: number;
-  accent: "indigo" | "cyan" | "emerald" | "amber" | "rose" | "violet" | "slate" | "teal";
-  trending?: boolean;
-  featured?: boolean;
-  installs: string;
+  accent: AgentAccent;
+  trending: boolean;
+  featured: boolean;
+  status: string;
 };
 
 const tabs: StoreTab[] = [
@@ -43,140 +46,9 @@ const tabs: StoreTab[] = [
   "Blizzway",
 ];
 
-const agents: Agent[] = [
-  {
-    id: "english-teacher",
-    icon: "EN",
-    title: "English Teacher",
-    category: "Language",
-    description: "Daily workplace speaking drills, vocabulary upgrades, and confidence prompts.",
-    price: 120,
-    accent: "cyan",
-    trending: true,
-    featured: true,
-    installs: "12.4k",
-  },
-  {
-    id: "resume-architect",
-    icon: "CV",
-    title: "Resume Architect",
-    category: "Career",
-    description: "Turns rough experience into proof-led bullets, role fit, and recruiter clarity.",
-    price: 180,
-    accent: "indigo",
-    trending: true,
-    featured: true,
-    installs: "9.8k",
-  },
-  {
-    id: "freelance-finder",
-    icon: "FF",
-    title: "Freelance Finder",
-    category: "Earning",
-    description: "Finds starter gigs, packages your skills, and drafts outreach messages.",
-    price: 160,
-    accent: "emerald",
-    trending: true,
-    installs: "7.2k",
-  },
-  {
-    id: "ielts-coach",
-    icon: "IE",
-    title: "IELTS Coach",
-    category: "Exam",
-    description: "Practice plans for speaking, writing, and timed mock test improvement.",
-    price: 220,
-    accent: "violet",
-    featured: true,
-    installs: "6.5k",
-  },
-  {
-    id: "visa-expert",
-    icon: "VE",
-    title: "Visa Expert",
-    category: "Migration",
-    description: "Organizes country options, document checklists, and next best application steps.",
-    price: 260,
-    accent: "teal",
-    installs: "4.1k",
-  },
-  {
-    id: "money-habit",
-    icon: "$",
-    title: "Money Habit Coach",
-    category: "Finance",
-    description: "Keeps savings goals, spending discipline, and weekly earning targets visible.",
-    price: 140,
-    accent: "amber",
-    trending: true,
-    installs: "8.3k",
-  },
-  {
-    id: "course-builder",
-    icon: "LB",
-    title: "Learning Builder",
-    category: "Learning",
-    description: "Builds a focused skill sprint with lessons, tasks, review days, and milestones.",
-    price: 110,
-    accent: "rose",
-    installs: "5.9k",
-  },
-  {
-    id: "interview-lab",
-    icon: "IL",
-    title: "Interview Lab",
-    category: "Career",
-    description: "Runs mock interviews, tightens answers, and improves role-specific storytelling.",
-    price: 200,
-    accent: "slate",
-    featured: true,
-    installs: "10.1k",
-  },
-  {
-    id: "blizzway-mentor",
-    icon: "BZ",
-    title: "Blizzway Mentor",
-    category: "Blizzway",
-    description: "Premium sprint guidance for proof, mentor readiness, and high-signal growth moves.",
-    price: 340,
-    accent: "indigo",
-    featured: true,
-    installs: "3.7k",
-  },
-  {
-    id: "job-scout",
-    icon: "JS",
-    title: "Job Scout AI",
-    category: "Earning",
-    description: "Shortlists roles, maps fit gaps, and drafts fast application action plans.",
-    price: 190,
-    accent: "cyan",
-    trending: true,
-    installs: "11.6k",
-  },
-  {
-    id: "scholarship-radar",
-    icon: "SR",
-    title: "Scholarship Radar",
-    category: "Migration",
-    description: "Tracks study-abroad funding paths, deadlines, eligibility notes, and task lists.",
-    price: 230,
-    accent: "emerald",
-    installs: "2.9k",
-  },
-  {
-    id: "exam-planner",
-    icon: "EP",
-    title: "Exam Planner",
-    category: "Exam",
-    description: "Creates a calm prep calendar with revision blocks, weak spots, and mock days.",
-    price: 130,
-    accent: "amber",
-    installs: "6.1k",
-  },
-];
+const accentCycle: AgentAccent[] = ["indigo", "cyan", "emerald", "violet", "teal", "amber", "rose", "slate"];
 
-const accentClass: Record<Agent["accent"], string> = {
+const accentClass: Record<AgentAccent, string> = {
   indigo: "from-indigo-600 to-sky-500 shadow-indigo-500/18",
   cyan: "from-cyan-500 to-blue-600 shadow-cyan-500/18",
   emerald: "from-emerald-500 to-teal-600 shadow-emerald-500/18",
@@ -187,13 +59,56 @@ const accentClass: Record<Agent["accent"], string> = {
   teal: "from-teal-500 to-cyan-600 shadow-teal-500/18",
 };
 
-function AgentIcon({ agent }: { agent: Agent }) {
+function toTitleCase(value: string) {
+  return value
+    .toLowerCase()
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function toAgentCategory(value: string | null): AgentCategory {
+  const title = toTitleCase(value || "Career");
+  return tabs.includes(title as StoreTab) && title !== "All" ? (title as AgentCategory) : "Career";
+}
+
+function initials(value: string) {
+  return value
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function mapAgent(agent: Career7Agent, index: number): StoreAgent {
+  return {
+    id: agent.id,
+    slug: agent.slug,
+    icon: agent.icon || initials(agent.name),
+    title: agent.name,
+    category: toAgentCategory(agent.type),
+    description: agent.description,
+    price: agent.creditPrice,
+    accent: accentCycle[index % accentCycle.length],
+    trending: Boolean(agent.isFeatured || (agent.sortOrder !== undefined && agent.sortOrder <= 3)),
+    featured: Boolean(agent.isFeatured),
+    status: agent.status,
+  };
+}
+
+function tabToApiType(tab: StoreTab) {
+  return tab === "All" ? undefined : tab.toUpperCase();
+}
+
+function AgentIcon({ agent }: { agent: StoreAgent }) {
   return (
     <span
       className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-gradient-to-br text-sm font-black text-white shadow-lg ${accentClass[agent.accent]}`}
       aria-hidden="true"
     >
-      {agent.icon}
+      {agent.icon.slice(0, 3).toUpperCase()}
     </span>
   );
 }
@@ -216,7 +131,28 @@ function StoreSectionTitle({
   );
 }
 
-function AgentCard({ agent, compact = false }: { agent: Agent; compact?: boolean }) {
+function LoadingGrid() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {[0, 1, 2, 3, 4, 5].map((item) => (
+        <div key={item} className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-12 w-12 animate-pulse rounded-[16px] bg-slate-200" />
+            <div className="min-w-0 flex-1">
+              <div className="h-4 w-32 animate-pulse rounded-full bg-slate-200" />
+              <div className="mt-2 h-3 w-20 animate-pulse rounded-full bg-slate-100" />
+            </div>
+          </div>
+          <div className="mt-5 h-4 w-full animate-pulse rounded-full bg-slate-100" />
+          <div className="mt-3 h-4 w-4/5 animate-pulse rounded-full bg-slate-100" />
+          <div className="mt-6 h-9 w-full animate-pulse rounded-full bg-slate-200" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AgentCard({ agent }: { agent: StoreAgent }) {
   return (
     <article className="group flex h-full flex-col rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm c7-lift-card">
       <div className="flex items-start gap-3">
@@ -225,7 +161,7 @@ function AgentCard({ agent, compact = false }: { agent: Agent; compact?: boolean
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <Link
-                href={`/agent-store/${agent.id}`}
+                href={`/agent-store/${agent.slug}`}
                 className="block truncate text-base font-black text-slate-950 transition hover:text-indigo-700"
               >
                 {agent.title}
@@ -241,36 +177,36 @@ function AgentCard({ agent, compact = false }: { agent: Agent; compact?: boolean
         </div>
       </div>
 
-      <p className={`mt-4 text-sm leading-6 c7-muted ${compact ? "line-clamp-2" : ""}`}>
-        {agent.description}
-      </p>
+      <p className="mt-4 text-sm leading-6 c7-muted">{agent.description}</p>
 
       <div className="mt-5 flex flex-1 items-end justify-between gap-3">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">
             Credits
           </p>
-          <p className="mt-1 text-lg font-black text-slate-950">{agent.price}</p>
+          <p className="mt-1 text-lg font-black text-slate-950">
+            {agent.price.toLocaleString()}
+          </p>
         </div>
-        <Career7Button type="button" size="sm" variant="dark" className="min-w-20">
-          Add
+        <Career7Button href={`/agent-store/${agent.slug}`} size="sm" variant="dark" className="min-w-20">
+          Details
         </Career7Button>
       </div>
     </article>
   );
 }
 
-function FeaturedAgent({ agent }: { agent: Agent }) {
+function FeaturedAgent({ agent }: { agent: StoreAgent }) {
   return (
     <article className="flex min-h-full flex-col rounded-[22px] border border-white/16 bg-white/12 p-4 text-white ring-1 ring-white/10">
       <div className="flex items-start justify-between gap-4">
         <AgentIcon agent={agent} />
         <span className="rounded-full bg-white/16 px-3 py-1 text-xs font-black text-white/82">
-          {agent.price} credits
+          {agent.price.toLocaleString()} credits
         </span>
       </div>
       <Link
-        href={`/agent-store/${agent.id}`}
+        href={`/agent-store/${agent.slug}`}
         className="mt-6 text-xl font-black tracking-tight transition hover:text-cyan-100"
       >
         {agent.title}
@@ -281,7 +217,7 @@ function FeaturedAgent({ agent }: { agent: Agent }) {
           {agent.category}
         </span>
         <Link
-          href={`/agent-store/${agent.id}`}
+          href={`/agent-store/${agent.slug}`}
           className="inline-flex min-h-10 items-center rounded-full bg-white px-4 text-sm font-black text-slate-950 transition hover:bg-cyan-50"
         >
           Details
@@ -294,24 +230,64 @@ function FeaturedAgent({ agent }: { agent: Agent }) {
 export default function AgentStorePage() {
   const [activeTab, setActiveTab] = useState<StoreTab>("All");
   const [search, setSearch] = useState("");
+  const [agents, setAgents] = useState<StoreAgent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAgents() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await career7Api.getMarketplaceAgents({
+          type: tabToApiType(activeTab),
+        });
+
+        if (!active) return;
+
+        setAgents(response.agents.map(mapAgent));
+      } catch (caught) {
+        if (!active) return;
+        setAgents([]);
+        setError(getApiErrorMessage(caught));
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadAgents();
+
+    return () => {
+      active = false;
+    };
+  }, [activeTab]);
 
   const filteredAgents = useMemo(() => {
     const query = search.trim().toLowerCase();
+    if (!query) return agents;
 
-    return agents.filter((agent) => {
-      const matchesTab = activeTab === "All" || agent.category === activeTab;
-      const matchesSearch =
-        query.length === 0 ||
-        [agent.title, agent.category, agent.description].some((value) =>
-          value.toLowerCase().includes(query),
-        );
+    return agents.filter((agent) =>
+      [agent.title, agent.category, agent.description, agent.status].some((value) =>
+        value.toLowerCase().includes(query),
+      ),
+    );
+  }, [agents, search]);
 
-      return matchesTab && matchesSearch;
-    });
-  }, [activeTab, search]);
+  const featuredAgents = useMemo(() => {
+    const featured = agents.filter((agent) => agent.featured).slice(0, 4);
+    return featured.length > 0 ? featured : agents.slice(0, 4);
+  }, [agents]);
 
-  const featuredAgents = agents.filter((agent) => agent.featured).slice(0, 4);
-  const trendingAgents = agents.filter((agent) => agent.trending).slice(0, 5);
+  const trendingAgents = useMemo(() => {
+    const trending = agents.filter((agent) => agent.trending).slice(0, 5);
+    return trending.length > 0 ? trending : agents.slice(0, 5);
+  }, [agents]);
+
+  const lowestPrice = agents.length > 0 ? Math.min(...agents.map((agent) => agent.price)) : 0;
+  const highestPrice = agents.length > 0 ? Math.max(...agents.map((agent) => agent.price)) : 0;
 
   return (
     <Career7DashboardShell
@@ -337,31 +313,47 @@ export default function AgentStorePage() {
               </p>
             </div>
             <div className="rounded-[22px] bg-white/10 p-4 ring-1 ring-white/10 lg:min-w-48">
-              <p className="text-sm font-bold text-white/62">Dummy balance</p>
-              <p className="mt-2 text-4xl font-black">2,400</p>
-              <p className="mt-1 text-sm text-white/58">credits available</p>
+              <p className="text-sm font-bold text-white/62">Marketplace</p>
+              <p className="mt-2 text-4xl font-black">{agents.length}</p>
+              <p className="mt-1 text-sm text-white/58">Career7 agents</p>
             </div>
           </div>
 
           <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {featuredAgents.map((agent) => (
-              <FeaturedAgent key={agent.id} agent={agent} />
-            ))}
+            {loading ? (
+              [0, 1, 2, 3].map((item) => (
+                <div key={item} className="min-h-56 rounded-[22px] border border-white/10 bg-white/10 p-4">
+                  <div className="h-12 w-12 animate-pulse rounded-[16px] bg-white/20" />
+                  <div className="mt-6 h-5 w-32 animate-pulse rounded-full bg-white/20" />
+                  <div className="mt-4 h-4 w-full animate-pulse rounded-full bg-white/10" />
+                  <div className="mt-3 h-4 w-4/5 animate-pulse rounded-full bg-white/10" />
+                </div>
+              ))
+            ) : featuredAgents.length > 0 ? (
+              featuredAgents.map((agent) => <FeaturedAgent key={agent.id} agent={agent} />)
+            ) : (
+              <div className="md:col-span-2 xl:col-span-4">
+                <Career7EmptyState
+                  title="No featured agents yet"
+                  description="BGOS returned an empty Career7 marketplace. Add Career7 agents in BGOS to populate this shelf."
+                />
+              </div>
+            )}
           </div>
         </div>
 
         <Career7Card as="section" className="flex flex-col justify-between">
           <StoreSectionTitle
             eyebrow="Store pulse"
-            title="Premium picks"
-            description="Dummy marketplace signals for what Career7 users are installing most."
+            title="Marketplace signals"
+            description="Live Career7 agent counts and credit pricing from BGOS marketplace data."
           />
           <div className="mt-5 grid grid-cols-2 gap-3">
             {[
               ["Agents", agents.length.toString()],
               ["Trending", trendingAgents.length.toString()],
-              ["Lowest", "110"],
-              ["Highest", "340"],
+              ["Lowest", lowestPrice.toString()],
+              ["Highest", highestPrice.toString()],
             ].map(([label, value]) => (
               <div key={label} className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
@@ -373,6 +365,12 @@ export default function AgentStorePage() {
           </div>
         </Career7Card>
       </section>
+
+      {error ? (
+        <div className="mt-5 rounded-[24px] border border-rose-200 bg-rose-50 p-4 text-sm font-semibold leading-6 text-rose-700">
+          {error}
+        </div>
+      ) : null}
 
       <section className="mt-5">
         <Career7Card as="div" className="p-4">
@@ -412,27 +410,45 @@ export default function AgentStorePage() {
           <StoreSectionTitle
             eyebrow="Trending"
             title="Fast installs"
-            description="Popular dummy agents with strong day-one usefulness."
+            description="Popular Career7 agents from the currently loaded marketplace view."
           />
           <div className="mt-5 grid gap-3">
-            {trendingAgents.map((agent, index) => (
-              <div key={agent.id} className="flex items-center gap-3 rounded-[20px] bg-slate-50 p-3">
-                <span className="w-6 text-center text-sm font-black text-slate-400">
-                  {index + 1}
-                </span>
-                <AgentIcon agent={agent} />
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/agent-store/${agent.id}`}
-                    className="block truncate text-sm font-black text-slate-950 transition hover:text-indigo-700"
-                  >
-                    {agent.title}
-                  </Link>
-                  <p className="text-xs font-semibold c7-muted">{agent.installs} installs</p>
+            {loading ? (
+              [0, 1, 2, 3, 4].map((item) => (
+                <div key={item} className="flex items-center gap-3 rounded-[20px] bg-slate-50 p-3">
+                  <div className="h-6 w-6 animate-pulse rounded-full bg-slate-200" />
+                  <div className="h-12 w-12 animate-pulse rounded-[16px] bg-slate-200" />
+                  <div className="min-w-0 flex-1">
+                    <div className="h-4 w-28 animate-pulse rounded-full bg-slate-200" />
+                    <div className="mt-2 h-3 w-20 animate-pulse rounded-full bg-slate-100" />
+                  </div>
                 </div>
-                <span className="shrink-0 text-sm font-black text-slate-950">{agent.price}</span>
-              </div>
-            ))}
+              ))
+            ) : trendingAgents.length > 0 ? (
+              trendingAgents.map((agent, index) => (
+                <div key={agent.id} className="flex items-center gap-3 rounded-[20px] bg-slate-50 p-3">
+                  <span className="w-6 text-center text-sm font-black text-slate-400">
+                    {index + 1}
+                  </span>
+                  <AgentIcon agent={agent} />
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/agent-store/${agent.slug}`}
+                      className="block truncate text-sm font-black text-slate-950 transition hover:text-indigo-700"
+                    >
+                      {agent.title}
+                    </Link>
+                    <p className="text-xs font-semibold c7-muted">{agent.category}</p>
+                  </div>
+                  <span className="shrink-0 text-sm font-black text-slate-950">{agent.price}</span>
+                </div>
+              ))
+            ) : (
+              <Career7EmptyState
+                title="No trending agents"
+                description="Trending agents will appear when BGOS returns featured or high-priority Career7 agents."
+              />
+            )}
           </div>
         </Career7Card>
 
@@ -441,21 +457,23 @@ export default function AgentStorePage() {
             <StoreSectionTitle
               eyebrow="Browse"
               title={activeTab === "All" ? "All agents" : `${activeTab} agents`}
-              description={`${filteredAgents.length} dummy agents match your current view.`}
+              description={`${filteredAgents.length} Career7 agent${filteredAgents.length === 1 ? "" : "s"} match your current view.`}
             />
             <Career7Badge tone="slate" className="self-start sm:self-auto">
-              Dummy data only
+              BGOS marketplace
             </Career7Badge>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredAgents.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} />
-            ))}
-          </div>
-
-          {filteredAgents.length === 0 ? (
-            <div className="mt-5">
+          <div className="mt-5">
+            {loading ? (
+              <LoadingGrid />
+            ) : filteredAgents.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredAgents.map((agent) => (
+                  <AgentCard key={agent.id} agent={agent} />
+                ))}
+              </div>
+            ) : (
               <Career7EmptyState
                 title="No agents match this view"
                 description="Try a softer search, switch categories, or return to the full store to keep browsing."
@@ -464,8 +482,8 @@ export default function AgentStorePage() {
                 secondaryLabel="Open Quick Boosts"
                 secondaryHref="/quick-boosts"
               />
-            </div>
-          ) : null}
+            )}
+          </div>
         </section>
       </section>
     </Career7DashboardShell>

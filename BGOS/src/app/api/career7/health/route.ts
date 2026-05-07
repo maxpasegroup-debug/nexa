@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import auth from "@/lib/auth";
+import { getCareer7Context } from "@/lib/career7-auth";
 
 export async function GET() {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await getCareer7Context();
+  if (authResult.response) return authResult.response;
 
   // Placeholder health check
   return NextResponse.json({

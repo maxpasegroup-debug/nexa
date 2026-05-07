@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { getCareer7Context } from "@/lib/career7-auth";
 import {
   type Career7NexaMessage,
   getCareer7NexaReply,
@@ -9,18 +9,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!session.user.businessId) {
-    return NextResponse.json(
-      { error: "Career7 requires a business workspace." },
-      { status: 400 },
-    );
-  }
+  const authResult = await getCareer7Context();
+  if (authResult.response) return authResult.response;
 
   const body = (await request.json()) as {
     message?: string;
@@ -34,8 +24,8 @@ export async function POST(request: Request) {
   }
 
   const reply = await getCareer7NexaReply({
-    userId: session.user.id,
-    businessId: session.user.businessId,
+    userId: authResult.context.userId,
+    businessId: authResult.context.businessId,
     message,
     quickAction: body.quickAction,
     history: body.history,

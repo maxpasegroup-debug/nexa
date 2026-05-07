@@ -45,6 +45,10 @@ export default auth((req) => {
   }
 
   if (pathname === "/login" && session?.user) {
+    if (req.nextUrl.searchParams.get("businessModel") === "career7") {
+      return NextResponse.redirect(new URL("/career7/dashboard", req.url));
+    }
+
     return NextResponse.redirect(new URL(getRoleRedirect(role), req.url));
   }
 
@@ -56,6 +60,13 @@ export default auth((req) => {
   if (pathname.startsWith("/_next/")) return NextResponse.next();
 
   if (!session?.user) {
+    if (pathname.startsWith("/career7")) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("businessModel", "career7");
+      loginUrl.searchParams.set("callbackUrl", `${pathname}${req.nextUrl.search}`);
+      return NextResponse.redirect(loginUrl);
+    }
+
     if (isProd) {
       return NextResponse.redirect(new URL("/login", `https://${BOSS_DOMAIN}`));
     }

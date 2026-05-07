@@ -1,11 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-
-type ChatMessage = {
-  from: "nexa" | "user";
-  text: string;
-};
+import { createInitialNexaState, sendNexaChatRequest } from "@/lib/nexa";
 
 const quickActions = [
   "Plan my next 7 days",
@@ -14,43 +10,47 @@ const quickActions = [
   "Find earning opportunities",
 ];
 
-const placeholderResponses: Record<string, string> = {
-  "Plan my next 7 days":
-    "Here is a focused 7-day sprint: polish your resume, complete one proof task, run two interview drills, and review three high-fit roles before the weekend.",
-  "Improve my resume":
-    "Start with proof. I would tighten each role into impact bullets, add measurable outcomes, and align the top summary to your target job.",
-  "Suggest learning path":
-    "Your learning path should pair communication practice with portfolio proof: English fluency, role-specific projects, then weekly mock interviews.",
-  "Find earning opportunities":
-    "I would scan for fast-fit freelance tasks, entry consulting gigs, and roles where your current proof can create a quick application advantage.",
-};
-
 export function NexaAssistant() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      from: "nexa",
-      text: "Hi Arun, I am NEXA. I can help you choose the next calm, high-leverage career move.",
-    },
-  ]);
+  const [state, setState] = useState(createInitialNexaState);
+  const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const latestNexaMessage = useMemo(
-    () => [...messages].reverse().find((message) => message.from === "nexa")?.text,
-    [messages],
+    () => [...state.messages].reverse().find((message) => message.role === "assistant")?.content,
+    [state.messages],
   );
 
-  function handleQuickAction(action: string) {
+  async function handleSend(message: string, quickAction?: string) {
+    const trimmedMessage = message.trim();
+    if (!trimmedMessage || isSending) {
+      return;
+    }
+
     setOpen(true);
-    setMessages((current) => [
-      ...current,
-      { from: "user", text: action },
-      {
-        from: "nexa",
-        text:
-          placeholderResponses[action] ??
-          "I can help with that. For now, this is a placeholder response until the real AI backend is connected.",
-      },
-    ]);
+    setIsSending(true);
+    setStatusMessage(null);
+
+    const result = await sendNexaChatRequest({
+      message: trimmedMessage,
+      quickAction,
+      state,
+    });
+
+    setState(result.state);
+    setStatusMessage(result.usedFallback ? "Using safe placeholder guidance while NEXA backend is unavailable." : null);
+    setIsSending(false);
+  }
+
+  function handleQuickAction(action: string) {
+    void handleSend(action, action);
+  }
+
+  function handleInputSubmit() {
+    const message = input;
+    setInput("");
+    void handleSend(message);
   }
 
   return (
@@ -65,7 +65,7 @@ export function NexaAssistant() {
                 </p>
                 <h2 className="mt-2 text-xl font-black tracking-tight sm:text-2xl">Career co-pilot</h2>
                 <p className="mt-2 text-sm leading-6 text-white/72">
-                  Warm guidance with placeholder intelligence.
+                  Warm guidance with integration-ready intelligence.
                 </p>
               </div>
               <button
@@ -80,31 +80,44 @@ export function NexaAssistant() {
           </header>
 
           <div className="max-h-[30svh] space-y-3 overflow-y-auto bg-slate-50 p-3 sm:max-h-[46vh] sm:p-4">
-            {messages.map((message, index) => (
+            {state.messages.map((message) => (
               <div
-                key={`${message.from}-${index}`}
-                className={`flex ${message.from === "user" ? "justify-end" : "justify-start"}`}
+                key={message.id}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <p
                   className={`max-w-[86%] rounded-[20px] px-4 py-3 text-sm leading-6 ${
-                    message.from === "user"
+                    message.role === "user"
                       ? "bg-slate-950 font-semibold text-white"
                       : "border border-slate-200 bg-white font-medium text-slate-700"
                   }`}
                 >
-                  {message.text}
+                  {message.content}
                 </p>
               </div>
             ))}
+            {isSending ? (
+              <div className="flex justify-start">
+                <p className="max-w-[86%] rounded-[20px] border border-slate-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-slate-500">
+                  NEXA is thinking...
+                </p>
+              </div>
+            ) : null}
           </div>
 
           <div className="border-t border-slate-200 bg-white p-3 sm:p-4">
+            {statusMessage ? (
+              <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-800">
+                {statusMessage}
+              </p>
+            ) : null}
             <div className="grid gap-2">
               {quickActions.map((action) => (
                 <button
                   key={action}
                   type="button"
                   onClick={() => handleQuickAction(action)}
+                  disabled={isSending}
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-sm font-black text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 sm:px-4 sm:py-3"
                 >
                   {action}
@@ -115,31 +128,22 @@ export function NexaAssistant() {
               <input
                 aria-label="Message NEXA"
                 placeholder="Ask NEXA anything..."
+                value={input}
+                onChange={(event) => setInput(event.currentTarget.value)}
                 className="min-w-0 flex-1 bg-transparent px-2 text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
                 onKeyDown={(event) => {
                   if (event.key !== "Enter") {
                     return;
                   }
-                  const value = event.currentTarget.value.trim();
-                  if (!value) {
-                    return;
-                  }
-                  event.currentTarget.value = "";
-                  setMessages((current) => [
-                    ...current,
-                    { from: "user", text: value },
-                    {
-                      from: "nexa",
-                      text: "That is a smart question. I would turn it into one clear next action, then review your Growth Board before choosing the best agent.",
-                    },
-                  ]);
+                  handleInputSubmit();
                 }}
               />
               <button
                 type="button"
-                onClick={() => handleQuickAction("Plan my next 7 days")}
+                onClick={handleInputSubmit}
+                disabled={isSending}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-black text-white"
-                aria-label="Send placeholder message to NEXA"
+                aria-label="Send message to NEXA"
               >
                 Go
               </button>

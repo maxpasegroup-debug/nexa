@@ -1,18 +1,22 @@
 import Link from "next/link";
+import { getApiBaseUrl } from "@/lib/api";
 
 import { AuthShell, TextField } from "../auth-shared";
 
 export default function SignupPage() {
+  const signupUrl = new URL("/register", getApiBaseUrl());
+  signupUrl.searchParams.set("businessModel", "career7");
+
   return (
     <AuthShell
       eyebrow="NEXA onboarding"
       title="Create your Career7 account"
-      description="Start with a placeholder signup. NEXA onboarding will later personalize your Growth Board, agents, and credits."
+      description="Create your Career7 account through BGOS authentication."
       sideTitle="Meet NEXA before your first career move."
       sideDescription="NEXA will learn your goals, recommend your first Growth Board, and introduce the best agents for your path."
       highlights={["Career profile setup", "Growth Board personalization", "Starter credits walkthrough"]}
     >
-      <form action="/dashboard" className="mt-6 space-y-4">
+      <div className="mt-6 space-y-4">
         <TextField label="Full name" placeholder="Your name" />
         <TextField label="Email address" type="email" placeholder="you@example.com" />
         <TextField label="Password" type="password" placeholder="Create a password" />
@@ -24,10 +28,10 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <button type="submit" className="c7-button-primary w-full">
+        <Link href={signupUrl.toString()} className="c7-button-primary block w-full text-center">
           Create preview account
-        </button>
-      </form>
+        </Link>
+      </div>
 
       <p className="mt-6 text-center text-sm c7-muted">
         Already have an account?{" "}

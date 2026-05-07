@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import {
   Career7Badge,
+  Career7AuthBoundary,
   Career7Sidebar,
   NexaAssistant,
   type Career7NavItem,
@@ -41,6 +42,8 @@ type Career7DashboardShellProps = {
   eyebrow?: string;
   title: string;
   description: string;
+  userName?: string;
+  walletCredits?: number | null;
   breadcrumbs?: { label: string; href?: string }[];
   children: ReactNode;
 };
@@ -50,6 +53,8 @@ export function Career7DashboardShell({
   eyebrow = "AI Career OS",
   title,
   description,
+  userName = "Career7 User",
+  walletCredits,
   breadcrumbs,
   children,
 }: Career7DashboardShellProps) {
@@ -60,6 +65,7 @@ export function Career7DashboardShell({
   ];
 
   return (
+    <Career7AuthBoundary>
     <main className="c7-shell overflow-x-hidden bg-[#f7f9ff] md:grid md:grid-cols-[280px_1fr]">
       <Career7Sidebar
         items={dashboardNavItems}
@@ -122,7 +128,9 @@ export function Career7DashboardShell({
               </label>
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 sm:px-4">
-                  2,400 credits
+                  {walletCredits === null || walletCredits === undefined
+                    ? "Credits loading"
+                    : `${walletCredits.toLocaleString()} credits`}
                 </span>
                 <button
                   type="button"
@@ -132,7 +140,12 @@ export function Career7DashboardShell({
                   !
                 </button>
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-xs font-black text-white">
-                  AK
+                  {userName
+                    .split(" ")
+                    .map((part) => part[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase() || "C7"}
                 </div>
               </div>
             </div>
@@ -177,5 +190,6 @@ export function Career7DashboardShell({
         {nexaEnabledRoutes.has(activeHref) ? <NexaAssistant /> : null}
       </section>
     </main>
+    </Career7AuthBoundary>
   );
 }

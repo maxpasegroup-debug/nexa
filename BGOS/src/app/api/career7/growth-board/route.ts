@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Career7GrowthBoardPath } from "@prisma/client";
 
-import auth from "@/lib/auth";
+import { getCareer7Context } from "@/lib/career7-auth";
 import {
   CAREER7_BUSINESS_MODEL,
   ensureCareer7Wallet,
@@ -22,27 +22,10 @@ function normalizePath(value: unknown): Career7GrowthBoardPath | null {
 }
 
 async function requireCareer7Context() {
-  const session = await auth();
+  const authResult = await getCareer7Context();
+  if (authResult.response) return { error: authResult.response };
 
-  if (!session?.user?.id) {
-    return {
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
-  }
-
-  if (!session.user.businessId) {
-    return {
-      error: NextResponse.json(
-        { error: "Career7 requires a business workspace." },
-        { status: 400 },
-      ),
-    };
-  }
-
-  return {
-    userId: session.user.id,
-    businessId: session.user.businessId,
-  };
+  return authResult.context;
 }
 
 function serializeAgent(agent: {

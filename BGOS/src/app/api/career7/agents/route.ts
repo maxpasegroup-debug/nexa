@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import auth from "@/lib/auth";
+import { getCareer7Context } from "@/lib/career7-auth";
 import {
   getCareer7AgentType,
   getCareer7MarketplaceStatus,
@@ -60,11 +60,8 @@ async function getCareer7Agents({
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authResult = await getCareer7Context();
+    if (authResult.response) return authResult.response;
 
     const { searchParams } = new URL(request.url);
     const growthBoardOnly = searchParams.get("growthBoardOnly") === "true";

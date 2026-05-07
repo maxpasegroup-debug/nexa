@@ -1,4 +1,9 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
 import { Career7Badge, Career7Button, Career7Card, Career7EmptyState } from "@/components/career7";
+import { career7Api, getApiErrorMessage, type Career7WalletResponse, type Career7WalletTransaction } from "@/lib/api";
 import { Career7DashboardShell } from "../dashboard-shell";
 
 type TopUpPackage = {
@@ -8,16 +13,6 @@ type TopUpPackage = {
   bonus: string;
   tone: "indigo" | "cyan" | "emerald" | "amber";
   featured?: boolean;
-};
-
-type Transaction = {
-  id: string;
-  title: string;
-  category: string;
-  amount: number;
-  date: string;
-  status: "Completed" | "Pending";
-  type: "credit" | "debit";
 };
 
 type AgentPrice = {
@@ -34,57 +29,11 @@ const packages: TopUpPackage[] = [
   { name: "Elite", credits: 6400, price: "$79", bonus: "Blizzway-ready pack", tone: "amber" },
 ];
 
-const transactions: Transaction[] = [
-  {
-    id: "txn-1001",
-    title: "Resume Architect",
-    category: "Agent install",
-    amount: -180,
-    date: "Today, 10:18 AM",
-    status: "Completed",
-    type: "debit",
-  },
-  {
-    id: "txn-1002",
-    title: "Growth credit pack",
-    category: "Top-up package",
-    amount: 1300,
-    date: "Yesterday, 6:42 PM",
-    status: "Completed",
-    type: "credit",
-  },
-  {
-    id: "txn-1003",
-    title: "Resume ATS Scan",
-    category: "Quick Boost",
-    amount: -45,
-    date: "May 6, 2026",
-    status: "Completed",
-    type: "debit",
-  },
-  {
-    id: "txn-1004",
-    title: "Blizzway preview",
-    category: "Premium pathway",
-    amount: -120,
-    date: "May 5, 2026",
-    status: "Pending",
-    type: "debit",
-  },
-];
-
 const featuredPricing: AgentPrice[] = [
   { name: "Resume Architect", category: "Career", credits: 180, demand: "High" },
   { name: "English Teacher", category: "Language", credits: 120, demand: "Popular" },
   { name: "IELTS Coach", category: "Exam", credits: 220, demand: "Focused" },
   { name: "Freelance Finder", category: "Earning", credits: 160, demand: "Fast" },
-];
-
-const analytics = [
-  { label: "Agents", value: 42, color: "bg-indigo-600" },
-  { label: "Boosts", value: 28, color: "bg-cyan-500" },
-  { label: "Blizzway", value: 18, color: "bg-emerald-500" },
-  { label: "Reviews", value: 12, color: "bg-amber-400" },
 ];
 
 const toneClass: Record<TopUpPackage["tone"], string> = {
@@ -138,15 +87,106 @@ function TopUpCard({ pack }: { pack: TopUpPackage }) {
         </div>
         <p className="text-2xl font-black text-slate-950">{pack.price}</p>
       </div>
-      <Career7Button type="button" variant={pack.featured ? "primary" : "dark"} size="sm" className="mt-5 w-full">
-        Top Up
+      <Career7Button type="button" variant={pack.featured ? "primary" : "dark"} size="sm" disabled className="mt-5 w-full opacity-60">
+        Payments soon
       </Career7Button>
     </article>
   );
 }
 
+function LoadingPanel() {
+  return (
+    <div className="rounded-[28px] bg-slate-950 p-5 text-white shadow-2xl shadow-slate-950/16">
+      <div className="h-4 w-36 animate-pulse rounded-full bg-white/15" />
+      <div className="mt-5 h-16 w-56 animate-pulse rounded-3xl bg-white/15" />
+      <div className="mt-5 h-4 w-full max-w-xl animate-pulse rounded-full bg-white/10" />
+      <div className="mt-3 h-4 w-4/5 max-w-lg animate-pulse rounded-full bg-white/10" />
+    </div>
+  );
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function summarizeUsage(transactions: Career7WalletTransaction[]) {
+  const spent = transactions
+    .filter((transaction) => transaction.type === "Spent")
+    .reduce((total, transaction) => total + transaction.amount, 0);
+  const added = transactions
+    .filter((transaction) => transaction.type === "Earned")
+    .reduce((total, transaction) => total + transaction.amount, 0);
+  const usageEntries = transactions.filter((transaction) => transaction.type === "Spent").length;
+
+  return { spent, added, usageEntries };
+}
+
+function usageBreakdown(transactions: Career7WalletTransaction[]) {
+  const spentTransactions = transactions.filter((transaction) => transaction.type === "Spent");
+  const total = spentTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+  const buckets = [
+    { label: "Agents", match: "agent", color: "bg-indigo-600" },
+    { label: "Boosts", match: "boost", color: "bg-cyan-500" },
+    { label: "Blizzway", match: "blizzway", color: "bg-emerald-500" },
+    { label: "Reviews", match: "review", color: "bg-amber-400" },
+  ];
+
+  if (total <= 0) {
+    return buckets.map((bucket) => ({ ...bucket, value: 0 }));
+  }
+
+  return buckets.map((bucket) => {
+    const amount = spentTransactions
+      .filter((transaction) => transaction.description.toLowerCase().includes(bucket.match))
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+
+    return {
+      ...bucket,
+      value: Math.round((amount / total) * 100),
+    };
+  });
+}
+
 export default function WalletPage() {
+  const [walletData, setWalletData] = useState<Career7WalletResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadWallet() {
+      try {
+        const response = await career7Api.getWallet();
+        if (!active) return;
+        setWalletData(response);
+      } catch (caught) {
+        if (!active) return;
+        setError(getApiErrorMessage(caught));
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadWallet();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const transactions = useMemo(
+    () => walletData?.wallet.recentTransactions ?? [],
+    [walletData?.wallet.recentTransactions],
+  );
   const hasTransactions = transactions.length > 0;
+  const credits = walletData?.wallet.credits ?? 0;
+  const summary = useMemo(() => summarizeUsage(transactions), [transactions]);
+  const analytics = useMemo(() => usageBreakdown(transactions), [transactions]);
 
   return (
     <Career7DashboardShell
@@ -154,44 +194,56 @@ export default function WalletPage() {
       eyebrow="Wallet"
       title="Wallet & Credits"
       description="Track Career7 credits for boosts, agents, reviews, and premium pathways."
+      walletCredits={walletData?.wallet.credits ?? null}
       breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Wallet" }]}
     >
+      {error ? (
+        <div className="mt-5 rounded-[24px] border border-rose-200 bg-rose-50 p-4 text-sm font-semibold leading-6 text-rose-700">
+          {error}
+        </div>
+      ) : null}
+
       <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.42fr]">
-        <div className="overflow-hidden rounded-[28px] bg-slate-950 p-5 text-white shadow-2xl shadow-slate-950/16">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200">
-                Current balance
-              </p>
-              <div className="mt-4 flex flex-wrap items-end gap-3">
-                <span className="text-6xl font-black tracking-tight sm:text-7xl">2,400</span>
-                <span className="pb-3 text-lg font-bold text-white/64">credits</span>
-              </div>
-              <p className="mt-4 max-w-2xl leading-7 text-white/70">
-                Dummy wallet balance for installing agents, running quick boosts, and previewing
-                premium Blizzway pathways.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
-              {[
-                ["Spent", "345"],
-                ["Added", "1,300"],
-                ["Pending", "120"],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-[22px] bg-white/10 p-4 ring-1 ring-white/10">
-                  <p className="text-sm font-bold text-white/58">{label}</p>
-                  <p className="mt-2 text-2xl font-black">{value}</p>
+        {loading ? (
+          <LoadingPanel />
+        ) : (
+          <div className="overflow-hidden rounded-[28px] bg-slate-950 p-5 text-white shadow-2xl shadow-slate-950/16">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200">
+                  Current balance
+                </p>
+                <div className="mt-4 flex flex-wrap items-end gap-3">
+                  <span className="text-6xl font-black tracking-tight sm:text-7xl">
+                    {credits.toLocaleString()}
+                  </span>
+                  <span className="pb-3 text-lg font-bold text-white/64">credits</span>
                 </div>
-              ))}
+                <p className="mt-4 max-w-2xl leading-7 text-white/70">
+                  Synced from BGOS Career7 wallet data scoped to the authenticated workspace.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+                {[
+                  ["Spent", summary.spent.toLocaleString()],
+                  ["Added", summary.added.toLocaleString()],
+                  ["Usage", summary.usageEntries.toString()],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-[22px] bg-white/10 p-4 ring-1 ring-white/10">
+                    <p className="text-sm font-bold text-white/58">{label}</p>
+                    <p className="mt-2 text-2xl font-black">{value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <Career7Card as="section">
           <SectionTitle
             eyebrow="Spending analytics"
-            title="Preview"
-            description="Dummy breakdown of how credits move across Career7."
+            title="Credit usage"
+            description="Breakdown derived from recent Career7 wallet ledger entries."
           />
           <div className="mt-5 space-y-4">
             {analytics.map((item) => (
@@ -214,10 +266,10 @@ export default function WalletPage() {
           <SectionTitle
             eyebrow="Top-up packages"
             title="Choose a credit pack"
-            description="Payment gateways are not connected yet; these are clean dummy package cards."
+            description="Payment gateways are intentionally disabled in this frontend phase."
           />
           <Career7Badge tone="slate" className="self-start sm:self-auto">
-            Dummy data only
+            Payments not connected
           </Career7Badge>
         </div>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -232,7 +284,7 @@ export default function WalletPage() {
           <SectionTitle
             eyebrow="Featured pricing"
             title="Agent costs"
-            description="Popular dummy agent prices for planning credit spend."
+            description="Reference prices for planning credit spend before adding agents."
           />
           <div className="mt-5 grid gap-3">
             {featuredPricing.map((agent) => (
@@ -254,9 +306,18 @@ export default function WalletPage() {
           <SectionTitle
             eyebrow="Credit usage"
             title="Recent wallet history"
-            description="A trustworthy transaction list UI using dummy activity only."
+            description="Live transaction history from the BGOS Career7 credit ledger."
           />
-          {hasTransactions ? (
+          {loading ? (
+            <div className="mt-5 overflow-hidden rounded-[22px] border border-slate-200">
+              {[0, 1, 2].map((item) => (
+                <div key={item} className="border-b border-slate-200 bg-white p-4 last:border-b-0">
+                  <div className="h-4 w-44 animate-pulse rounded-full bg-slate-200" />
+                  <div className="mt-3 h-3 w-64 animate-pulse rounded-full bg-slate-100" />
+                </div>
+              ))}
+            </div>
+          ) : hasTransactions ? (
             <div className="mt-5 overflow-hidden rounded-[22px] border border-slate-200">
               {transactions.map((transaction) => (
                 <div
@@ -264,34 +325,36 @@ export default function WalletPage() {
                   className="grid gap-3 border-b border-slate-200 bg-white p-4 last:border-b-0 sm:grid-cols-[1fr_auto_auto] sm:items-center"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-black text-slate-950">{transaction.title}</p>
+                    <p className="truncate font-black text-slate-950">{transaction.description}</p>
                     <p className="mt-1 text-sm font-semibold c7-muted">
-                      {transaction.category} - {transaction.date}
+                      {transaction.businessModel} - {formatDate(transaction.date)}
                     </p>
                   </div>
-                  <Career7Badge tone={transaction.status === "Completed" ? "emerald" : "slate"}>
-                    {transaction.status}
+                  <Career7Badge tone={transaction.type === "Earned" ? "emerald" : "slate"}>
+                    {transaction.type}
                   </Career7Badge>
                   <p
                     className={`text-right text-lg font-black ${
-                      transaction.type === "credit" ? "text-emerald-600" : "text-slate-950"
+                      transaction.type === "Earned" ? "text-emerald-600" : "text-slate-950"
                     }`}
                   >
-                    {transaction.type === "credit" ? "+" : ""}
+                    {transaction.type === "Earned" ? "+" : "-"}
                     {transaction.amount.toLocaleString()}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <Career7EmptyState
-              title="No credit activity yet"
-              description="Your future top-ups, boosts, agent installs, and premium pathway spends will appear here."
-              actionLabel="Browse Agent Store"
-              actionHref="/agent-store"
-              secondaryLabel="Run a Quick Boost"
-              secondaryHref="/quick-boosts"
-            />
+            <div className="mt-5">
+              <Career7EmptyState
+                title="No credit activity yet"
+                description="Your future top-ups, boosts, agent installs, and premium pathway spends will appear here."
+                actionLabel="Browse Agent Store"
+                actionHref="/agent-store"
+                secondaryLabel="Open Quick Boosts"
+                secondaryHref="/quick-boosts"
+              />
+            </div>
           )}
         </Career7Card>
       </section>
@@ -301,18 +364,17 @@ export default function WalletPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">
-                Empty state support
+                Career7 scope
               </p>
               <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
-                Wallet states are ready for no-activity users.
+                Wallet data is scoped under businessModel = career7.
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 c7-muted">
-                The page includes an empty history path so the UI still feels complete before a
-                user buys credits or spends anything.
+                This page reads BGOS wallet credits and ledger entries only. Payment gateways stay disabled until the billing phase.
               </p>
             </div>
-            <Career7Button type="button" variant="secondary" className="w-full lg:w-auto">
-              View Credit Policy
+            <Career7Button href="/agent-store" variant="secondary" className="w-full lg:w-auto">
+              Browse Agent Store
             </Career7Button>
           </div>
         </Career7Card>
