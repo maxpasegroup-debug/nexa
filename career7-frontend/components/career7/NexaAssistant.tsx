@@ -54,7 +54,7 @@ export function NexaAssistant() {
   }
 
   return (
-    <div className="fixed bottom-24 right-3 z-40 flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-3 sm:right-4 sm:max-w-[calc(100vw-2rem)] md:bottom-6 md:right-6">
+    <div className="fixed bottom-44 right-3 z-40 flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-3 sm:right-4 sm:max-w-[calc(100vw-2rem)] md:bottom-6 md:right-6">
       {open ? (
         <section className="max-h-[calc(100svh-7rem)] w-[min(390px,calc(100vw-1.5rem))] overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-2xl shadow-slate-950/18 sm:w-[min(390px,calc(100vw-2rem))] sm:rounded-[28px]">
           <header className="c7-gradient-panel rounded-none p-4 shadow-none sm:p-5">

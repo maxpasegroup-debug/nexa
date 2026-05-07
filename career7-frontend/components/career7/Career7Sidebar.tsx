@@ -43,6 +43,7 @@ export function Career7Sidebar({
               key={item.href}
               href={item.href}
               className={cn("c7-nav-item", active && "c7-nav-item-active")}
+              aria-current={active ? "page" : undefined}
             >
               {item.icon ?? <span className="h-2 w-2 rounded-full bg-current opacity-70" />}
               <span className="min-w-0 flex-1 truncate">{item.label}</span>

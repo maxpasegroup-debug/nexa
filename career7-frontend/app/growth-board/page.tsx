@@ -187,6 +187,7 @@ export default function GrowthBoardPage() {
       eyebrow="Growth Board"
       title="Growth Board"
       description="Your visual command board for learning, earning, agents, and career momentum."
+      breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Growth Board" }]}
     >
       <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.72fr]">
         <Career7GradientPanel>
