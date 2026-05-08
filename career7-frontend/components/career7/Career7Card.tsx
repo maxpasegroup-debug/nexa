@@ -2,12 +2,12 @@ import type { HTMLAttributes, ReactNode } from "react";
 
 import { cn } from "./utils";
 
-type CardVariant = "default" | "compact" | "agent" | "plain";
+type CardVariant = "default" | "compact" | "companion" | "plain";
 
 const variantClass: Record<CardVariant, string> = {
   default: "c7-card min-w-0 max-w-[calc(100vw-2rem)] md:max-w-none",
   compact: "c7-card-compact min-w-0 max-w-[calc(100vw-2rem)] md:max-w-none",
-  agent: "c7-agent-card min-w-0 max-w-[calc(100vw-2rem)] md:max-w-none",
+  companion: "c7-companion-card min-w-0 max-w-[calc(100vw-2rem)] md:max-w-none",
   plain: "min-w-0 max-w-[calc(100vw-2rem)] rounded-[22px] border border-slate-200 bg-white md:max-w-none",
 };
 

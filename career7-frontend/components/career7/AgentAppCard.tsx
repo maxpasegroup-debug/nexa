@@ -39,7 +39,7 @@ export function AgentAppCard({
   className,
 }: AgentAppCardProps) {
   return (
-    <a href={href} className={cn("c7-agent-card block overflow-hidden p-4 transition hover:-translate-y-1", className)}>
+    <a href={href} className={cn("c7-companion-card block overflow-hidden p-4 transition hover:-translate-y-1", className)}>
       <div className={cn("rounded-[20px] bg-gradient-to-br p-5 text-white shadow-lg shadow-indigo-500/20", accentClass[accent])}>
         <div className="flex items-center justify-between gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 text-sm font-black">

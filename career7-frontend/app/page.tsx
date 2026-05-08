@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const navItems = [
-  { label: "NEXA", href: "#nexa" },
-  { label: "Growth Board", href: "#growth-board" },
-  { label: "Agent Store", href: "#agent-store" },
+  { label: "Guardian Angel AI", href: "#guardian-angel-ai" },
+  { label: "My Pathway", href: "#growth-board" },
+  { label: "Magic Market", href: "#companion-store" },
   { label: "Credits", href: "#credits" },
 ];
 
@@ -15,11 +15,11 @@ const heroSignals = [
 
 const growthSteps = [
   ["Discover", "Understand your role fit, skill gaps, and ambition map."],
-  ["Build", "Turn goals into daily learning, proof, projects, and practice."],
+  ["Build", "Turn goals into daily Learning Garden, proof, projects, and practice."],
   ["Earn", "Unlock boosts, gigs, mentors, and marketplace opportunities."],
 ];
 
-const agents = [
+const companions = [
   {
     name: "Resume Architect",
     tag: "Profile",
@@ -51,13 +51,13 @@ const footerLinks = [
 
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-3" aria-label="Career7 home">
+    <Link href="/" className="flex items-center gap-3" aria-label="Blizzway home">
       <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white shadow-lg shadow-indigo-500/15">
-        C7
+        BW
       </span>
       <span>
-        <span className="block text-base font-black tracking-tight text-slate-950">Career7</span>
-        <span className="block text-xs font-semibold c7-muted">AI Career OS</span>
+        <span className="block text-base font-black tracking-tight text-slate-950">Blizzway</span>
+        <span className="block text-xs font-semibold c7-muted">The Magical Career Pathway</span>
       </span>
     </Link>
   );
@@ -122,14 +122,14 @@ export default function Home() {
           <div>
             <span className="c7-badge">
               <span className="h-2 w-2 rounded-full bg-cyan-500" />
-              Premium AI career ecosystem
+              Premium AI career ecosystem - Powered by NEXA
             </span>
             <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-tight text-slate-950 sm:text-6xl lg:text-7xl">
-              Your <span className="c7-gradient-text">AI Career OS</span> for learning,
-              earning, and growth.
+              Your <span className="c7-gradient-text">The Magical Career Pathway</span> for Learning Garden,
+              Earning Universe, and growth.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 c7-muted">
-              Career7 brings NEXA, growth boards, career agents, quick boosts,
+              Blizzway brings Guardian Angel AI, My Pathways, career companions, quick boosts,
               premium pathways, and credits into one friendly workspace.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -145,7 +145,7 @@ export default function Home() {
           <div className="c7-card p-4 sm:p-5">
             <div className="c7-gradient-panel rounded-[24px] p-5">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">
-                NEXA career command
+                Guardian Angel AI career command
               </p>
               <h2 className="mt-3 text-2xl font-black tracking-tight">Today&apos;s plan</h2>
               <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
@@ -170,18 +170,18 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="nexa" className="px-4 py-14 sm:px-6 lg:px-8">
+      <section id="guardian-angel-ai" className="px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div className="c7-sidebar rounded-[28px] p-6 shadow-2xl shadow-slate-950/20">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200">Meet NEXA</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200">Meet Guardian Angel AI</p>
             <h2 className="mt-3 text-4xl font-black tracking-tight text-white">Your career co-pilot.</h2>
             <p className="mt-4 leading-7 text-white/68">
-              NEXA understands your goals, reads your progress, recommends the next
+              Guardian Angel AI understands your goals, reads your progress, recommends the next
               move, and keeps your career growth from becoming scattered.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
-            {["Plan weekly moves", "Find skill gaps", "Recommend agents"].map((item) => (
+            {["Plan weekly moves", "Find skill gaps", "Recommend companions"].map((item) => (
               <article key={item} className="c7-card p-5">
                 <div className="c7-icon-tile">{item.slice(0, 2).toUpperCase()}</div>
                 <h3 className="mt-5 text-lg font-black text-slate-950">{item}</h3>
@@ -197,9 +197,9 @@ export default function Home() {
       <section id="growth-board" className="px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <SectionIntro
-            eyebrow="Growth Board"
+            eyebrow="My Pathway"
             title="A visual board for your career momentum."
-            desc="Your Growth Board turns ambition into visible actions: learn, build, earn, and launch."
+            desc="Your My Pathway turns ambition into visible actions: learn, build, earn, and launch."
           />
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {growthSteps.map(([title, desc], index) => (
@@ -213,28 +213,28 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="agent-store" className="px-4 py-14 sm:px-6 lg:px-8">
+      <section id="companion-store" className="px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">Agent Store</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">Magic Market</p>
               <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-                App-store style career agents.
+                App-store style career companions.
               </h2>
             </div>
             <Link href="/agent-store" className="c7-button-secondary">Preview store</Link>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {agents.map((agent) => (
-              <article key={agent.name} className="c7-agent-card overflow-hidden p-4">
-                <div className={`rounded-[20px] bg-gradient-to-br ${agent.accent} p-5 text-white shadow-lg shadow-indigo-500/20`}>
+            {companions.map((companion) => (
+              <article key={companion.name} className="c7-companion-card overflow-hidden p-4">
+                <div className={`rounded-[20px] bg-gradient-to-br ${companion.accent} p-5 text-white shadow-lg shadow-indigo-500/20`}>
                   <div className="flex items-center justify-between">
-                    <AgentIcon name={agent.name} />
-                    <span className="rounded-full bg-white/18 px-2.5 py-1 text-xs font-bold">{agent.tag}</span>
+                    <AgentIcon name={companion.name} />
+                    <span className="rounded-full bg-white/18 px-2.5 py-1 text-xs font-bold">{companion.tag}</span>
                   </div>
-                  <h3 className="mt-8 text-xl font-black">{agent.name}</h3>
+                  <h3 className="mt-8 text-xl font-black">{companion.name}</h3>
                 </div>
-                <p className="px-1 pt-4 text-sm leading-6 c7-muted">{agent.desc}</p>
+                <p className="px-1 pt-4 text-sm leading-6 c7-muted">{companion.desc}</p>
               </article>
             ))}
           </div>
@@ -245,21 +245,21 @@ export default function Home() {
         <div className="c7-section mx-auto grid max-w-7xl gap-6 p-6 lg:grid-cols-2 lg:p-8">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-600">
-              Learning + Earning
+              Learning Garden + Earning Universe
             </p>
             <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">
               Learn the skill. Build the proof. Earn from momentum.
             </h2>
             <p className="mt-4 leading-7 c7-muted">
-              Career7 is designed as an ecosystem, not a course library. Learning,
-              practice, proof-of-work, mentors, agents, and earning paths live together.
+              Blizzway is designed as an ecosystem, not a course library. Learning Garden,
+              practice, proof-of-work, mentors, companions, and Earning Universe paths live together.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {["Skill tracks", "Proof projects", "Mentor reviews", "Opportunity paths"].map((item) => (
               <div key={item} className="c7-card-compact p-4">
                 <p className="font-black text-slate-950">{item}</p>
-                <p className="mt-2 text-sm leading-6 c7-muted">Connected to your Growth Board.</p>
+                <p className="mt-2 text-sm leading-6 c7-muted">Connected to your My Pathway.</p>
               </div>
             ))}
           </div>
@@ -294,7 +294,7 @@ export default function Home() {
             </h2>
             <p className="mt-4 leading-7 text-white/72">
               Blizzway is the high-touch pathway teaser for ambitious users who want a
-              more guided, premium route through learning, proof, review, and launch.
+              more guided, premium route through Learning Garden, proof, review, and launch.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -313,11 +313,11 @@ export default function Home() {
           <div>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-600">Credits + Wallet</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-              One wallet for boosts, agents, and premium guidance.
+              One wallet for boosts, companions, and premium guidance.
             </h2>
             <p className="mt-4 max-w-2xl leading-7 c7-muted">
-              Credits make Career7 flexible. Spend them on Quick Boosts, agent actions,
-              Blizzway upgrades, reviews, and future earning ecosystem features.
+              Credits make Blizzway flexible. Spend them on Quick Boosts, companion actions,
+              Blizzway upgrades, reviews, and future Earning Universe ecosystem features.
             </p>
           </div>
           <div className="c7-card p-5">
@@ -325,7 +325,7 @@ export default function Home() {
               <p className="text-sm text-white/60">Available credits</p>
               <p className="mt-2 text-5xl font-black">2,400</p>
               <div className="mt-6 space-y-3">
-                {["Resume boost - 120", "Interview drill - 180", "Agent action - 60"].map((item) => (
+                {["Resume boost - 120", "Interview drill - 180", "companion action - 60"].map((item) => (
                   <div key={item} className="flex justify-between rounded-2xl bg-white/8 p-3 text-sm">
                     <span>{item.split(" - ")[0]}</span>
                     <span className="font-bold">{item.split(" - ")[1]}</span>
@@ -339,12 +339,12 @@ export default function Home() {
 
       <section className="px-4 py-16 sm:px-6 lg:px-8">
         <div className="c7-section mx-auto max-w-5xl p-6 text-center sm:p-10">
-          <span className="c7-badge">Career7 Phase 1</span>
+          <span className="c7-badge">Blizzway Phase 1</span>
           <h2 className="mt-5 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
             Build your next career move with an AI OS.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl leading-7 c7-muted">
-            Start with clarity, keep momentum on the Growth Board, and use agents
+            Start with clarity, keep momentum on the My Pathway, and use companions
             whenever your next step needs more intelligence.
           </p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">

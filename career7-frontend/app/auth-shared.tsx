@@ -23,13 +23,13 @@ export function AuthShell({
   return (
     <main className="c7-shell grid min-h-screen lg:grid-cols-[0.92fr_1.08fr]">
       <section className="c7-sidebar hidden min-h-screen flex-col justify-between p-8 lg:flex">
-        <Link href="/" className="flex items-center gap-3" aria-label="Career7 home">
+        <Link href="/" className="flex items-center gap-3" aria-label="Blizzway home">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-sm font-black text-indigo-600">
-            C7
+            BW
           </span>
           <span>
-            <span className="block text-lg font-black tracking-tight text-white">Career7</span>
-            <span className="block text-xs font-semibold text-white/45">AI Career OS</span>
+            <span className="block text-lg font-black tracking-tight text-white">Blizzway</span>
+            <span className="block text-xs font-semibold text-white/45">The Magical Career Pathway</span>
           </span>
         </Link>
 
@@ -54,11 +54,11 @@ export function AuthShell({
       <section className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-10">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center justify-between lg:hidden">
-            <Link href="/" className="flex items-center gap-3" aria-label="Career7 home">
+            <Link href="/" className="flex items-center gap-3" aria-label="Blizzway home">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-xs font-black text-white">
-                C7
+                BW
               </span>
-              <span className="text-base font-black text-slate-950">Career7</span>
+              <span className="text-base font-black text-slate-950">Blizzway</span>
             </Link>
             <span className="c7-badge">Preview</span>
           </div>

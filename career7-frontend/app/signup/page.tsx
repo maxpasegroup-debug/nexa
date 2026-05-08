@@ -9,12 +9,12 @@ export default function SignupPage() {
 
   return (
     <AuthShell
-      eyebrow="NEXA onboarding"
-      title="Create your Career7 account"
-      description="Create your Career7 account through BGOS authentication."
-      sideTitle="Meet NEXA before your first career move."
-      sideDescription="NEXA will learn your goals, recommend your first Growth Board, and introduce the best agents for your path."
-      highlights={["Career profile setup", "Growth Board personalization", "Starter credits walkthrough"]}
+      eyebrow="Guardian Angel AI onboarding"
+      title="Create your Blizzway account"
+      description="Create your Blizzway account through BGOS authentication."
+      sideTitle="Meet Guardian Angel AI before your first career move."
+      sideDescription="Guardian Angel AI will learn your goals, recommend your first My Pathway, and introduce the best companions for your path."
+      highlights={["Career profile setup", "My Pathway personalization", "Starter credits walkthrough"]}
     >
       <div className="mt-6 space-y-4">
         <TextField label="Full name" placeholder="Your name" />
@@ -22,9 +22,9 @@ export default function SignupPage() {
         <TextField label="Password" type="password" placeholder="Create a password" />
 
         <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
-          <p className="text-sm font-black text-indigo-700">NEXA onboarding preview</p>
+          <p className="text-sm font-black text-indigo-700">Guardian Angel AI onboarding preview</p>
           <p className="mt-1 text-sm leading-6 text-indigo-700/75">
-            After signup, NEXA will ask about your goals, current stage, skills, and preferred growth path.
+            After signup, Guardian Angel AI will ask about your goals, current stage, skills, and preferred growth path.
           </p>
         </div>
 

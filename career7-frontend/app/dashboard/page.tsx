@@ -24,7 +24,7 @@ const visionItems = [
 ];
 
 const tasks = [
-  { time: "10:00 AM", title: "Run NEXA resume pass", tag: "Boost" },
+  { time: "10:00 AM", title: "Run Guardian Angel AI resume pass", tag: "Boost" },
   { time: "01:30 PM", title: "Add portfolio proof note", tag: "Vault" },
   { time: "05:00 PM", title: "Practice behavioral answer", tag: "Interview" },
 ];
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       if (profileResult.status === "fulfilled") {
         nextData.profile = profileResult.value;
       } else {
-        nextErrors.push("Career7 profile is not available yet.");
+        nextErrors.push("Blizzway profile is not available yet.");
       }
 
       if (sessionResult.status === "fulfilled") {
@@ -146,7 +146,7 @@ export default function DashboardPage() {
       if (boardResult.status === "fulfilled") {
         nextData.growthBoard = boardResult.value;
       } else {
-        nextErrors.push("Growth Board summary could not be loaded.");
+        nextErrors.push("My Pathway summary could not be loaded.");
       }
 
       setData(nextData);
@@ -162,7 +162,7 @@ export default function DashboardPage() {
   }, []);
 
   const userName = useMemo(
-    () => data.profile?.name || data.session?.user?.name || "Career7 User",
+    () => data.profile?.name || data.session?.user?.name || "Blizzway User",
     [data.profile?.name, data.session?.user?.name],
   );
   const score = boundedScore(data.metrics?.metrics.careerScore);
@@ -176,8 +176,8 @@ export default function DashboardPage() {
   return (
     <Career7DashboardShell
       activeHref="/dashboard"
-      title={loading ? "Loading your Career7 workspace" : `Good morning, ${firstName(userName)}`}
-      description="NEXA has prepared your next best growth actions."
+      title={loading ? "Loading your Blizzway workspace" : `Good morning, ${firstName(userName)}`}
+      description="Guardian Angel AI has prepared your next best growth actions."
       userName={userName}
       walletCredits={walletCredits}
     >
@@ -192,7 +192,7 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">
-                NEXA insight
+                Guardian Angel AI insight
               </p>
               <h2 className="mt-3 max-w-2xl text-[1.65rem] font-black leading-tight tracking-tight sm:text-4xl">
                 {loading
@@ -201,8 +201,8 @@ export default function DashboardPage() {
               </h2>
               <p className="mt-4 max-w-2xl leading-7 text-white/72">
                 {boardTotal > 0
-                  ? `You have ${boardTotal} active Growth Board agent${boardTotal === 1 ? "" : "s"} across learning and earning.`
-                  : "Add your first Growth Board agent when you are ready to turn planning into action."}
+                  ? `You have ${boardTotal} active My Pathway companion${boardTotal === 1 ? "" : "s"} across Learning Garden and Earning Universe.`
+                  : "Add your first My Pathway companion when you are ready to turn planning into action."}
               </p>
             </div>
             <div className="rounded-[24px] bg-white/14 p-5 ring-1 ring-white/14 lg:min-w-52">
@@ -223,7 +223,7 @@ export default function DashboardPage() {
               <WidgetTitle
                 eyebrow="Career Score"
                 title={score === null ? "Not scored yet" : `${score} / 100`}
-                description="Loaded from the Career7 metrics API."
+                description="Loaded from the Blizzway metrics API."
               />
               <div className="mt-6">
                 <div className="h-3 rounded-full bg-slate-200">
@@ -272,23 +272,23 @@ export default function DashboardPage() {
 
         <Career7Card as="section">
           <WidgetTitle
-            eyebrow="Growth Board"
-            title={loading ? "Loading board" : `${boardTotal} active agents`}
-            description="Live summary from your Career7 Growth Board."
+            eyebrow="My Pathway"
+            title={loading ? "Loading board" : `${boardTotal} active companions`}
+            description="Live summary from your Blizzway My Pathway."
           />
           <div className="mt-6 grid gap-3">
             {loading ? (
-              <LoadingBlock label="Loading Growth Board" />
+              <LoadingBlock label="Loading My Pathway" />
             ) : boardTotal === 0 ? (
               <EmptyState
-                title="No active agents yet"
-                description="Your Growth Board is ready. Add a learning or earning agent to start tracking momentum."
+                title="No active companions yet"
+                description="Your My Pathway is ready. Add a Learning Garden or Earning Universe companion to start tracking momentum."
               />
             ) : (
               [
-                ["Learning", learningCount],
-                ["Earning", earningCount],
-                ["Available agents", marketplaceCount],
+                ["Learning Garden", learningCount],
+                ["Earning Universe", earningCount],
+                ["Available companions", marketplaceCount],
               ].map(([label, value], index) => (
                 <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <p className="text-xs font-black text-indigo-600">0{index + 1}</p>
@@ -304,7 +304,7 @@ export default function DashboardPage() {
           <WidgetTitle
             eyebrow="Wallet Credits"
             title={walletCredits === null ? "Loading credits" : `${walletCredits.toLocaleString()} credits`}
-            description="Live wallet balance for boosts, agents, and premium reviews."
+            description="Live wallet balance for boosts, companions, and premium reviews."
           />
           <div className="mt-6 rounded-[24px] bg-slate-950 p-5 text-white">
             <p className="text-sm text-white/60">Available now</p>
@@ -357,11 +357,11 @@ export default function DashboardPage() {
             <h2 className="mt-3 max-w-2xl text-[1.65rem] font-black leading-tight tracking-tight sm:text-3xl">
               {data.session?.user?.email || data.profile?.email
                 ? `Signed in as ${data.session?.user?.email ?? data.profile?.email}`
-                : "Your BGOS session keeps Career7 scoped to your workspace."}
+                : "Your BGOS session keeps Blizzway scoped to your workspace."}
             </h2>
             <p className="mt-4 max-w-2xl leading-7 text-white/72">
               {data.profile
-                ? "Career7 profile data loaded successfully."
+                ? "Blizzway profile data loaded successfully."
                 : "Profile endpoint is not available yet, so the dashboard is using BGOS session data safely."}
             </p>
           </div>

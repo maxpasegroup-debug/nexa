@@ -25,13 +25,13 @@ export function Career7Sidebar({
 }: Career7SidebarProps) {
   return (
     <aside className={cn("c7-sidebar flex min-h-screen flex-col px-5 py-6", className)}>
-      <Link href="/" className="flex items-center gap-3" aria-label="Career7 home">
+      <Link href="/" className="flex items-center gap-3" aria-label="Blizzway home">
         <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-sm font-black text-indigo-600 shadow-lg shadow-indigo-950/25">
-          C7
+          BW
         </span>
         <span>
-          <span className="block text-lg font-black tracking-tight text-white">Career7</span>
-          <span className="block text-xs font-semibold text-white/45">AI Career OS</span>
+          <span className="block text-lg font-black tracking-tight text-white">Blizzway</span>
+          <span className="block text-xs font-semibold text-white/45">The Magical Career Pathway</span>
         </span>
       </Link>
 
@@ -60,7 +60,7 @@ export function Career7Sidebar({
       <div className="mt-auto pt-8">
         {footer ?? (
           <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">NEXA</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">Guardian Angel AI</p>
             <p className="mt-2 text-sm font-semibold leading-6 text-white/78">
               Your next career action stays visible here.
             </p>

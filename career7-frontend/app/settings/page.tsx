@@ -8,7 +8,7 @@ export default function SettingsPage() {
       title="Settings"
       description="Manage profile preferences, workspace defaults, notifications, and future account controls."
       previewTitle="Simple controls for a premium career workspace."
-      previewDescription="Settings will eventually hold profile, notification, privacy, billing, NEXA preferences, and connected account controls."
+      previewDescription="Settings will eventually hold profile, notification, privacy, billing, Guardian Angel AI preferences, and connected account controls."
       highlights={["Profile", "Alerts", "Preferences"]}
     />
   );

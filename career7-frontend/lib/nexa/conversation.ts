@@ -37,7 +37,7 @@ export function createInitialNexaState(): NexaConversationState {
     messages: [
       createNexaMessage(
         "assistant",
-        "Hi Arun, I am NEXA. I can help you choose the next calm, high-leverage career move.",
+        "Hi Arun, I am Guardian Angel AI. I can help you choose the next calm, high-leverage career move.",
       ),
     ],
     memory: {},

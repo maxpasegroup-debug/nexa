@@ -33,7 +33,7 @@ const featuredPricing: AgentPrice[] = [
   { name: "Resume Architect", category: "Career", credits: 180, demand: "High" },
   { name: "English Teacher", category: "Language", credits: 120, demand: "Popular" },
   { name: "IELTS Coach", category: "Exam", credits: 220, demand: "Focused" },
-  { name: "Freelance Finder", category: "Earning", credits: 160, demand: "Fast" },
+  { name: "Freelance Finder", category: "Earning Universe", credits: 160, demand: "Fast" },
 ];
 
 const toneClass: Record<TopUpPackage["tone"], string> = {
@@ -76,7 +76,7 @@ function TopUpCard({ pack }: { pack: TopUpPackage }) {
       <span
         className={`flex h-12 w-12 items-center justify-center rounded-[18px] bg-gradient-to-br text-sm font-black text-white shadow-lg ${toneClass[pack.tone]}`}
       >
-        C7
+        BW
       </span>
       <h3 className="mt-5 text-xl font-black text-slate-950">{pack.name}</h3>
       <p className="mt-1 text-sm font-semibold c7-muted">{pack.bonus}</p>
@@ -113,6 +113,10 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function formatBusinessModel(value: string) {
+  return value.toLowerCase() === "career7" ? "Blizzway" : value;
+}
+
 function summarizeUsage(transactions: Career7WalletTransaction[]) {
   const spent = transactions
     .filter((transaction) => transaction.type === "Spent")
@@ -129,7 +133,7 @@ function usageBreakdown(transactions: Career7WalletTransaction[]) {
   const spentTransactions = transactions.filter((transaction) => transaction.type === "Spent");
   const total = spentTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
   const buckets = [
-    { label: "Agents", match: "agent", color: "bg-indigo-600" },
+    { label: "companions", match: "companion", color: "bg-indigo-600" },
     { label: "Boosts", match: "boost", color: "bg-cyan-500" },
     { label: "Blizzway", match: "blizzway", color: "bg-emerald-500" },
     { label: "Reviews", match: "review", color: "bg-amber-400" },
@@ -193,7 +197,7 @@ export default function WalletPage() {
       activeHref="/wallet"
       eyebrow="Wallet"
       title="Wallet & Credits"
-      description="Track Career7 credits for boosts, agents, reviews, and premium pathways."
+      description="Track Blizzway credits for boosts, companions, reviews, and premium pathways."
       walletCredits={walletData?.wallet.credits ?? null}
       breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Wallet" }]}
     >
@@ -220,7 +224,7 @@ export default function WalletPage() {
                   <span className="pb-3 text-lg font-bold text-white/64">credits</span>
                 </div>
                 <p className="mt-4 max-w-2xl leading-7 text-white/70">
-                  Synced from BGOS Career7 wallet data scoped to the authenticated workspace.
+                  Synced from BGOS Blizzway wallet data scoped to the authenticated workspace.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
@@ -243,7 +247,7 @@ export default function WalletPage() {
           <SectionTitle
             eyebrow="Spending analytics"
             title="Credit usage"
-            description="Breakdown derived from recent Career7 wallet ledger entries."
+            description="Breakdown derived from recent Blizzway wallet ledger entries."
           />
           <div className="mt-5 space-y-4">
             {analytics.map((item) => (
@@ -283,20 +287,20 @@ export default function WalletPage() {
         <Career7Card as="section">
           <SectionTitle
             eyebrow="Featured pricing"
-            title="Agent costs"
-            description="Reference prices for planning credit spend before adding agents."
+            title="companion costs"
+            description="Reference prices for planning credit spend before adding companions."
           />
           <div className="mt-5 grid gap-3">
-            {featuredPricing.map((agent) => (
-              <div key={agent.name} className="rounded-[20px] bg-slate-50 p-4">
+            {featuredPricing.map((companion) => (
+              <div key={companion.name} className="rounded-[20px] bg-slate-50 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-black text-slate-950">{agent.name}</p>
-                    <p className="mt-1 text-xs font-bold c7-muted">{agent.category}</p>
+                    <p className="truncate font-black text-slate-950">{companion.name}</p>
+                    <p className="mt-1 text-xs font-bold c7-muted">{companion.category}</p>
                   </div>
-                  <Career7Badge tone="slate">{agent.demand}</Career7Badge>
+                  <Career7Badge tone="slate">{companion.demand}</Career7Badge>
                 </div>
-                <p className="mt-4 text-2xl font-black text-slate-950">{agent.credits} credits</p>
+                <p className="mt-4 text-2xl font-black text-slate-950">{companion.credits} credits</p>
               </div>
             ))}
           </div>
@@ -306,7 +310,7 @@ export default function WalletPage() {
           <SectionTitle
             eyebrow="Credit usage"
             title="Recent wallet history"
-            description="Live transaction history from the BGOS Career7 credit ledger."
+            description="Live transaction history from the BGOS Blizzway credit ledger."
           />
           {loading ? (
             <div className="mt-5 overflow-hidden rounded-[22px] border border-slate-200">
@@ -327,7 +331,7 @@ export default function WalletPage() {
                   <div className="min-w-0">
                     <p className="truncate font-black text-slate-950">{transaction.description}</p>
                     <p className="mt-1 text-sm font-semibold c7-muted">
-                      {transaction.businessModel} - {formatDate(transaction.date)}
+                      {formatBusinessModel(transaction.businessModel)} - {formatDate(transaction.date)}
                     </p>
                   </div>
                   <Career7Badge tone={transaction.type === "Earned" ? "emerald" : "slate"}>
@@ -348,8 +352,8 @@ export default function WalletPage() {
             <div className="mt-5">
               <Career7EmptyState
                 title="No credit activity yet"
-                description="Your future top-ups, boosts, agent installs, and premium pathway spends will appear here."
-                actionLabel="Browse Agent Store"
+                description="Your future top-ups, boosts, companion installs, and premium pathway spends will appear here."
+                actionLabel="Browse Magic Market"
                 actionHref="/agent-store"
                 secondaryLabel="Open Quick Boosts"
                 secondaryHref="/quick-boosts"
@@ -364,17 +368,17 @@ export default function WalletPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">
-                Career7 scope
+                Blizzway scope
               </p>
               <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
-                Wallet data is scoped under businessModel = career7.
+                Wallet data is scoped to the Blizzway workspace.
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 c7-muted">
                 This page reads BGOS wallet credits and ledger entries only. Payment gateways stay disabled until the billing phase.
               </p>
             </div>
             <Career7Button href="/agent-store" variant="secondary" className="w-full lg:w-auto">
-              Browse Agent Store
+              Browse Magic Market
             </Career7Button>
           </div>
         </Career7Card>

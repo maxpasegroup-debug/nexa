@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
       title="Reset your password"
       description="Enter your email and we will show a placeholder recovery flow. Real email delivery will be connected later."
       sideTitle="Simple recovery for a premium career workspace."
-      sideDescription="Keep access to your Growth Board, agents, credits, and NEXA context without adding friction."
+      sideDescription="Keep access to your My Pathway, companions, credits, and Guardian Angel AI context without adding friction."
       highlights={["Clean recovery flow", "No real email sent yet", "Dashboard route placeholder"]}
     >
       <form action="/login" className="mt-6 space-y-4">

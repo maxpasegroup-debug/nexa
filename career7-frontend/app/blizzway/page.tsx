@@ -27,7 +27,7 @@ const roadmap: RoadmapStage[] = [
   {
     phase: "01",
     title: "Clarity Gate",
-    description: "Define your premium role, migration, or earning destination with NEXA.",
+    description: "Define your premium role, migration, or Earning Universe destination with Guardian Angel AI.",
     progress: 92,
     status: "Almost complete",
   },
@@ -156,7 +156,7 @@ export default function BlizzwayPage() {
       activeHref="/blizzway"
       eyebrow="Blizzway"
       title="Blizzway Premium Pathway"
-      description="A premium guided pathway for ambitious Career7 users moving from clarity to launch."
+      description="A premium guided pathway for ambitious Blizzway users moving from clarity to launch."
       breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Blizzway" }]}
     >
       <section className="mt-5 overflow-hidden rounded-[30px] bg-slate-950 p-5 text-white shadow-2xl shadow-slate-950/18">
@@ -174,7 +174,7 @@ export default function BlizzwayPage() {
               Cross from scattered ambition into elite career momentum.
             </h2>
             <p className="mt-5 max-w-3xl text-base leading-7 text-white/72 sm:text-lg">
-              Blizzway is the premium Career7 pathway for people ready to turn desire into
+              Blizzway is the premium Blizzway pathway for people ready to turn desire into
               direction, proof, confidence, and launch-grade action.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -232,13 +232,13 @@ export default function BlizzwayPage() {
 
         <Career7Card as="section" className="bg-slate-950 text-white">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">
-            NEXA guidance
+            Guardian Angel AI guidance
           </p>
           <h2 className="mt-3 text-2xl font-black tracking-tight">
             Your next premium move is proof before pressure.
           </h2>
           <p className="mt-4 text-sm leading-6 text-white/72">
-            NEXA recommends completing the Proof Forge stage before making high-stakes
+            Guardian Angel AI recommends completing the Proof Forge stage before making high-stakes
             applications, interviews, or migration decisions.
           </p>
           <div className="mt-5 rounded-[22px] bg-white/10 p-4 ring-1 ring-white/10">

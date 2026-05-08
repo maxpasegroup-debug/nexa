@@ -51,7 +51,7 @@ export function PlaceholderPage({
 
         <Career7EmptyState
           title={`${title} is coming next`}
-          description="This placeholder keeps navigation complete while the real Career7 business logic, data, and workflows are designed."
+          description="This placeholder keeps navigation complete while the real Blizzway business logic, data, and workflows are designed."
           actionLabel="Back to dashboard"
           actionHref="/dashboard"
         />

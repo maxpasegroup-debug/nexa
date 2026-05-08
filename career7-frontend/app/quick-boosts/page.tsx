@@ -1,7 +1,7 @@
 import { Career7Badge, Career7Button, Career7Card } from "@/components/career7";
 import { Career7DashboardShell } from "../dashboard-shell";
 
-type BoostCategory = "Resume" | "Interview" | "Learning" | "Language" | "Migration" | "Finance";
+type BoostCategory = "Resume" | "Interview" | "Learning Garden" | "Language" | "Migration" | "Finance";
 
 type QuickBoost = {
   title: string;
@@ -70,7 +70,7 @@ const quickBoosts: QuickBoost[] = [
   },
   {
     title: "Skill Gap Scanner",
-    category: "Learning",
+    category: "Learning Garden",
     time: "6 min",
     credits: 55,
     description: "Finds missing skills between your current profile and target role.",
@@ -108,10 +108,10 @@ const quickBoosts: QuickBoost[] = [
   },
   {
     title: "Course Picker",
-    category: "Learning",
+    category: "Learning Garden",
     time: "5 min",
     credits: 40,
-    description: "Recommends a dummy learning path from your next role goal.",
+    description: "Recommends a dummy Learning Garden path from your next role goal.",
     icon: "CP",
     accent: "violet",
   },
@@ -129,7 +129,7 @@ const quickBoosts: QuickBoost[] = [
     category: "Finance",
     time: "3 min",
     credits: 30,
-    description: "Creates a quick savings, spend, and weekly earning snapshot.",
+    description: "Creates a quick savings, spend, and weekly Earning Universe snapshot.",
     icon: "BS",
     accent: "amber",
   },
@@ -138,7 +138,7 @@ const quickBoosts: QuickBoost[] = [
 const categoryTone: Record<BoostCategory, string> = {
   Resume: "bg-indigo-50 text-indigo-700 border-indigo-100",
   Interview: "bg-rose-50 text-rose-700 border-rose-100",
-  Learning: "bg-amber-50 text-amber-700 border-amber-100",
+  "Learning Garden": "bg-amber-50 text-amber-700 border-amber-100",
   Language: "bg-cyan-50 text-cyan-700 border-cyan-100",
   Migration: "bg-violet-50 text-violet-700 border-violet-100",
   Finance: "bg-emerald-50 text-emerald-700 border-emerald-100",
@@ -153,7 +153,7 @@ const accentClass: Record<QuickBoost["accent"], string> = {
   violet: "from-violet-500 to-fuchsia-600 shadow-violet-500/18",
 };
 
-const categories: BoostCategory[] = ["Resume", "Interview", "Learning", "Language", "Migration", "Finance"];
+const categories: BoostCategory[] = ["Resume", "Interview", "Learning Garden", "Language", "Migration", "Finance"];
 const featuredBoosts = quickBoosts.filter((boost) => boost.featured);
 const recommendedBoosts = quickBoosts.filter((boost) => boost.recommended);
 
@@ -265,7 +265,7 @@ export default function QuickBoostsPage() {
               </h2>
               <p className="mt-4 max-w-2xl leading-7 text-white/70">
                 Bite-sized tools for resume polish, interview prep, language confidence,
-                migration planning, learning focus, and money clarity.
+                migration planning, Learning Garden focus, and money clarity.
               </p>
             </div>
             <div className="rounded-[22px] bg-white/10 p-4 ring-1 ring-white/10 lg:min-w-52">
@@ -284,7 +284,7 @@ export default function QuickBoostsPage() {
 
         <Career7Card as="section" className="bg-white">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">
-            NEXA recommendation
+            Guardian Angel AI recommendation
           </p>
           <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
             Start with ATS, then run Interview Questions.
@@ -309,7 +309,7 @@ export default function QuickBoostsPage() {
           <SectionTitle
             eyebrow="Recommended tools"
             title="Best matches now"
-            description="High-impact dummy tools NEXA would place near the top of your queue."
+            description="High-impact dummy tools Guardian Angel AI would place near the top of your queue."
           />
           <div className="mt-5 grid gap-3">
             {recommendedBoosts.map((boost, index) => (

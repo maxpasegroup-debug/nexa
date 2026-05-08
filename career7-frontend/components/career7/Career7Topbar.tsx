@@ -25,7 +25,7 @@ function initials(name: string) {
 export function Career7Topbar({
   title,
   subtitle,
-  userName = "Career7 user",
+  userName = "Blizzway user",
   userLabel = "Preview",
   action,
   className,

@@ -26,7 +26,7 @@ const completedActions = [
 const recommendedActions = [
   "Practice one interview answer",
   "Add metrics to project story",
-  "Review two earning leads",
+  "Review two Earning Universe leads",
 ];
 
 function ProgressLine({ label, value }: { label: string; value: number }) {
@@ -58,7 +58,7 @@ export function Career7ProgressTracker() {
             Small wins, visible momentum
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 c7-muted">
-            A simple weekly view of learning, earning, completed actions, and the next best moves.
+            A simple weekly view of Learning Garden, Earning Universe, completed actions, and the next best moves.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -104,14 +104,14 @@ export function Career7ProgressTracker() {
 
           <div className="grid gap-4">
             <div className="rounded-[24px] border border-emerald-100 bg-emerald-50 p-4">
-              <p className="text-sm font-black text-emerald-700">Learning streak</p>
+              <p className="text-sm font-black text-emerald-700">Learning Garden streak</p>
               <p className="mt-2 text-3xl font-black text-slate-950">4 days</p>
               <p className="mt-1 text-sm font-semibold text-emerald-700/75">
                 One more calm action keeps it alive.
               </p>
             </div>
             <div className="rounded-[24px] border border-cyan-100 bg-cyan-50 p-4">
-              <p className="text-sm font-black text-cyan-700">Earning discipline</p>
+              <p className="text-sm font-black text-cyan-700">Earning Universe discipline</p>
               <p className="mt-2 text-3xl font-black text-slate-950">2 / 3</p>
               <p className="mt-1 text-sm font-semibold text-cyan-700/75">
                 Leads reviewed before spending credits.

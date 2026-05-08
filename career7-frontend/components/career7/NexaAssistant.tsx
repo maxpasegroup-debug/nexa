@@ -6,8 +6,8 @@ import { createInitialNexaState, sendNexaChatRequest } from "@/lib/nexa";
 const quickActions = [
   "Plan my next 7 days",
   "Improve my resume",
-  "Suggest learning path",
-  "Find earning opportunities",
+  "Suggest Learning Garden path",
+  "Find Earning Universe opportunities",
 ];
 
 export function NexaAssistant() {
@@ -39,7 +39,7 @@ export function NexaAssistant() {
     });
 
     setState(result.state);
-    setStatusMessage(result.usedFallback ? "Using safe placeholder guidance while NEXA backend is unavailable." : null);
+    setStatusMessage(result.usedFallback ? "Using safe placeholder guidance while Guardian Angel AI backend is unavailable." : null);
     setIsSending(false);
   }
 
@@ -61,7 +61,7 @@ export function NexaAssistant() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">
-                  NEXA assistant
+                  Guardian Angel AI assistant
                 </p>
                 <h2 className="mt-2 text-xl font-black tracking-tight sm:text-2xl">Career co-pilot</h2>
                 <p className="mt-2 text-sm leading-6 text-white/72">
@@ -70,7 +70,7 @@ export function NexaAssistant() {
               </div>
               <button
                 type="button"
-                aria-label="Close NEXA assistant"
+                aria-label="Close Guardian Angel AI assistant"
                 onClick={() => setOpen(false)}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/16 text-sm font-black text-white ring-1 ring-white/18"
               >
@@ -99,7 +99,7 @@ export function NexaAssistant() {
             {isSending ? (
               <div className="flex justify-start">
                 <p className="max-w-[86%] rounded-[20px] border border-slate-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-slate-500">
-                  NEXA is thinking...
+                  Guardian Angel AI is thinking...
                 </p>
               </div>
             ) : null}
@@ -126,8 +126,8 @@ export function NexaAssistant() {
             </div>
             <div className="mt-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2">
               <input
-                aria-label="Message NEXA"
-                placeholder="Ask NEXA anything..."
+                aria-label="Message Guardian Angel AI"
+                placeholder="Ask Guardian Angel AI anything..."
                 value={input}
                 onChange={(event) => setInput(event.currentTarget.value)}
                 className="min-w-0 flex-1 bg-transparent px-2 text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
@@ -143,7 +143,7 @@ export function NexaAssistant() {
                 onClick={handleInputSubmit}
                 disabled={isSending}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-black text-white"
-                aria-label="Send message to NEXA"
+                aria-label="Send message to Guardian Angel AI"
               >
                 Go
               </button>
@@ -156,13 +156,13 @@ export function NexaAssistant() {
         type="button"
         onClick={() => setOpen((current) => !current)}
         className="group flex items-center gap-3 rounded-full bg-slate-950 px-3 py-3 text-white shadow-2xl shadow-indigo-500/25 ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-slate-900 sm:px-4"
-        aria-label="Open NEXA assistant"
+        aria-label="Open Guardian Angel AI assistant"
       >
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 text-sm font-black">
           NX
         </span>
         <span className="hidden text-left sm:block">
-          <span className="block text-sm font-black">Ask NEXA</span>
+          <span className="block text-sm font-black">Ask Guardian Angel AI</span>
           <span className="block max-w-48 truncate text-xs font-semibold text-white/58">
             {latestNexaMessage}
           </span>

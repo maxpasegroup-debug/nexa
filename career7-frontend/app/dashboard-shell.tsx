@@ -11,12 +11,12 @@ import {
 
 export const dashboardNavItems: Career7NavItem[] = [
   { label: "Dashboard", href: "/dashboard", badge: "Home" },
-  { label: "Agent Store", href: "/agent-store" },
+  { label: "Magic Market", href: "/agent-store" },
   { label: "Quick Boosts", href: "/quick-boosts" },
-  { label: "Growth Board", href: "/growth-board" },
+  { label: "My Pathway", href: "/growth-board" },
   { label: "Blizzway", href: "/blizzway" },
   { label: "Wallet", href: "/wallet" },
-  { label: "Growth Vault", href: "/growth-vault" },
+  { label: "Soul Vault", href: "/growth-vault" },
   { label: "Settings", href: "/settings" },
 ];
 
@@ -50,17 +50,17 @@ type Career7DashboardShellProps = {
 
 export function Career7DashboardShell({
   activeHref,
-  eyebrow = "AI Career OS",
+  eyebrow = "The Magical Career Pathway",
   title,
   description,
-  userName = "Career7 User",
+  userName = "Blizzway User",
   walletCredits,
   breadcrumbs,
   children,
 }: Career7DashboardShellProps) {
   const activeItem = dashboardNavItems.find((item) => item.href === activeHref);
   const shellBreadcrumbs = breadcrumbs ?? [
-    { label: "Career7", href: "/dashboard" },
+    { label: "Blizzway", href: "/dashboard" },
     { label: activeItem?.label ?? title },
   ];
 
@@ -73,7 +73,7 @@ export function Career7DashboardShell({
         className="hidden md:flex"
         footer={
           <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">NEXA brief</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">Guardian Angel AI brief</p>
             <p className="mt-2 text-sm font-semibold leading-6 text-white/78">
               Build portfolio proof before applying to premium roles.
             </p>
@@ -85,10 +85,10 @@ export function Career7DashboardShell({
         <div className="mb-4 flex items-center justify-between gap-3 md:hidden">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-xs font-black text-white">
-              C7
+              BW
             </span>
             <div>
-              <p className="font-black text-slate-950">Career7</p>
+              <p className="font-black text-slate-950">Blizzway</p>
               <p className="text-xs font-semibold c7-muted">Dashboard</p>
             </div>
           </div>
@@ -120,9 +120,9 @@ export function Career7DashboardShell({
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <label className="relative min-w-0 sm:w-72">
-                <span className="sr-only">Search Career7</span>
+                <span className="sr-only">Search Blizzway</span>
                 <input
-                  placeholder="Search agents, boosts, vault..."
+                  placeholder="Search companions, boosts, vault..."
                   className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
                 />
               </label>
@@ -145,14 +145,14 @@ export function Career7DashboardShell({
                     .map((part) => part[0])
                     .join("")
                     .slice(0, 2)
-                    .toUpperCase() || "C7"}
+                    .toUpperCase() || "BW"}
                 </div>
               </div>
             </div>
           </div>
         </header>
 
-        <nav className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-2 md:hidden" aria-label="Career7 sections">
+        <nav className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-2 md:hidden" aria-label="Blizzway sections">
           {dashboardNavItems.map((item) => (
             <Link
               key={item.href}

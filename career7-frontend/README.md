@@ -1,6 +1,6 @@
-# Career7 Frontend
+# Blizzway Frontend
 
-Career7 is the standalone frontend for the Career7 business model. It is kept separate from the BGOS application so it can be hosted, released, and configured independently.
+Blizzway is the standalone frontend for The Magical Career Pathway, powered by NEXA. It is kept separate from the BGOS application so it can be hosted, released, and configured independently.
 
 ## Tech Stack
 

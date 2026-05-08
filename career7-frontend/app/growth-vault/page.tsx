@@ -19,7 +19,7 @@ const timeline = [
   {
     range: "3 years",
     title: "Premium career leverage",
-    detail: "Move into higher-value roles, mentor peers, and use agents for strategic opportunity discovery.",
+    detail: "Move into higher-value roles, mentor peers, and use companions for strategic opportunity discovery.",
   },
   {
     range: "5 years",
@@ -36,7 +36,7 @@ const skillGaps = [
 
 const notes = [
   "I want work that compounds into freedom, not just a better title.",
-  "My strongest weeks happen when learning and earning both have one clear action.",
+  "My strongest weeks happen when Learning Garden and Earning Universe both have one clear action.",
   "Proof beats pressure. Build the asset before chasing the opportunity.",
 ];
 
@@ -62,8 +62,8 @@ export default function GrowthVaultPage() {
   return (
     <Career7DashboardShell
       activeHref="/growth-vault"
-      eyebrow="Growth Vault"
-      title="Growth Vault"
+      eyebrow="Soul Vault"
+      title="Soul Vault"
       description="A private archive for career identity, proof, notes, and long-range vision."
     >
       <section className="mt-5 grid gap-5 xl:grid-cols-[1.18fr_0.82fr]">
@@ -71,7 +71,7 @@ export default function GrowthVaultPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">
-                Private Growth Vault
+                Private Soul Vault
               </p>
               <h2 className="mt-3 max-w-3xl text-[1.65rem] font-black leading-tight tracking-tight sm:text-4xl">
                 Your career identity, protected and ready to grow.
@@ -97,7 +97,7 @@ export default function GrowthVaultPage() {
           />
           <div className="mt-5 rounded-[24px] border border-indigo-100 bg-indigo-50 p-5">
             <p className="break-words font-mono text-sm leading-7 text-indigo-800">
-              ENCRYPTED_PROFILE::CAREER7::ARUN::VISION_LOCKED::PROOF_READY
+              ENCRYPTED_PROFILE::Blizzway::ARUN::VISION_LOCKED::PROOF_READY
             </p>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -112,7 +112,7 @@ export default function GrowthVaultPage() {
           <SectionHeading
             eyebrow="Digital profile"
             title="Career snapshot"
-            description="Dummy summary of the person NEXA is helping you become."
+            description="Dummy summary of the person Guardian Angel AI is helping you become."
           />
           <div className="mt-6 space-y-3">
             {[
@@ -154,7 +154,7 @@ export default function GrowthVaultPage() {
           <SectionHeading
             eyebrow="Skill gaps"
             title="What needs attention"
-            description="Dummy gap cards that help NEXA recommend the next growth action."
+            description="Dummy gap cards that help Guardian Angel AI recommend the next growth action."
           />
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {skillGaps.map((gap) => (
@@ -177,13 +177,13 @@ export default function GrowthVaultPage() {
 
         <Career7GradientPanel>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">
-            NEXA suggestion
+            Guardian Angel AI suggestion
           </p>
           <h2 className="mt-3 text-[1.65rem] font-black leading-tight tracking-tight sm:text-3xl">
             Convert one private note into a visible proof asset.
           </h2>
           <p className="mt-4 leading-7 text-white/72">
-            NEXA suggests turning your strongest reflection into a portfolio story,
+            Guardian Angel AI suggests turning your strongest reflection into a portfolio story,
             then linking it to Resume Architect for a cleaner role narrative.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -192,7 +192,7 @@ export default function GrowthVaultPage() {
               <p className="mt-2 text-sm text-white/70">Write one proof note</p>
             </div>
             <div className="rounded-2xl bg-white/14 p-4 ring-1 ring-white/14">
-              <p className="font-black">Best agent</p>
+              <p className="font-black">Best companion</p>
               <p className="mt-2 text-sm text-white/70">Resume Architect</p>
             </div>
           </div>
@@ -204,7 +204,7 @@ export default function GrowthVaultPage() {
           <SectionHeading
             eyebrow="Personal growth notes"
             title="Private reflections"
-            description="Soft, personal notes for motivation and future NEXA context."
+            description="Soft, personal notes for motivation and future Guardian Angel AI context."
           />
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {notes.map((note, index) => (

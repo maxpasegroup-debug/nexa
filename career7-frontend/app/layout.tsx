@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Career7 | AI Career OS",
-  description: "A premium AI career ecosystem for learning, earning, agents, credits, and guided growth.",
+  title: "Blizzway | The Magical Career Pathway",
+  description: "A premium AI career ecosystem for Learning Garden, Earning Universe, companions, credits, and guided growth.",
 };
 
 export default function RootLayout({
