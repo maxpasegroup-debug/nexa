@@ -128,6 +128,22 @@ a {
   background: var(--c7-gradient-soft);
 }
 
+.c7-magical-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.c7-magical-glow::before {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(246, 196, 91, 0.28), transparent 28%),
+    radial-gradient(circle at 86% 12%, rgba(95, 216, 238, 0.26), transparent 30%),
+    linear-gradient(135deg, rgba(143, 92, 247, 0.16), rgba(255, 255, 255, 0));
+  content: "";
+}
+
 .c7-button-primary {
   display: inline-flex;
   min-height: 44px;
