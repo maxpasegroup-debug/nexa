@@ -1,47 +1,34 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import {
-  Career7Badge,
-  Career7AuthBoundary,
-  Career7Sidebar,
-  NexaAssistant,
-  type Career7NavItem,
-} from "@/components/career7";
+import { Career7Badge, Career7Sidebar, type Career7NavItem } from "@/components/career7";
 
 export const dashboardNavItems: Career7NavItem[] = [
   { label: "Dashboard", href: "/dashboard", badge: "Home" },
-  { label: "Magic Market", href: "/agent-store" },
+  { label: "My Pathway", href: "/my-pathway" },
+  { label: "Learning Garden", href: "/learning-garden" },
+  { label: "Earning Universe", href: "/earning-universe" },
+  { label: "Magic Market", href: "/magic-market" },
+  { label: "Companions", href: "/companions" },
   { label: "Quick Boosts", href: "/quick-boosts" },
-  { label: "My Pathway", href: "/growth-board" },
-  { label: "Blizzway", href: "/blizzway" },
+  { label: "Soul Vault", href: "/soul-vault" },
   { label: "Wallet", href: "/wallet" },
-  { label: "Soul Vault", href: "/growth-vault" },
   { label: "Settings", href: "/settings" },
 ];
 
 const mobileNavItems = [
   { label: "Home", href: "/dashboard" },
-  { label: "Board", href: "/growth-board" },
-  { label: "Store", href: "/agent-store" },
+  { label: "Pathway", href: "/my-pathway" },
+  { label: "Market", href: "/magic-market" },
   { label: "Wallet", href: "/wallet" },
 ];
-
-const nexaEnabledRoutes = new Set([
-  "/dashboard",
-  "/growth-board",
-  "/agent-store",
-  "/quick-boosts",
-  "/blizzway",
-  "/wallet",
-  "/growth-vault",
-]);
 
 type Career7DashboardShellProps = {
   activeHref: string;
   eyebrow?: string;
   title: string;
   description: string;
+  greeting?: string;
   userName?: string;
   walletCredits?: number | null;
   breadcrumbs?: { label: string; href?: string }[];
@@ -53,29 +40,22 @@ export function Career7DashboardShell({
   eyebrow = "The Magical Career Pathway",
   title,
   description,
-  userName = "Blizzway User",
-  walletCredits,
-  breadcrumbs,
+  greeting = "Good morning",
+  userName = "Blizzway Explorer",
+  walletCredits = 2400,
   children,
 }: Career7DashboardShellProps) {
-  const activeItem = dashboardNavItems.find((item) => item.href === activeHref);
-  const shellBreadcrumbs = breadcrumbs ?? [
-    { label: "Blizzway", href: "/dashboard" },
-    { label: activeItem?.label ?? title },
-  ];
-
   return (
-    <Career7AuthBoundary>
-    <main className="c7-shell overflow-x-hidden bg-[#f7f9ff] md:grid md:grid-cols-[280px_1fr]">
+    <main className="c7-shell min-h-screen overflow-x-hidden md:grid md:grid-cols-[280px_1fr]">
       <Career7Sidebar
         items={dashboardNavItems}
         activeHref={activeHref}
         className="hidden md:flex"
         footer={
           <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">Guardian Angel AI brief</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">NEXA Guardian Angel</p>
             <p className="mt-2 text-sm font-semibold leading-6 text-white/78">
-              Build portfolio proof before applying to premium roles.
+              Today&apos;s focus: one calm learning step and one visible proof action.
             </p>
           </div>
         }
@@ -83,7 +63,7 @@ export function Career7DashboardShell({
 
       <section className="w-full min-w-0 max-w-[100vw] overflow-x-hidden px-4 pb-24 pt-4 sm:px-6 md:max-w-full md:px-8 md:pb-8 md:py-6 lg:px-10">
         <div className="mb-4 flex items-center justify-between gap-3 md:hidden">
-          <div className="flex items-center gap-3">
+          <Link href="/dashboard" className="flex items-center gap-3" aria-label="Blizzway dashboard">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-xs font-black text-white">
               BW
             </span>
@@ -91,51 +71,36 @@ export function Career7DashboardShell({
               <p className="font-black text-slate-950">Blizzway</p>
               <p className="text-xs font-semibold c7-muted">Dashboard</p>
             </div>
-          </div>
+          </Link>
         </div>
 
-        <header className="rounded-[28px] bg-white/86 p-4 shadow-sm ring-1 ring-slate-200/70 backdrop-blur">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <header className="rounded-[28px] bg-white/88 p-4 shadow-sm ring-1 ring-slate-200/70 backdrop-blur">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <nav className="mb-3 flex flex-wrap items-center gap-2 text-xs font-black text-slate-400" aria-label="Breadcrumb">
-                {shellBreadcrumbs.map((crumb, index) => (
-                  <span key={`${crumb.label}-${index}`} className="inline-flex items-center gap-2">
-                    {index > 0 ? <span className="text-slate-300">/</span> : null}
-                    {crumb.href ? (
-                      <Link href={crumb.href} className="transition hover:text-indigo-600">
-                        {crumb.label}
-                      </Link>
-                    ) : (
-                      <span className="text-slate-600">{crumb.label}</span>
-                    )}
-                  </span>
-                ))}
-              </nav>
-              <Career7Badge tone="indigo" dot>{eyebrow}</Career7Badge>
+              <p className="text-sm font-black text-slate-500">{greeting}, {userName}</p>
+              <Career7Badge tone="indigo" dot className="mt-3">{eyebrow}</Career7Badge>
               <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
                 {title}
               </h1>
-              <p className="mt-1 text-sm leading-6 c7-muted">{description}</p>
+              <p className="mt-1 max-w-3xl text-sm leading-6 c7-muted">{description}</p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <label className="relative min-w-0 sm:w-72">
+              <label className="relative min-w-0 sm:w-80">
                 <span className="sr-only">Search Blizzway</span>
                 <input
-                  placeholder="Search companions, boosts, vault..."
-                  className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                  placeholder="Search pathway, companions, boosts..."
+                  className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
                 />
               </label>
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 sm:px-4">
-                  {walletCredits === null || walletCredits === undefined
-                    ? "Credits loading"
-                    : `${walletCredits.toLocaleString()} credits`}
+                <span className="rounded-full bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 ring-1 ring-cyan-100 sm:px-4">
+                  {walletCredits === null || walletCredits === undefined ? "2,400" : walletCredits.toLocaleString()} credits
                 </span>
                 <button
                   type="button"
                   aria-label="Notifications"
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-lg shadow-sm"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-black text-slate-700 shadow-sm"
                 >
                   !
                 </button>
@@ -173,6 +138,7 @@ export function Career7DashboardShell({
         <nav
           className="fixed bottom-3 z-30 grid grid-cols-4 gap-2 overflow-hidden rounded-[24px] border border-slate-200 bg-white/92 p-2 shadow-2xl shadow-slate-950/12 backdrop-blur md:hidden"
           style={{ left: "0.75rem", width: "calc(100vw - 1.5rem)" }}
+          aria-label="Mobile dashboard navigation"
         >
           {mobileNavItems.map((item) => (
             <Link
@@ -186,10 +152,7 @@ export function Career7DashboardShell({
             </Link>
           ))}
         </nav>
-
-        {nexaEnabledRoutes.has(activeHref) ? <NexaAssistant /> : null}
       </section>
     </main>
-    </Career7AuthBoundary>
   );
 }

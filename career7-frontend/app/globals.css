@@ -93,7 +93,8 @@ a {
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
-.c7-agent-card {
+.c7-agent-card,
+.c7-companion-card {
   border: 1px solid rgba(220, 231, 245, 0.92);
   border-radius: var(--c7-radius-md);
   background:

@@ -59,8 +59,8 @@ const happinessSignals = [
 const footerLinks = [
   { label: "Login", href: "/login" },
   { label: "Start", href: "/signup" },
-  { label: "Magic Market", href: "/agent-store" },
-  { label: "Soul Vault", href: "/growth-vault" },
+  { label: "Magic Market", href: "/magic-market" },
+  { label: "Soul Vault", href: "/soul-vault" },
 ];
 
 function Logo() {
@@ -350,7 +350,7 @@ export default function Home() {
               title="A premium market of growth tools and guided help."
               description="Browse focused experiences for resumes, interviews, learning, earning, exams, migration, and confidence."
             />
-            <Link href="/agent-store" className="c7-button-secondary shrink-0">
+            <Link href="/magic-market" className="c7-button-secondary shrink-0">
               Preview Magic Market
             </Link>
           </div>

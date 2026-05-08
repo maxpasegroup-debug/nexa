@@ -6,10 +6,13 @@ export default function SettingsPage() {
       activeHref="/settings"
       eyebrow="Settings"
       title="Settings"
-      description="Manage profile preferences, workspace defaults, notifications, and future account controls."
-      previewTitle="Simple controls for a premium career workspace."
-      previewDescription="Settings will eventually hold profile, notification, privacy, billing, Guardian Angel AI preferences, and connected account controls."
-      highlights={["Profile", "Alerts", "Preferences"]}
+      description="Future controls for profile, notifications, privacy, credits, and NEXA preferences."
+      previewTitle="Control the calm around your pathway."
+      previewDescription="Dummy settings cards preview the account controls that will arrive in later phases."
+      highlights={["Profile", "Privacy", "NEXA tone"]}
+      emptyTitle="No settings changed yet"
+      emptyDescription="Settings are visual placeholders only and do not save changes yet."
+      nexaSuggestion="Keep notifications gentle, guidance clear, and privacy controls easy to understand."
     />
   );
 }
