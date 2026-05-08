@@ -7,13 +7,13 @@ export default function ForgotPasswordPage() {
     <AuthShell
       eyebrow="Account recovery"
       title="Recover your pathway access"
-      description="Enter your email to preview the password recovery flow. No real reset email is sent yet."
+      description="Enter your email to preview the password recovery flow. NEXA keeps this moment calm, and no real reset email is sent yet."
       sideTitle="A calm reset for a trusted career workspace."
-      sideDescription="Blizzway keeps recovery simple, reassuring, and clear so students, parents, and professionals feel safe returning."
+      sideDescription="Blizzway and NEXA, the Guardian Angel AI, keep recovery simple, reassuring, and clear so students, parents, and professionals feel safe returning."
       highlights={[
         "Placeholder recovery only",
+        "NEXA Guardian Angel reassurance",
         "No backend email delivery yet",
-        "Return to login whenever you are ready",
       ]}
       footerNote="Recovery preview only. Real auth and email delivery arrive later."
     >
