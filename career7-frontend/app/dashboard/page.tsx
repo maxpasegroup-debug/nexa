@@ -17,6 +17,18 @@ const previews = [
   ["Soul Vault", "/soul-vault", "8 saved wins", "Reflections, achievements, and confidence notes are safely organized."],
 ];
 
+const progressCards = [
+  ["Learning Garden", "72%", "Language drills and portfolio practice are blooming."],
+  ["Earning Universe", "58%", "Two opportunity leads are ready for review."],
+  ["Soul Vault", "81%", "Eight proof notes and confidence wins are saved."],
+];
+
+const nextActions = [
+  ["Add one proof story", "Soul Vault", "10 min"],
+  ["Practice intro answer", "Quick Boosts", "15 min"],
+  ["Review freelance lead", "Earning Universe", "20 min"],
+];
+
 function ScoreCard({
   title,
   value,
@@ -105,6 +117,46 @@ export default function DashboardPage() {
           tone="gold"
           description="Dummy signal for emotional momentum, confidence, and sustainable progress."
         />
+      </section>
+
+      <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.82fr]">
+        <Career7Card as="section">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Progress cards</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Where your magic is moving</h2>
+            </div>
+            <Career7Badge tone="purple">Dummy data</Career7Badge>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {progressCards.map(([title, value, description]) => (
+              <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-black text-slate-950">{title}</p>
+                <p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
+                <div className="mt-3 h-2 rounded-full bg-slate-200">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-indigo-700 via-purple-500 to-cyan-400" style={{ width: value }} />
+                </div>
+                <p className="mt-3 text-sm leading-6 c7-muted">{description}</p>
+              </div>
+            ))}
+          </div>
+        </Career7Card>
+
+        <Career7Card as="section" className="c7-magical-glow">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Recommended next actions</p>
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">NEXA&apos;s gentle queue</h2>
+          <div className="mt-6 space-y-3">
+            {nextActions.map(([title, area, time]) => (
+              <div key={title} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+                <div>
+                  <p className="font-black text-slate-950">{title}</p>
+                  <p className="mt-1 text-sm font-semibold c7-muted">{area}</p>
+                </div>
+                <Career7Badge tone="slate">{time}</Career7Badge>
+              </div>
+            ))}
+          </div>
+        </Career7Card>
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
