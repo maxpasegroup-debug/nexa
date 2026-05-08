@@ -1,31 +1,22 @@
 import Link from "next/link";
-import { getApiBaseUrl } from "@/lib/api";
 
 import { AuthShell, TextField } from "../auth-shared";
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ returnTo?: string }>;
-}) {
-  const { returnTo } = await searchParams;
-  const callbackUrl = returnTo?.startsWith("/") && !returnTo.startsWith("//")
-    ? returnTo
-    : "/dashboard";
-  const loginUrl = new URL("/login", getApiBaseUrl());
-  loginUrl.searchParams.set("businessModel", "career7");
-  loginUrl.searchParams.set("callbackUrl", callbackUrl);
-
+export default function LoginPage() {
   return (
     <AuthShell
       eyebrow="Secure login"
-      title="Welcome back"
-      description="Enter your Blizzway workspace through BGOS authentication."
-      sideTitle="Return to your AI career command center."
-      sideDescription="Review your My Pathway, spend credits wisely, and let Guardian Angel AI keep your next move visible."
-      highlights={["Protected career workspace", "Guardian Angel AI-ready growth context", "Credits and companions in one place"]}
+      title="Welcome back to Blizzway"
+      description="Use this placeholder login to enter the dashboard preview. Real authentication will be connected later."
+      sideTitle="Return to your magical career pathway."
+      sideDescription="NEXA keeps your pathway calm, focused, and ready for the next meaningful action."
+      highlights={[
+        "Premium Blizzway workspace",
+        "NEXA Guardian Angel AI guidance",
+        "My Pathway, Soul Vault, and Magic Market in one place",
+      ]}
     >
-      <div className="mt-6 space-y-4">
+      <form action="/dashboard" className="mt-6 space-y-4">
         <TextField label="Email address" type="email" placeholder="you@example.com" />
         <TextField label="Password" type="password" placeholder="Enter your password" />
 
@@ -39,15 +30,15 @@ export default async function LoginPage({
           </Link>
         </div>
 
-        <Link href={loginUrl.toString()} className="c7-button-primary block w-full text-center">
+        <button type="submit" className="c7-button-primary w-full">
           Continue to dashboard
-        </Link>
-      </div>
+        </button>
+      </form>
 
       <p className="mt-6 text-center text-sm c7-muted">
         New to Blizzway?{" "}
         <Link href="/signup" className="font-bold text-indigo-600 hover:text-indigo-700">
-          Create an account
+          Begin your pathway
         </Link>
       </p>
     </AuthShell>

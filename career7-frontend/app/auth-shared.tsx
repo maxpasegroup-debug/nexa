@@ -9,6 +9,7 @@ type AuthShellProps = {
   sideTitle: string;
   sideDescription: string;
   highlights: string[];
+  footerNote?: string;
 };
 
 export function AuthShell({
@@ -19,9 +20,10 @@ export function AuthShell({
   sideTitle,
   sideDescription,
   highlights,
+  footerNote = "Secure placeholder experience. Real auth arrives later.",
 }: AuthShellProps) {
   return (
-    <main className="c7-shell grid min-h-screen lg:grid-cols-[0.92fr_1.08fr]">
+    <main className="c7-shell grid min-h-screen lg:grid-cols-[0.94fr_1.06fr]">
       <section className="c7-sidebar hidden min-h-screen flex-col justify-between p-8 lg:flex">
         <Link href="/" className="flex items-center gap-3" aria-label="Blizzway home">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-sm font-black text-indigo-600">
@@ -41,14 +43,14 @@ export function AuthShell({
           <p className="mt-5 text-lg leading-8 text-white/66">{sideDescription}</p>
           <div className="mt-8 grid gap-3">
             {highlights.map((item) => (
-              <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+              <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 shadow-lg shadow-slate-950/10">
                 <p className="font-bold text-white">{item}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="text-sm text-white/45">Secure placeholder experience. Real auth arrives later.</p>
+        <p className="text-sm text-white/45">{footerNote}</p>
       </section>
 
       <section className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-10">
@@ -63,7 +65,7 @@ export function AuthShell({
             <span className="c7-badge">Preview</span>
           </div>
 
-          <div className="c7-card p-5 sm:p-7">
+          <div className="c7-card c7-magical-glow p-5 sm:p-7">
             <span className="c7-badge">{eyebrow}</span>
             <h1 className="mt-5 text-3xl font-black tracking-tight text-slate-950">{title}</h1>
             <p className="mt-3 text-sm leading-6 c7-muted">{description}</p>

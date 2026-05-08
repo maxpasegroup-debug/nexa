@@ -6,16 +6,21 @@ export default function ForgotPasswordPage() {
   return (
     <AuthShell
       eyebrow="Account recovery"
-      title="Reset your password"
-      description="Enter your email and we will show a placeholder recovery flow. Real email delivery will be connected later."
-      sideTitle="Simple recovery for a premium career workspace."
-      sideDescription="Keep access to your My Pathway, companions, credits, and Guardian Angel AI context without adding friction."
-      highlights={["Clean recovery flow", "No real email sent yet", "Dashboard route placeholder"]}
+      title="Recover your pathway access"
+      description="Enter your email to preview the password recovery flow. No real reset email is sent yet."
+      sideTitle="A calm reset for a trusted career workspace."
+      sideDescription="Blizzway keeps recovery simple, reassuring, and clear so students, parents, and professionals feel safe returning."
+      highlights={[
+        "Placeholder recovery only",
+        "No backend email delivery yet",
+        "Return to login whenever you are ready",
+      ]}
+      footerNote="Recovery preview only. Real auth and email delivery arrive later."
     >
       <form action="/login" className="mt-6 space-y-4">
         <TextField label="Email address" type="email" placeholder="you@example.com" />
         <button type="submit" className="c7-button-primary w-full">
-          Send reset instructions
+          Show recovery preview
         </button>
       </form>
 
@@ -23,9 +28,9 @@ export default function ForgotPasswordPage() {
         <Link href="/login" className="font-bold text-indigo-600 hover:text-indigo-700">
           Back to login
         </Link>
-        <span className="hidden c7-muted sm:inline">·</span>
+        <span className="hidden c7-muted sm:inline">/</span>
         <Link href="/signup" className="font-bold text-indigo-600 hover:text-indigo-700">
-          Create account
+          Begin My Pathway
         </Link>
       </div>
     </AuthShell>
