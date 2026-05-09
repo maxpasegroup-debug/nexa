@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
 import {
+  assertUniverseJwtSecret,
   createReferralCode,
   normalizeUniversePhone,
   signUniverseToken,
@@ -24,6 +25,8 @@ export async function POST(request: Request) {
     if (!name || !phone || !/^\+?\d{10,15}$/.test(phone) || !pin || !/^\d{4}$/.test(pin)) {
       return NextResponse.json({ error: "Invalid registration details" }, { status: 400 });
     }
+
+    assertUniverseJwtSecret();
 
     const existing = await prisma.universeUser.findUnique({ where: { phone } });
 
@@ -67,7 +70,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ token, user });
   } catch (error) {
     console.error("Universe register failed", error);
+
+    if (error instanceof Error && error.message === "UNIVERSE_JWT_SECRET is not configured") {
+      return NextResponse.json({ error: "Registration is not configured yet" }, { status: 500 });
+    }
+
     return NextResponse.json({ error: "Unable to register" }, { status: 500 });
   }
 }
-

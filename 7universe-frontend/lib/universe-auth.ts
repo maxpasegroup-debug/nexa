@@ -21,13 +21,17 @@ function base64UrlDecode(value: string) {
 }
 
 function getSecret() {
-  const secret = process.env.UNIVERSE_JWT_SECRET;
+  const secret = process.env.UNIVERSE_JWT_SECRET ?? process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
 
   if (!secret) {
     throw new Error("UNIVERSE_JWT_SECRET is not configured");
   }
 
   return secret;
+}
+
+export function assertUniverseJwtSecret() {
+  getSecret();
 }
 
 export function signUniverseToken(payload: UniverseJwtPayload) {
@@ -100,4 +104,3 @@ export function normalizeUniversePhone(phone: string) {
 export function createReferralCode() {
   return randomBytes(6).toString("base64url").replace(/[^a-zA-Z0-9]/g, "").slice(0, 8);
 }
-

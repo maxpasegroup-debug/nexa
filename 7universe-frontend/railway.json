@@ -5,6 +5,7 @@
     "buildCommand": "npx prisma generate && npm run build"
   },
   "deploy": {
+    "preDeployCommand": "npm run prisma:migrate",
     "startCommand": "npm run start -- -p $PORT"
   }
 }
