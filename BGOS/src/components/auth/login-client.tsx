@@ -21,7 +21,7 @@ export function LoginClient({ businessModel, callbackUrl }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const registerHref = isCareer7 ? "/register?businessModel=career7" : "/register";
+  const registerHref = isCareer7 ? "/bgos-register?businessModel=career7" : "/bgos-register";
 
   async function handleEmailLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

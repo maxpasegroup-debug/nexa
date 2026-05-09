@@ -9,6 +9,12 @@ const PUBLIC_ROUTES = [
   "/marketplace/(.*)",
   "/login",
   "/register",
+  "/bgos-register",
+  "/journey",
+  "/resources",
+  "/done",
+  "/admin",
+  "/admin/(.*)",
   "/forgot-password",
   "/reset-password",
   "/accept-invite",
@@ -39,10 +45,6 @@ export default auth((req) => {
   const session = req.auth;
   const isProd = process.env.NODE_ENV === "production";
   const role = (session?.user?.role as string | undefined) || "EMPLOYEE";
-
-  if (pathname === "/" && session?.user) {
-    return NextResponse.redirect(new URL(getRoleRedirect(role), req.url));
-  }
 
   if (pathname === "/login" && session?.user) {
     if (req.nextUrl.searchParams.get("businessModel") === "career7") {
@@ -102,6 +104,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|register|workspace-preview|activate-trial|marketplace).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|register|bgos-register|journey|resources|done|admin|workspace-preview|activate-trial|marketplace).*)",
   ],
 };
