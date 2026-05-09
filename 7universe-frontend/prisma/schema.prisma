@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UniverseUser {
+  id           String             @id @default(cuid())
+  name         String
+  phone        String             @unique
+  pinHash      String
+  language     String             @default("ml")
+  referralCode String             @unique @default(cuid())
+  referredBy   String?
+  createdAt    DateTime           @default(now())
+  progress     UniverseProgress[]
+}
+
+model UniverseProgress {
+  id          String       @id @default(cuid())
+  userId      String
+  user        UniverseUser @relation(fields: [userId], references: [id])
+  stepNumber  Int
+  completedAt DateTime     @default(now())
+
+  @@unique([userId, stepNumber])
+}
+

@@ -1,53 +1,41 @@
-import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getRoleRedirect } from "@/lib/role-redirect";
+import CtaSection from "@/components/landing/cta-section";
+import FaqSection from "@/components/landing/faq-section";
+import FeaturesSection from "@/components/landing/features-section";
+import HeroSection from "@/components/landing/hero-section";
+import LandingFooter from "@/components/landing/landing-footer";
+import LandingNavbar from "@/components/landing/landing-navbar";
+import { NexaCaptureWidget } from "@/components/landing/nexa-capture-widget";
+import NexaDemoSection from "@/components/landing/nexa-demo-section";
+import PricingSection from "@/components/landing/pricing-section";
+import ProductProofSection from "@/components/landing/product-proof-section";
+import TestimonialsSection from "@/components/landing/testimonials-section";
 
-const steps = [
-  "Join in 30 seconds",
-  "Listen to 5 guided audios",
-  "Activate your referral",
-];
+export default async function Home() {
+  const session = await auth();
 
-export default function UniverseLandingPage() {
+  if (session?.user) {
+    redirect(getRoleRedirect(session.user.role as string));
+  }
+
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,#0d0020_0%,#000000_100%)] px-5 text-white">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between py-6">
-        <div className="font-heading text-xl font-extrabold text-[#F59E0B]">7Universe</div>
-      </header>
-
-      <section className="mx-auto flex min-h-[calc(100vh-92px)] w-full max-w-xl flex-col items-center justify-center pb-20 text-center">
-        <div className="mb-6 rounded-[20px] border border-[rgba(245,158,11,0.3)] bg-[rgba(245,158,11,0.08)] px-[14px] py-1 text-[11px] font-bold text-[#F59E0B]">
-          ⚡ Powered by OpBNB
-        </div>
-        <h1 className="whitespace-pre-line font-heading text-[40px] font-extrabold leading-[1.1] text-white md:text-6xl">
-          {"Your 7-slot income system.\nStarts here."}
-        </h1>
-        <p className="mt-5 text-base text-white/50">Listen. Learn. Activate.</p>
-        <Link
-          href="/register"
-          className="mt-9 rounded-xl border-0 bg-[linear-gradient(135deg,#F59E0B,#D97706)] px-10 py-4 text-base font-extrabold text-black shadow-[0_8px_32px_rgba(245,158,11,0.3)] transition hover:-translate-y-0.5"
-        >
-          Start Now →
-        </Link>
-
-        <div className="mt-16 grid w-full gap-5">
-          {steps.map((step, index) => (
-            <div key={step} className="flex flex-col items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F59E0B] text-sm font-extrabold text-black">
-                {index + 1}
-              </div>
-              <p className="text-base font-semibold text-white/85">{step}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <a
-        href="https://wa.me/917591929909"
-        className="fixed bottom-6 right-5 z-50 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#25D366] text-2xl shadow-[0_4px_20px_rgba(37,211,102,0.4)]"
-        aria-label="Chat on WhatsApp"
-      >
-        💬
-      </a>
+    <main
+      className="min-h-screen max-w-full overflow-x-hidden bg-[#070709]"
+      style={{ overflowX: "hidden" }}
+    >
+      <LandingNavbar />
+      <HeroSection />
+      <ProductProofSection />
+      <NexaDemoSection />
+      <FeaturesSection />
+      <PricingSection />
+      <TestimonialsSection />
+      <FaqSection />
+      <CtaSection />
+      <LandingFooter />
+      <NexaCaptureWidget />
     </main>
   );
 }
-
