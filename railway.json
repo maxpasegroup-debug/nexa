@@ -5,6 +5,6 @@
   },
   "deploy": {
     "preDeployCommand": "npm run prisma:migrate",
-    "startCommand": "npm run start -- -p $PORT"
+    "startCommand": "sleep 5 && npm run start -- -H :: -p $PORT"
   }
 }

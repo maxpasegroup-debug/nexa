@@ -1,11 +1,11 @@
-FROM node:20-alpine AS deps
+FROM node:20-slim AS deps
 
 WORKDIR /app/7universe-frontend
 
 COPY 7universe-frontend/package.json 7universe-frontend/package-lock.json ./
 RUN npm ci
 
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app/7universe-frontend
 
@@ -17,7 +17,7 @@ COPY 7universe-frontend/ ./
 RUN npx prisma generate
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
 WORKDIR /app/7universe-frontend
 
@@ -34,4 +34,4 @@ COPY --from=builder /app/7universe-frontend/next.config.mjs ./next.config.mjs
 
 EXPOSE 3000
 
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start", "--", "-H", "::", "-p", "3000"]
