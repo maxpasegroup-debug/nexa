@@ -15,7 +15,6 @@ COPY --from=deps /app/7universe-frontend/node_modules ./node_modules
 COPY 7universe-frontend/ ./
 
 RUN npx prisma generate
-RUN npx prisma migrate deploy
 RUN npm run build
 
 FROM node:20-alpine AS runner

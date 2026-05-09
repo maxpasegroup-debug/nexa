@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "install": "npm ci --prefix 7universe-frontend",
-    "build": "npx prisma generate --schema 7universe-frontend/prisma/schema.prisma && npx prisma migrate deploy --schema 7universe-frontend/prisma/schema.prisma && npm run build --prefix 7universe-frontend",
+    "build": "npx prisma generate --schema 7universe-frontend/prisma/schema.prisma && npm run build --prefix 7universe-frontend",
     "start": "npm run start --prefix 7universe-frontend -- -p $PORT"
   },
   "devDependencies": {
