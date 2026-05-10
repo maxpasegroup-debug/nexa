@@ -71,9 +71,9 @@ const fallbackMagicalSteps: MagicalStep[] = [
 ];
 
 const fallbackNextActions: NextAction[] = [
+  { title: "Check admissions readiness", area: "Admissions", time: "12 min" },
   { title: "Add one proof story", area: "Soul Vault", time: "10 min" },
   { title: "Practice intro answer", area: "Quick Boosts", time: "15 min" },
-  { title: "Review freelance lead", area: "Earning Universe", time: "20 min" },
 ];
 
 function asPercent(value: number | null | undefined, fallback: number) {
@@ -148,6 +148,13 @@ function buildPreviews(data: DashboardData): PreviewCard[] {
       href: "/assessments",
       stat: "2 free starters",
       description: "Take NEXA-powered assessments to improve your BDP and pathway recommendations.",
+      fallback: false,
+    },
+    {
+      title: "Admissions",
+      href: "/admissions",
+      stat: "4 pathway routes",
+      description: "Explore national and international admissions with eligibility, deadlines, scholarships, and NEXA guidance.",
       fallback: false,
     },
     {
@@ -386,7 +393,7 @@ export function DashboardClient() {
       nexaMessage:
         data.nexaMessage ||
         data.growthBoard.nexaRecommendation ||
-        "Keep today light: one learning action, one confidence save, one earning review.",
+        "Use Academic Readiness and Global Readiness results to improve your BDP before choosing admissions pathways.",
       profileSummary: `${data.session.user?.role ?? "Blizzway member"}${data.session.user?.businessId ? " in a scoped Blizzway workspace" : ""}`,
     };
   }, [data]);
@@ -495,6 +502,32 @@ export function DashboardClient() {
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {["Pathway fit +9%", "BDP clarity +12%", "NEXA confidence +15%"].map((item) => (
+              <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-black text-slate-950">
+                {item}
+              </div>
+            ))}
+          </div>
+        </BlizzwayCard>
+      </section>
+
+      <section className="mt-5">
+        <BlizzwayCard as="section" className="c7-magical-glow">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Admissions pathway</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
+                Explore national and international admissions
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-6 c7-muted">
+                NEXA connects assessments, BDP strength, academic readiness, global readiness, documents, and scholarship signals before you shortlist colleges.
+              </p>
+            </div>
+            <BlizzwayButton href="/admissions" variant="dark" className="shrink-0">
+              Open admissions
+            </BlizzwayButton>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {["National routes", "Study abroad", "Scholarship readiness"].map((item) => (
               <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-black text-slate-950">
                 {item}
               </div>

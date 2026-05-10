@@ -5,7 +5,7 @@ import { assessmentCategories, assessments } from "@/lib/blizzway/assessments";
 import { BlizzwayDashboardShell } from "../dashboard-shell";
 
 const recommended = assessments.filter((assessment) =>
-  ["career-compass-starter", "communication-spark", "happiness-baseline"].includes(assessment.slug),
+  ["academic-readiness-check", "global-readiness-scan", "career-compass-starter"].includes(assessment.slug),
 );
 
 function AssessmentCard({ assessment }: { assessment: (typeof assessments)[number] }) {
@@ -41,7 +41,9 @@ function AssessmentCard({ assessment }: { assessment: (typeof assessments)[numbe
 }
 
 export default function AssessmentsPage() {
-  const featured = assessments.slice(0, 4);
+  const featured = assessments.filter((assessment) =>
+    ["career-compass-starter", "academic-readiness-check", "global-readiness-scan", "communication-spark"].includes(assessment.slug),
+  );
 
   return (
     <BlizzwayDashboardShell
@@ -72,7 +74,7 @@ export default function AssessmentsPage() {
           <BlizzwayBadge tone="cyan">BDP improvement</BlizzwayBadge>
           <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-950">Every result makes your living identity smarter.</h2>
           <p className="mt-3 text-sm leading-6 c7-muted">
-            Dummy results currently update only this preview, but the intended engine will improve BDP quality, NEXA guidance, pathway fit, and user confidence.
+            Dummy results currently update only this preview, but the intended engine will improve BDP quality, NEXA guidance, pathway fit, admissions recommendations, and user confidence.
           </p>
           <div className="mt-5 grid gap-3">
             {["Profile strength +12%", "Pathway accuracy +9%", "Recommendation confidence +15%"].map((item) => (
@@ -142,10 +144,20 @@ export default function AssessmentsPage() {
           <BlizzwayCard as="section">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">BDP impact preview</p>
             <div className="mt-4 space-y-3">
-              {["IQ 72", "EQ 88", "CQ 69", "AQ 74", "LQ 76"].map((metric) => (
+              {["IQ 72", "EQ 88", "CQ 69", "AQ 74", "LQ 76", "Admissions readiness 74"].map((metric) => (
                 <div key={metric} className="rounded-2xl bg-slate-50 p-3 text-sm font-black text-slate-950">{metric}</div>
               ))}
             </div>
+          </BlizzwayCard>
+
+          <BlizzwayCard as="section">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Admissions connection</p>
+            <p className="mt-3 text-sm leading-6 c7-muted">
+              Global Readiness and Academic Readiness results help NEXA recommend colleges, countries, deadlines, documents, and scholarships inside Admissions.
+            </p>
+            <BlizzwayButton href="/admissions" className="mt-5 w-full" variant="dark">
+              Open admissions
+            </BlizzwayButton>
           </BlizzwayCard>
         </div>
       </section>

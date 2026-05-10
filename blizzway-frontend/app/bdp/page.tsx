@@ -11,6 +11,7 @@ const metrics = [
 
 const suggestions = [
   "Take Career Compass Starter to sharpen pathway direction.",
+  "Complete Academic Readiness and Global Readiness before admissions shortlisting.",
   "Complete Communication Spark to improve interview confidence.",
   "Add two proof stories to Soul Vault for a stronger public profile.",
 ];
@@ -101,6 +102,54 @@ export default function BdpPage() {
               No backend profile storage is connected yet. This page uses dummy metrics to establish the Blizzway BDP experience.
             </p>
           </div>
+        </BlizzwayCard>
+      </section>
+
+      <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.85fr]">
+        <BlizzwayCard as="section">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Admissions Readiness</p>
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Study goals and application strength</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="font-black text-slate-950">Study goals</p>
+              <p className="mt-2 text-sm leading-6 c7-muted">Computer Science UG, business diploma, and global data pathways are saved as placeholder interests.</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="font-black text-slate-950">Country preference</p>
+              <p className="mt-2 text-sm leading-6 c7-muted">India, Canada, and United Kingdom are marked for comparison.</p>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {[
+              ["Academic fit", "74%"],
+              ["Global fit", "69%"],
+              ["Application confidence", "62%"],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="text-3xl font-black text-slate-950">{value}</p>
+                <p className="mt-1 text-sm font-semibold c7-muted">{label}</p>
+              </div>
+            ))}
+          </div>
+        </BlizzwayCard>
+
+        <BlizzwayCard as="section" className="c7-magical-glow">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Documents and scholarships</p>
+          <div className="mt-5 grid gap-3">
+            {[
+              ["Documents readiness", "Transcripts ready, SOP/LOR drafts pending"],
+              ["Scholarship readiness", "Merit profile started, proof stories need detail"],
+              ["NEXA next step", "Take admissions-linked assessments before final shortlist"],
+            ].map(([title, description]) => (
+              <div key={title} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="font-black text-slate-950">{title}</p>
+                <p className="mt-2 text-sm leading-6 c7-muted">{description}</p>
+              </div>
+            ))}
+          </div>
+          <BlizzwayButton href="/admissions" className="mt-5 w-full" variant="dark">
+            Review admissions readiness
+          </BlizzwayButton>
         </BlizzwayCard>
       </section>
     </BlizzwayDashboardShell>

@@ -8,7 +8,7 @@ export const dashboardNavItems: BlizzwayNavItem[] = [
   { label: "BDP", href: "/bdp" },
   { label: "Assessments", href: "/assessments", badge: "Free" },
   { label: "My Pathway", href: "/my-pathway" },
-  { label: "Admissions", href: "/admissions", badge: "Soon" },
+  { label: "Admissions", href: "/admissions" },
   { label: "Learning Garden", href: "/learning-garden" },
   { label: "Earning Universe", href: "/earning-universe" },
   { label: "Magic Market", href: "/magic-market" },
