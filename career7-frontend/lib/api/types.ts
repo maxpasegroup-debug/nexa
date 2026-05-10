@@ -219,12 +219,36 @@ export type SoulVaultItem = {
   metadata?: Record<string, unknown>;
 };
 
+export type BlizzwayVisionBoard = {
+  sixMonths: string;
+  oneYear: string;
+  threeYears: string;
+  fiveYears: string;
+};
+
+export type BlizzwayVaultPayload = {
+  onboardingAnswers: Record<string, string>;
+  digitalProfile: {
+    stage: string;
+    summary: string;
+    strengths: string[];
+  };
+  dreamGoals: string[];
+  visionBoard: BlizzwayVisionBoard;
+  updatedAt?: string;
+};
+
 export type SoulVaultResponse = {
   vault: {
     certificates: number;
     achievements: number;
     tier: string;
     vaultItems: SoulVaultItem[];
+    onboardingAnswers?: Record<string, string>;
+    digitalProfile?: BlizzwayVaultPayload["digitalProfile"];
+    dreamGoals?: string[];
+    visionBoard?: BlizzwayVisionBoard;
+    updatedAt?: string;
   };
 };
 

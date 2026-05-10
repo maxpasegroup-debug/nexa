@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import type { PaymentGatewayProvider } from "@prisma/client";
 
 import "@/lib/payment-callbacks";
 import { getCareer7Context } from "@/lib/career7-auth";
@@ -7,7 +6,7 @@ import {
   BLIZZWAY_BUSINESS_MODEL_ALIASES,
   ensureCareer7Wallet,
 } from "@/lib/career7-wallet";
-import { createPaymentIntent, getPaymentConfig, markPaymentSucceeded } from "@/lib/payments";
+import { getPaymentConfig } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -64,60 +63,19 @@ export async function GET(request: Request) {
   }
 }
 
-async function readBody(request: Request) {
-  try {
-    return (await request.json()) as {
-      gateway?: PaymentGatewayProvider;
-      amount?: number;
-      credits?: number;
-    };
-  } catch {
-    return {};
-  }
-}
-
 export async function POST(request: Request) {
   try {
     const context = await requireContext(request);
     if ("error" in context) return context.error;
 
-    const body = await readBody(request);
-    const amount = Math.max(0, Math.round(body.amount ?? 100000));
-    const credits = Math.max(0, Math.round(body.credits ?? 1000));
-
-    const { payment, checkout } = await createPaymentIntent({
-      businessModel: context.businessModel,
-      businessId: context.businessId,
-      userId: context.userId,
-      amount,
-      credits,
-      gateway: body.gateway,
-      description: `Blizzway credit top-up: ${credits} credits`,
-      metadata: {
-        source: "blizzway.wallet",
-      },
-    });
-
-    if (payment.gateway === "MANUAL") {
-      await markPaymentSucceeded(payment.id, `manual_${payment.id}`, {
-        completedBy: "manual",
-      });
-    }
-
-    const wallet = await ensureCareer7Wallet(context.businessId, context.userId);
-
-    return NextResponse.json({
-      wallet: {
-        primaryBalance: 0,
-        credits: wallet.balance,
-      },
-      payment,
-      checkout,
-    });
+    return NextResponse.json(
+      { error: "Blizzway wallet top-ups are not implemented yet." },
+      { status: 501 },
+    );
   } catch (error) {
     console.error("[career7:wallet:top-up]", error);
     return NextResponse.json(
-      { error: "Unable to top up Career7 credits." },
+      { error: "Unable to process Blizzway wallet top-up." },
       { status: 500 },
     );
   }
