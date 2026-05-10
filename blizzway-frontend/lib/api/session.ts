@@ -1,0 +1,137 @@
+import { api, buildApiUrl } from "./client";
+import { BLIZZWAY_BUSINESS_MODEL } from "./business-context";
+import type { AuthSessionResponse, BlizzwayHealthResponse, BlizzwayUserProfile } from "./types";
+
+const SESSION_PATH = "/api/auth/session";
+const CSRF_PATH = "/api/auth/csrf";
+const SIGN_IN_PATH = "/api/auth/callback/credentials?json=true";
+const SIGN_OUT_PATH = "/api/auth/signout?json=true";
+const REGISTER_PATH = "/api/register";
+// Legacy BGOS compatibility: Blizzway session health still lives under /api/career7/*.
+const LEGACY_BGOS_HEALTH_PATH = "/api/career7/health";
+
+export type LoginInput = {
+  email: string;
+  password: string;
+};
+
+export type SignupInput = LoginInput & {
+  name: string;
+};
+
+type CsrfResponse = {
+  csrfToken: string;
+};
+
+type NextAuthActionResponse = {
+  url?: string | null;
+  ok?: boolean;
+  error?: string | null;
+  status?: number;
+};
+
+type RegisterResponse = {
+  user: BlizzwayUserProfile;
+};
+
+async function getCsrfToken() {
+  const response = await api.get<CsrfResponse>(CSRF_PATH);
+  return response.csrfToken;
+}
+
+function credentialsBody({
+  csrfToken,
+  email,
+  password,
+  callbackUrl,
+}: LoginInput & { csrfToken: string; callbackUrl: string }) {
+  return new URLSearchParams({
+    csrfToken,
+    email,
+    password,
+    redirect: "false",
+    json: "true",
+    callbackUrl,
+  });
+}
+
+async function assertBlizzwaySession() {
+  return api.get<BlizzwayHealthResponse>(LEGACY_BGOS_HEALTH_PATH);
+}
+
+function redirectHasAuthError(location: string | null) {
+  if (!location) return false;
+
+  try {
+    const url = new URL(location, typeof window === "undefined" ? "http://localhost" : window.location.origin);
+    return url.searchParams.has("error");
+  } catch {
+    return location.includes("error=");
+  }
+}
+
+async function submitCredentials(body: URLSearchParams) {
+  const response = await fetch(buildApiUrl(SIGN_IN_PATH), {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    credentials: "include",
+    redirect: "manual",
+    body,
+  });
+
+  const location = response.headers.get("Location");
+  if (redirectHasAuthError(location)) {
+    throw new Error("Incorrect email or password. Please try again.");
+  }
+
+  if (response.status >= 300 && response.status < 400) {
+    return {};
+  }
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as NextAuthActionResponse;
+}
+
+export const sessionApi = {
+  getSession: () => api.get<AuthSessionResponse>(SESSION_PATH),
+  safeGetSession: () => api.safeGet<AuthSessionResponse>(SESSION_PATH),
+  getCsrfToken,
+  login: async ({ email, password }: LoginInput, callbackUrl = "/dashboard") => {
+    const csrfToken = await getCsrfToken();
+    const response = await submitCredentials(
+      credentialsBody({ csrfToken, email, password, callbackUrl }),
+    );
+
+    if (response.error) {
+      throw new Error("Incorrect email or password. Please try again.");
+    }
+
+    await assertBlizzwaySession();
+    return response;
+  },
+  signup: async ({ name, email, password }: SignupInput) => {
+    await api.post<RegisterResponse>(REGISTER_PATH, {
+      name,
+      email,
+      password,
+      businessModel: BLIZZWAY_BUSINESS_MODEL,
+    });
+
+    return sessionApi.login({ email, password }, "/onboarding");
+  },
+  logout: async () => {
+    const csrfToken = await getCsrfToken();
+    return api.formPost<NextAuthActionResponse>(
+      SIGN_OUT_PATH,
+      new URLSearchParams({
+        csrfToken,
+        redirect: "false",
+        json: "true",
+        callbackUrl: "/login",
+      }),
+    );
+  },
+};
