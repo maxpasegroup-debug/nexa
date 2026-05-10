@@ -2,6 +2,7 @@ import { apiConfig } from "./config";
 import { ApiError, type ApiErrorPayload } from "./errors";
 import { safeApiCall } from "./errors";
 import { getApiAuthToken } from "./auth";
+import { BLIZZWAY_BUSINESS_MODEL } from "./business-context";
 
 type QueryValue = string | number | boolean | null | undefined;
 
@@ -66,6 +67,10 @@ export async function apiRequest<T>(
 
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  if (!headers.has("X-Business-Model")) {
+    headers.set("X-Business-Model", BLIZZWAY_BUSINESS_MODEL);
   }
 
   const response = await fetch(buildApiUrl(path, options.query), {

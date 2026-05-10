@@ -4,7 +4,21 @@ import { prisma } from "@/lib/prisma";
 
 type Tx = Prisma.TransactionClient;
 
+export const BLIZZWAY_BUSINESS_MODEL = "blizzway";
 export const CAREER7_BUSINESS_MODEL = "career7";
+export const BLIZZWAY_BUSINESS_MODEL_ALIASES = [
+  BLIZZWAY_BUSINESS_MODEL,
+  CAREER7_BUSINESS_MODEL,
+] as const;
+
+export type BlizzwayBusinessModel = (typeof BLIZZWAY_BUSINESS_MODEL_ALIASES)[number];
+
+export function normalizeBlizzwayBusinessModel(value: unknown): BlizzwayBusinessModel | null {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return BLIZZWAY_BUSINESS_MODEL_ALIASES.includes(normalized as BlizzwayBusinessModel)
+    ? (normalized as BlizzwayBusinessModel)
+    : null;
+}
 
 export function isCareer7PaymentModeEnabled() {
   return process.env.CAREER7_CREDIT_PAYMENT_ENABLED !== "false";
@@ -26,12 +40,14 @@ export async function topUpCareer7Credits({
   businessId,
   userId,
   amount,
+  businessModel = CAREER7_BUSINESS_MODEL,
   description = "Dummy Career7 credit top-up",
   metadata = {},
 }: {
   businessId: string;
   userId: string;
   amount: number;
+  businessModel?: BlizzwayBusinessModel;
   description?: string;
   metadata?: Prisma.InputJsonValue;
 }) {
@@ -50,7 +66,7 @@ export async function topUpCareer7Credits({
 
     const ledger = await tx.career7CreditLedger.create({
       data: {
-        businessModel: CAREER7_BUSINESS_MODEL,
+        businessModel,
         businessId,
         userId,
         walletId: wallet.id,
@@ -70,6 +86,7 @@ export async function debitCareer7Credits({
   businessId,
   userId,
   amount,
+  businessModel = CAREER7_BUSINESS_MODEL,
   agentId,
   growthBoardItemId,
   description,
@@ -78,6 +95,7 @@ export async function debitCareer7Credits({
   businessId: string;
   userId: string;
   amount: number;
+  businessModel?: BlizzwayBusinessModel;
   agentId?: string;
   growthBoardItemId?: string;
   description: string;
@@ -113,7 +131,7 @@ export async function debitCareer7Credits({
 
     const ledger = await tx.career7CreditLedger.create({
       data: {
-        businessModel: CAREER7_BUSINESS_MODEL,
+        businessModel,
         businessId,
         userId,
         walletId: wallet.id,

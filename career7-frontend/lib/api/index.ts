@@ -1,4 +1,9 @@
 export { api, apiRequest, type ApiRequestOptions } from "./client";
+export {
+  BLIZZWAY_BUSINESS_MODEL,
+  BLIZZWAY_LEGACY_BUSINESS_MODEL,
+  type BlizzwayBusinessModel,
+} from "./business-context";
 export { apiConfig, getApiBaseUrl } from "./config";
 export {
   ApiError,

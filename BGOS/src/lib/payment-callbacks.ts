@@ -1,7 +1,7 @@
 import { topUpCareer7Credits } from "@/lib/career7-wallet";
-import { registerPaymentCallback } from "@/lib/payments";
+import { registerPaymentCallback, type PaymentCallbackContext } from "@/lib/payments";
 
-registerPaymentCallback("career7.payment.success", async ({ payment }) => {
+async function topUpBlizzwayCredits({ payment }: PaymentCallbackContext) {
   const credits = payment.credits ?? 0;
   if (credits <= 0) return;
 
@@ -9,7 +9,8 @@ registerPaymentCallback("career7.payment.success", async ({ payment }) => {
     businessId: payment.businessId,
     userId: payment.userId,
     amount: credits,
-    description: `Career7 credit top-up via ${payment.gateway.toLowerCase()}`,
+    businessModel: payment.businessModel === "blizzway" ? "blizzway" : "career7",
+    description: `Blizzway credit top-up via ${payment.gateway.toLowerCase()}`,
     metadata: {
       paymentGateway: payment.gateway,
       bgosPaymentIntentId: payment.id,
@@ -17,8 +18,15 @@ registerPaymentCallback("career7.payment.success", async ({ payment }) => {
       providerPaymentId: payment.providerPaymentId,
     },
   });
-});
+}
+
+registerPaymentCallback("blizzway.payment.success", topUpBlizzwayCredits);
+registerPaymentCallback("career7.payment.success", topUpBlizzwayCredits);
 
 registerPaymentCallback("career7.payment.failure", async () => {
+  return;
+});
+
+registerPaymentCallback("blizzway.payment.failure", async () => {
   return;
 });

@@ -1,4 +1,5 @@
 import { api } from "./client";
+import { BLIZZWAY_BUSINESS_MODEL } from "./business-context";
 import type { AuthSessionResponse, Career7HealthResponse, Career7UserProfile } from "./types";
 
 const SESSION_PATH = "/api/auth/session";
@@ -80,7 +81,7 @@ export const sessionApi = {
       name,
       email,
       password,
-      businessModel: "career7",
+      businessModel: BLIZZWAY_BUSINESS_MODEL,
     });
 
     return sessionApi.login({ email, password }, "/onboarding");

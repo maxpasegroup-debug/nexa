@@ -3,29 +3,32 @@ import type { PaymentGatewayProvider } from "@prisma/client";
 
 import "@/lib/payment-callbacks";
 import { getCareer7Context } from "@/lib/career7-auth";
-import { CAREER7_BUSINESS_MODEL, ensureCareer7Wallet } from "@/lib/career7-wallet";
+import {
+  BLIZZWAY_BUSINESS_MODEL_ALIASES,
+  ensureCareer7Wallet,
+} from "@/lib/career7-wallet";
 import { createPaymentIntent, getPaymentConfig, markPaymentSucceeded } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-async function requireContext() {
-  const authResult = await getCareer7Context();
+async function requireContext(request?: Request) {
+  const authResult = await getCareer7Context(request);
   if (authResult.response) return { error: authResult.response };
 
   return authResult.context;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const context = await requireContext();
+    const context = await requireContext(request);
     if ("error" in context) return context.error;
 
-    const paymentConfig = await getPaymentConfig(CAREER7_BUSINESS_MODEL, context.businessId);
+    const paymentConfig = await getPaymentConfig(context.businessModel, context.businessId);
     const wallet = await ensureCareer7Wallet(context.businessId, context.userId);
     const ledger = await prisma.career7CreditLedger.findMany({
       where: {
-        businessModel: "career7",
+        businessModel: { in: [...BLIZZWAY_BUSINESS_MODEL_ALIASES] },
         businessId: context.businessId,
         userId: context.userId,
       },
@@ -75,7 +78,7 @@ async function readBody(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const context = await requireContext();
+    const context = await requireContext(request);
     if ("error" in context) return context.error;
 
     const body = await readBody(request);
@@ -83,15 +86,15 @@ export async function POST(request: Request) {
     const credits = Math.max(0, Math.round(body.credits ?? 1000));
 
     const { payment, checkout } = await createPaymentIntent({
-      businessModel: CAREER7_BUSINESS_MODEL,
+      businessModel: context.businessModel,
       businessId: context.businessId,
       userId: context.userId,
       amount,
       credits,
       gateway: body.gateway,
-      description: `Career7 credit top-up: ${credits} credits`,
+      description: `Blizzway credit top-up: ${credits} credits`,
       metadata: {
-        source: "career7.wallet",
+        source: "blizzway.wallet",
       },
     });
 

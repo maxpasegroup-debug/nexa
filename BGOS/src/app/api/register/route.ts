@@ -1,8 +1,8 @@
 import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
-import { CAREER7_AUTH_MODEL, getAuthBusinessModel } from "@/lib/auth-business-model";
-import { CAREER7_BUSINESS_MODEL } from "@/lib/career7-wallet";
+import { BLIZZWAY_AUTH_MODEL, getAuthBusinessModel, isCareer7Auth } from "@/lib/auth-business-model";
+import { BLIZZWAY_BUSINESS_MODEL, CAREER7_BUSINESS_MODEL } from "@/lib/career7-wallet";
 import { generateClientId } from "@/lib/client-id";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
@@ -19,7 +19,9 @@ export async function POST(request: Request) {
     const { name, email, password, businessModel: rawBusinessModel } = await request.json();
     const userName = String(name ?? "").trim();
     const businessModel = getAuthBusinessModel(rawBusinessModel);
-    const isCareer7 = businessModel === CAREER7_AUTH_MODEL;
+    const isCareer7 = isCareer7Auth(businessModel);
+    const ventureBusinessModel =
+      businessModel === BLIZZWAY_AUTH_MODEL ? BLIZZWAY_BUSINESS_MODEL : CAREER7_BUSINESS_MODEL;
 
     if (!userName || !email || !password) {
       return NextResponse.json(
@@ -46,12 +48,16 @@ export async function POST(request: Request) {
       const business = await tx.business.create({
         data: {
           clientId,
-          name: isCareer7 ? `${userName}'s Career7 Workspace` : `${userName}'s Business`,
-          type: isCareer7 ? CAREER7_BUSINESS_MODEL : "Not set",
+          name: isCareer7 ? `${userName}'s Blizzway Workspace` : `${userName}'s Business`,
+          type: isCareer7 ? ventureBusinessModel : "Not set",
           teamSize: isCareer7 ? "1" : "Not set",
           goal: isCareer7 ? "Career growth" : "Not set",
           healthScore: 50,
-          plan: isCareer7 ? "CAREER7_STARTER" : "STARTER",
+          plan: isCareer7
+            ? ventureBusinessModel === BLIZZWAY_BUSINESS_MODEL
+              ? "BLIZZWAY_STARTER"
+              : "CAREER7_STARTER"
+            : "STARTER",
         },
         select: { id: true },
       });
@@ -79,18 +85,18 @@ export async function POST(request: Request) {
         await tx.businessPaymentConfig.upsert({
           where: {
             businessModel_businessId: {
-              businessModel: CAREER7_BUSINESS_MODEL,
+              businessModel: ventureBusinessModel,
               businessId: business.id,
             },
           },
           create: {
-            businessModel: CAREER7_BUSINESS_MODEL,
+            businessModel: ventureBusinessModel,
             businessId: business.id,
             enabledGateways: ["MANUAL"],
             defaultGateway: "MANUAL",
             currency: "INR",
-            successCallback: "career7.payment.success",
-            failureCallback: "career7.payment.failure",
+            successCallback: `${ventureBusinessModel}.payment.success`,
+            failureCallback: `${ventureBusinessModel}.payment.failure`,
           },
           update: {},
         });

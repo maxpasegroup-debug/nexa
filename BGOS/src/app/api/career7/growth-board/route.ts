@@ -3,7 +3,6 @@ import type { Career7GrowthBoardPath } from "@prisma/client";
 
 import { getCareer7Context } from "@/lib/career7-auth";
 import {
-  CAREER7_BUSINESS_MODEL,
   ensureCareer7Wallet,
   isCareer7PaymentModeEnabled,
 } from "@/lib/career7-wallet";
@@ -21,8 +20,8 @@ function normalizePath(value: unknown): Career7GrowthBoardPath | null {
     : null;
 }
 
-async function requireCareer7Context() {
-  const authResult = await getCareer7Context();
+async function requireCareer7Context(request?: Request) {
+  const authResult = await getCareer7Context(request);
   if (authResult.response) return { error: authResult.response };
 
   return authResult.context;
@@ -95,9 +94,9 @@ async function getAvailableAgents() {
   });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const context = await requireCareer7Context();
+    const context = await requireCareer7Context(request);
     if ("error" in context) return context.error;
 
     const [items, availableAgents] = await Promise.all([
@@ -136,7 +135,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const context = await requireCareer7Context();
+    const context = await requireCareer7Context(request);
     if ("error" in context) return context.error;
 
     const body = (await request.json()) as Record<string, unknown>;
@@ -232,7 +231,7 @@ export async function POST(request: Request) {
 
         await tx.career7CreditLedger.create({
           data: {
-            businessModel: CAREER7_BUSINESS_MODEL,
+            businessModel: context.businessModel,
             businessId: context.businessId,
             userId: context.userId,
             walletId: wallet.id,
@@ -241,7 +240,7 @@ export async function POST(request: Request) {
             balanceAfter,
             agentId: agent.id,
             growthBoardItemId: activated.id,
-            description: `Activated ${agent.name} on Career7 ${path.toLowerCase()} path`,
+            description: `Activated ${agent.name} on Blizzway ${path.toLowerCase()} path`,
             metadata: {
               paymentModeEnabled,
               creditPrice: agent.creditPrice,
@@ -274,7 +273,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const context = await requireCareer7Context();
+    const context = await requireCareer7Context(request);
     if ("error" in context) return context.error;
 
     const body = (await request.json()) as Record<string, unknown>;

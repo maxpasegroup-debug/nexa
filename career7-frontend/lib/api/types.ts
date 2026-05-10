@@ -1,6 +1,6 @@
-export type ApiResponse<T> = T;
+import type { BlizzwayBusinessModel } from "./business-context";
 
-export type BlizzwayBusinessModel = "career7";
+export type ApiResponse<T> = T;
 
 export type ISODateString = string;
 
@@ -87,7 +87,8 @@ export type EarningUniverseResponse = {
 
 export type Career7HealthResponse = {
   status: "healthy";
-  module: "career7";
+  module: "blizzway" | "career7";
+  businessModel?: BlizzwayBusinessModel;
   timestamp: string;
 };
 

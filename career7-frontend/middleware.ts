@@ -11,6 +11,7 @@ const protectedRoutes = [
   "/soul-vault",
   "/wallet",
   "/settings",
+  "/growth-board",
 ];
 
 function getBgosBaseUrl() {
@@ -44,6 +45,7 @@ export async function middleware(request: NextRequest) {
     const response = await fetch(new URL("/api/career7/health", getBgosBaseUrl()), {
       headers: {
         cookie: request.headers.get("cookie") ?? "",
+        "x-business-model": "blizzway",
       },
       cache: "no-store",
     });
@@ -70,5 +72,6 @@ export const config = {
     "/soul-vault/:path*",
     "/wallet/:path*",
     "/settings/:path*",
+    "/growth-board/:path*",
   ],
 };

@@ -60,7 +60,7 @@ async function getCareer7Agents({
 
 export async function GET(request: Request) {
   try {
-    const authResult = await getCareer7Context();
+    const authResult = await getCareer7Context(request);
     if (authResult.response) return authResult.response;
 
     const { searchParams } = new URL(request.url);

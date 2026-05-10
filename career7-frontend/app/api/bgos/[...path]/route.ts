@@ -52,6 +52,9 @@ function buildForwardHeaders(request: Request) {
   });
 
   headers.set("x-blizzway-proxy", "career7-frontend");
+  if (!headers.has("x-business-model")) {
+    headers.set("x-business-model", "blizzway");
+  }
   return headers;
 }
 

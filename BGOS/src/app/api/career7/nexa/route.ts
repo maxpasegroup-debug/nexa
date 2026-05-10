@@ -9,7 +9,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const authResult = await getCareer7Context();
+  const authResult = await getCareer7Context(request);
   if (authResult.response) return authResult.response;
 
   const body = (await request.json()) as {
