@@ -13,3 +13,5 @@ export async function getApiAuthToken() {
 export function getSessionEndpoint() {
   return "/api/auth/session";
 }
+
+export { sessionApi } from "./session";

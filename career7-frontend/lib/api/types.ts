@@ -1,12 +1,16 @@
 export type ApiResponse<T> = T;
 
+export type BlizzwayBusinessModel = "career7";
+
+export type ISODateString = string;
+
 export type Career7UserProfile = {
   id: string;
   name: string | null;
   email: string | null;
   role?: string | null;
   businessId?: string | null;
-  businessModel: "career7";
+  businessModel: BlizzwayBusinessModel;
 };
 
 export type BgosSessionResponse = {
@@ -20,12 +24,64 @@ export type BgosSessionResponse = {
   expires?: string;
 };
 
+export type AuthSessionResponse = BgosSessionResponse;
+
 export type Career7MetricsResponse = {
   metrics: {
     careerScore: number | null;
     walletBalance: number;
     credits: number;
     tasksCompleted: number;
+  };
+};
+
+export type BlizzwayPathwayStep = {
+  id: string;
+  title: string;
+  status: "locked" | "available" | "active" | "completed";
+  progress: number;
+  dueAt?: ISODateString | null;
+};
+
+export type BlizzwayPathwayResponse = {
+  pathway: {
+    id: string;
+    title: string;
+    currentStepId?: string | null;
+    progress: number;
+    steps: BlizzwayPathwayStep[];
+  };
+};
+
+export type LearningGardenItem = {
+  id: string;
+  title: string;
+  type: string;
+  status: "not_started" | "in_progress" | "completed";
+  progress: number;
+};
+
+export type LearningGardenResponse = {
+  garden: {
+    items: LearningGardenItem[];
+    activeCount: number;
+    completedCount: number;
+  };
+};
+
+export type EarningUniverseOpportunity = {
+  id: string;
+  title: string;
+  category: string;
+  status: "suggested" | "saved" | "active" | "completed";
+  estimatedValue?: number | null;
+};
+
+export type EarningUniverseResponse = {
+  universe: {
+    opportunities: EarningUniverseOpportunity[];
+    activeCount: number;
+    completedCount: number;
   };
 };
 
@@ -59,6 +115,27 @@ export type Career7AgentsResponse = {
   agents: Career7Agent[];
   total: number;
   featured: Career7Agent | null;
+};
+
+export type MagicMarketResponse = Career7AgentsResponse;
+
+export type CompanionsResponse = {
+  companions: Career7Agent[];
+  total: number;
+  featured: Career7Agent | null;
+};
+
+export type QuickBoost = {
+  id: string;
+  title: string;
+  description: string;
+  creditPrice: number;
+  status: "available" | "coming_soon" | "archived";
+};
+
+export type QuickBoostsResponse = {
+  boosts: QuickBoost[];
+  total: number;
 };
 
 export type Career7GrowthBoardItem = {
@@ -131,6 +208,23 @@ export type Career7WalletTopUpResponse = {
   };
   payment: unknown;
   checkout: unknown;
+};
+
+export type SoulVaultItem = {
+  id: string;
+  title: string;
+  type: string;
+  issuedAt?: ISODateString | null;
+  metadata?: Record<string, unknown>;
+};
+
+export type SoulVaultResponse = {
+  vault: {
+    certificates: number;
+    achievements: number;
+    tier: string;
+    vaultItems: SoulVaultItem[];
+  };
 };
 
 export type Career7NexaMessage = {

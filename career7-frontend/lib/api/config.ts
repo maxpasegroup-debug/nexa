@@ -6,9 +6,7 @@ function trimTrailingSlash(value: string) {
 
 export function getApiBaseUrl() {
   return trimTrailingSlash(
-    process.env.NEXT_PUBLIC_BGOS_API_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      DEFAULT_API_BASE_URL,
+    process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_BASE_URL,
   );
 }
 

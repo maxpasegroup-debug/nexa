@@ -1,5 +1,6 @@
 import { apiConfig } from "./config";
 import { ApiError, type ApiErrorPayload } from "./errors";
+import { safeApiCall } from "./errors";
 import { getApiAuthToken } from "./auth";
 
 type QueryValue = string | number | boolean | null | undefined;
@@ -80,4 +81,12 @@ export const api = {
     apiRequest<T>(path, { ...options, method: "PUT", body }),
   delete: <T>(path: string, options?: ApiRequestOptions) =>
     apiRequest<T>(path, { ...options, method: "DELETE" }),
+  safeGet: <T>(path: string, options?: ApiRequestOptions) =>
+    safeApiCall(apiRequest<T>(path, { ...options, method: "GET" })),
+  safePost: <T>(path: string, body?: unknown, options?: ApiRequestOptions) =>
+    safeApiCall(apiRequest<T>(path, { ...options, method: "POST", body })),
+  safePatch: <T>(path: string, body?: unknown, options?: ApiRequestOptions) =>
+    safeApiCall(apiRequest<T>(path, { ...options, method: "PATCH", body })),
+  safeDelete: <T>(path: string, options?: ApiRequestOptions) =>
+    safeApiCall(apiRequest<T>(path, { ...options, method: "DELETE" })),
 };

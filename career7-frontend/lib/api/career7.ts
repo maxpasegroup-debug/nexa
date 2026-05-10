@@ -1,24 +1,17 @@
+import { magicMarketApi, type MagicMarketFilters } from "./magic-market";
+import { nexaApi } from "./nexa";
+import { profileApi } from "./profile";
+import { sessionApi } from "./session";
+import { walletApi } from "./wallet";
 import { api } from "./client";
 import type {
-  BgosSessionResponse,
   Career7AgentsResponse,
   Career7GrowthBoardResponse,
   Career7HealthResponse,
   Career7MetricsResponse,
-  Career7NexaRequest,
-  Career7NexaResponse,
-  Career7UserProfile,
-  Career7WalletResponse,
-  Career7WalletTopUpRequest,
-  Career7WalletTopUpResponse,
 } from "./types";
 
-export type Career7AgentFilters = {
-  category?: string;
-  type?: string;
-  status?: string;
-  growthBoardOnly?: boolean;
-};
+export type Career7AgentFilters = MagicMarketFilters;
 
 export type AddGrowthBoardAgentRequest = {
   agentId: string;
@@ -31,9 +24,9 @@ export type UpdateGrowthBoardAgentRequest = {
 };
 
 export const career7Api = {
-  getProfile: () => api.get<Career7UserProfile>("/api/career7/profile"),
+  getProfile: profileApi.getProfile,
 
-  getSession: () => api.get<BgosSessionResponse>("/api/auth/session"),
+  getSession: sessionApi.getSession,
 
   getHealth: () => api.get<Career7HealthResponse>("/api/career7/health"),
 
@@ -54,13 +47,11 @@ export const career7Api = {
     ),
 
   getMarketplaceAgents: (filters: Career7AgentFilters = {}) =>
-    api.get<Career7AgentsResponse>("/api/career7/agents", { query: filters }),
+    magicMarketApi.getMagicMarket(filters) as Promise<Career7AgentsResponse>,
 
-  getWallet: () => api.get<Career7WalletResponse>("/api/career7/wallet"),
+  getWallet: walletApi.getWallet,
 
-  topUpWallet: (body: Career7WalletTopUpRequest) =>
-    api.post<Career7WalletTopUpResponse>("/api/career7/wallet", body),
+  topUpWallet: walletApi.topUpWallet,
 
-  askNexa: (body: Career7NexaRequest) =>
-    api.post<Career7NexaResponse>("/api/career7/nexa", body),
+  askNexa: nexaApi.askNexa,
 };
