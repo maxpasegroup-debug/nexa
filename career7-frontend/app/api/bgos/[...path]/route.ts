@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",
   "content-length",
+  "expect",
   "host",
   "keep-alive",
   "proxy-authenticate",

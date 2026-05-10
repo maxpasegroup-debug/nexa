@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, buildApiUrl } from "./client";
 import { BLIZZWAY_BUSINESS_MODEL } from "./business-context";
 import type { AuthSessionResponse, Career7HealthResponse, Career7UserProfile } from "./types";
 
@@ -58,14 +58,49 @@ async function assertCareer7Session() {
   return api.get<Career7HealthResponse>(CAREER7_HEALTH_PATH);
 }
 
+function redirectHasAuthError(location: string | null) {
+  if (!location) return false;
+
+  try {
+    const url = new URL(location, typeof window === "undefined" ? "http://localhost" : window.location.origin);
+    return url.searchParams.has("error");
+  } catch {
+    return location.includes("error=");
+  }
+}
+
+async function submitCredentials(body: URLSearchParams) {
+  const response = await fetch(buildApiUrl(SIGN_IN_PATH), {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    credentials: "include",
+    redirect: "manual",
+    body,
+  });
+
+  const location = response.headers.get("Location");
+  if (redirectHasAuthError(location)) {
+    throw new Error("Incorrect email or password. Please try again.");
+  }
+
+  if (response.status >= 300 && response.status < 400) {
+    return {};
+  }
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as NextAuthActionResponse;
+}
+
 export const sessionApi = {
   getSession: () => api.get<AuthSessionResponse>(SESSION_PATH),
   safeGetSession: () => api.safeGet<AuthSessionResponse>(SESSION_PATH),
   getCsrfToken,
   login: async ({ email, password }: LoginInput, callbackUrl = "/dashboard") => {
     const csrfToken = await getCsrfToken();
-    const response = await api.formPost<NextAuthActionResponse>(
-      SIGN_IN_PATH,
+    const response = await submitCredentials(
       credentialsBody({ csrfToken, email, password, callbackUrl }),
     );
 
