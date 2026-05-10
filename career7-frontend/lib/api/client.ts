@@ -11,9 +11,15 @@ export type ApiRequestOptions = Omit<RequestInit, "body"> & {
   authToken?: string | null;
 };
 
-function buildUrl(path: string, query?: Record<string, QueryValue>) {
+export function buildApiUrl(path: string, query?: Record<string, QueryValue>) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(`${apiConfig.baseUrl}${normalizedPath}`);
+  const url =
+    apiConfig.baseUrl.startsWith("http://") || apiConfig.baseUrl.startsWith("https://")
+      ? new URL(`${apiConfig.baseUrl}${normalizedPath}`)
+      : new URL(
+          `${apiConfig.baseUrl}${normalizedPath}`,
+          typeof window === "undefined" ? "http://localhost" : window.location.origin,
+        );
 
   Object.entries(query ?? {}).forEach(([key, value]) => {
     if (value !== null && value !== undefined && value !== "") {
@@ -22,6 +28,21 @@ function buildUrl(path: string, query?: Record<string, QueryValue>) {
   });
 
   return url.toString();
+}
+
+function isBodyInit(value: unknown): value is BodyInit {
+  return (
+    typeof value === "string" ||
+    value instanceof URLSearchParams ||
+    value instanceof FormData ||
+    value instanceof Blob ||
+    value instanceof ArrayBuffer
+  );
+}
+
+function serializeBody(body: unknown) {
+  if (body === undefined) return undefined;
+  return isBodyInit(body) ? body : JSON.stringify(body);
 }
 
 async function readErrorPayload(response: Response): Promise<ApiErrorPayload | null> {
@@ -39,7 +60,7 @@ export async function apiRequest<T>(
   const token = options.authToken === undefined ? await getApiAuthToken() : options.authToken;
   const headers = new Headers(options.headers);
 
-  if (options.body !== undefined && !headers.has("Content-Type")) {
+  if (options.body !== undefined && !headers.has("Content-Type") && !isBodyInit(options.body)) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -47,11 +68,11 @@ export async function apiRequest<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(buildUrl(path, options.query), {
+  const response = await fetch(buildApiUrl(path, options.query), {
     ...options,
     headers,
     credentials: options.credentials ?? "include",
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body: serializeBody(options.body),
   });
 
   if (!response.ok) {
@@ -81,6 +102,16 @@ export const api = {
     apiRequest<T>(path, { ...options, method: "PUT", body }),
   delete: <T>(path: string, options?: ApiRequestOptions) =>
     apiRequest<T>(path, { ...options, method: "DELETE" }),
+  formPost: <T>(path: string, body: URLSearchParams, options?: ApiRequestOptions) =>
+    apiRequest<T>(path, {
+      ...options,
+      method: "POST",
+      body,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        ...Object.fromEntries(new Headers(options?.headers).entries()),
+      },
+    }),
   safeGet: <T>(path: string, options?: ApiRequestOptions) =>
     safeApiCall(apiRequest<T>(path, { ...options, method: "GET" })),
   safePost: <T>(path: string, body?: unknown, options?: ApiRequestOptions) =>

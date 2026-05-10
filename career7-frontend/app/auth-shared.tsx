@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
 type AuthShellProps = {
   eyebrow: string;
@@ -20,7 +20,7 @@ export function AuthShell({
   sideTitle,
   sideDescription,
   highlights,
-  footerNote = "Secure placeholder experience. Real auth arrives later.",
+  footerNote = "Secure BGOS-powered Blizzway authentication.",
 }: AuthShellProps) {
   return (
     <main className="c7-shell grid min-h-screen lg:grid-cols-[0.94fr_1.06fr]">
@@ -81,17 +81,19 @@ export function TextField({
   label,
   type = "text",
   placeholder,
+  ...inputProps
 }: {
   label: string;
   type?: string;
   placeholder: string;
-}) {
+} & Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "placeholder">) {
   return (
     <label className="block">
       <span className="text-sm font-bold text-slate-700">{label}</span>
       <input
         type={type}
         placeholder={placeholder}
+        {...inputProps}
         className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
       />
     </label>

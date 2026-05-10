@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { Career7Badge, Career7Sidebar, type Career7NavItem } from "@/components/career7";
+import { Career7Badge, Career7Sidebar, LogoutButton, type Career7NavItem } from "@/components/career7";
 
 export const dashboardNavItems: Career7NavItem[] = [
   { label: "Dashboard", href: "/dashboard", badge: "Home" },
@@ -97,6 +97,7 @@ export function Career7DashboardShell({
                 <span className="rounded-full bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 ring-1 ring-cyan-100 sm:px-4">
                   {walletCredits === null || walletCredits === undefined ? "2,400" : walletCredits.toLocaleString()} credits
                 </span>
+                <LogoutButton />
                 <button
                   type="button"
                   aria-label="Notifications"

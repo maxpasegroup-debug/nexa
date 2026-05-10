@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-import { career7Api, getApiBaseUrl } from "@/lib/api";
+import { career7Api } from "@/lib/api";
 
 type AuthState = "checking" | "allowed" | "blocked";
 
@@ -59,7 +59,7 @@ export function Career7AuthBoundary({ children }: { children: ReactNode }) {
         </p>
         {authState === "blocked" ? (
           <Link
-            href={`${getApiBaseUrl()}/login?businessModel=career7`}
+            href="/login"
             className="mt-5 inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-black text-white"
           >
             Continue to login
