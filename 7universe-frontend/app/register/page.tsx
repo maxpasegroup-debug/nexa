@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type Mode = "checking" | "login" | "register";
@@ -31,7 +32,7 @@ function PinBoxes({
             key={index}
             className="flex h-14 items-center justify-center rounded-xl border border-white/10 bg-black/30 text-2xl font-extrabold text-white"
           >
-            {digit.trim() ? "•" : ""}
+            {digit.trim() ? "*" : ""}
           </span>
         ))}
       </button>
@@ -138,9 +139,10 @@ function RegisterForm() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(ellipse_at_top,#0d0020_0%,#000000_100%)] px-5 py-10 text-white">
       <section className="w-full max-w-[400px] rounded-[20px] border border-[rgba(245,158,11,0.15)] bg-[#0a0a14] p-8 shadow-2xl">
-        <h1 className="mb-7 text-center font-heading text-3xl font-extrabold text-[#F59E0B]">
-          Join 7Universe
-        </h1>
+        <div className="mb-7 text-center">
+          <h1 className="font-heading text-3xl font-extrabold text-[#F59E0B]">Join 7Universe</h1>
+          <p className="mt-2 text-sm text-white/50">Phone number, name, and one simple 4-digit PIN.</p>
+        </div>
 
         <div className="mb-5 flex overflow-hidden rounded-xl border border-white/10 bg-black/20">
           <select
@@ -149,7 +151,7 @@ function RegisterForm() {
             className="w-[118px] border-r border-white/10 bg-transparent px-3 py-4 text-sm font-bold outline-none"
           >
             <option className="bg-[#0a0a14]" value="+91">
-              🇮🇳 +91
+              India +91
             </option>
           </select>
           <input
@@ -178,7 +180,7 @@ function RegisterForm() {
             />
             <PinBoxes label="Create a 4-digit PIN" value={pin} onChange={setPin} />
             <PinBoxes label="Confirm PIN" value={confirmPin} onChange={setConfirmPin} />
-            <p className="text-xs text-white/45">🔒 Your number is your identity. We never share it.</p>
+            <p className="text-xs text-white/45">Your number is your identity. We never share it.</p>
           </div>
         )}
 
@@ -190,8 +192,15 @@ function RegisterForm() {
           disabled={loading || mode === "checking" || phone.length < 10}
           className="mt-7 w-full rounded-xl bg-[linear-gradient(135deg,#F59E0B,#D97706)] px-5 py-4 text-base font-extrabold text-black shadow-[0_8px_32px_rgba(245,158,11,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? "Please wait..." : mode === "login" ? "Continue →" : "Create Account →"}
+          {loading ? "Please wait..." : mode === "login" ? "Continue" : "Create Account"}
         </button>
+
+        <p className="mt-6 text-center text-sm text-white/45">
+          Already have an account?{" "}
+          <Link href="/login" className="font-bold text-[#F59E0B]">
+            Login
+          </Link>
+        </p>
       </section>
     </main>
   );

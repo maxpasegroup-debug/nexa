@@ -8,32 +8,53 @@ const STEPS = [
   {
     id: 1,
     file: "7A1.mp3",
-    title: "Welcome & Vision",
-    desc: "Understand what 7Universe is and why it matters.",
+    title: "Welcome and Vision",
+    desc: "Listen first. Understand why this business exists.",
   },
   {
     id: 2,
     file: "7A2.mp3",
-    title: "Understanding the System",
-    desc: "How the 7-slot structure works.",
+    title: "Understand the System",
+    desc: "Simple explanation of the 7-slot structure.",
   },
   {
     id: 3,
     file: "7A3.mp3",
-    title: "7 Slot Explanation",
-    desc: "Your position and how slots fill.",
+    title: "Your 7 Slots",
+    desc: "Know your place and how the slots fill.",
   },
   {
     id: 4,
     file: "7A4.mp3",
     title: "Income Structure",
-    desc: "How earnings flow through the system.",
+    desc: "Learn how earnings move through the system.",
   },
   {
     id: 5,
     file: "7A5.mp3",
-    title: "SafePal + Activation",
-    desc: "Set up your wallet and activate your referral.",
+    title: "SafePal and Activation",
+    desc: "Set up wallet, activate, and start sharing.",
+  },
+];
+
+const BUSINESS_LINKS = [
+  {
+    title: "Connect SafePal account",
+    desc: "Install SafePal and keep your wallet ready before activation.",
+    href: "https://safepal.com/download",
+    cta: "Open SafePal",
+  },
+  {
+    title: "What is OpBNB?",
+    desc: "Short YouTube video for understanding the network.",
+    href: "https://www.youtube.com/watch?v=QPn6BI3pM1Q",
+    cta: "Watch video",
+  },
+  {
+    title: "7 Slot Income Explained",
+    desc: "Use this video when you explain the business to someone.",
+    href: "https://www.youtube.com/watch?v=_kgL1XDk0Yg",
+    cta: "Watch video",
   },
 ];
 
@@ -67,7 +88,7 @@ export default function JourneyPage() {
     const stored = localStorage.getItem("universe_token");
 
     if (!stored) {
-      router.replace("/register");
+      router.replace("/login");
       return;
     }
 
@@ -86,7 +107,7 @@ export default function JourneyPage() {
       })
       .catch(() => {
         localStorage.removeItem("universe_token");
-        router.replace("/register");
+        router.replace("/login");
       });
   }, [router]);
 
@@ -127,29 +148,48 @@ export default function JourneyPage() {
 
   function logout() {
     localStorage.removeItem("universe_token");
-    router.replace("/register");
+    router.replace("/login");
   }
 
   const completedCount = progress.length;
-  const nextStep = Math.min(completedCount + 1, 5);
+  const nextStepNumber = Math.min(completedCount + 1, STEPS.length);
+  const nextStep = STEPS.find((step) => step.id === nextStepNumber) ?? STEPS[0];
+  const allCompleted = progress.includes(5);
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,#0d0020_0%,#000000_100%)] px-5 py-5 text-white">
-      <div className="mx-auto w-full max-w-xl pb-12">
-        <header className="flex items-center justify-between">
-          <div className="font-heading text-lg font-extrabold text-[#F59E0B]">7Universe</div>
-          <div className="flex items-center gap-3">
-            <a href="https://wa.me/917591929909" className="text-xl" aria-label="WhatsApp mentor">
-              💬
+    <main className="min-h-screen bg-[#050509] text-white">
+      <div className="mx-auto min-h-screen w-full max-w-md bg-[radial-gradient(ellipse_at_top,#16002f_0%,#050509_62%)] px-4 pb-24 pt-5 shadow-2xl">
+        <header className="sticky top-0 z-10 -mx-4 flex items-center justify-between bg-[#08070d]/90 px-4 py-3 backdrop-blur">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#F59E0B]">7Universe</p>
+            <h1 className="text-lg font-extrabold">My Business Dashboard</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href="https://wa.me/917591929909"
+              className="rounded-full bg-[#25D366] px-3 py-2 text-xs font-extrabold text-white"
+              aria-label="WhatsApp mentor"
+            >
+              Help
             </a>
-            <button type="button" onClick={logout} className="text-xl" aria-label="Logout">
-              ⎋
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-white/70"
+            >
+              Logout
             </button>
           </div>
         </header>
 
-        <section className="mt-8">
-          <p className="text-lg font-semibold">Hello {user?.name ?? "there"} 👋</p>
+        <section className="mt-5 rounded-[18px] border border-[rgba(245,158,11,0.25)] bg-[rgba(245,158,11,0.08)] p-5">
+          <p className="text-sm font-semibold text-white/70">Hello {user?.name ?? "there"}</p>
+          <h2 className="mt-2 font-heading text-2xl font-extrabold leading-tight text-white">
+            First listen. Then act.
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-white/58">
+            Complete each audio in order. After the final audio, connect SafePal and share your referral link.
+          </p>
           <div className="mt-5 grid grid-cols-5 gap-2">
             {STEPS.map((step) => (
               <div
@@ -158,132 +198,168 @@ export default function JourneyPage() {
               />
             ))}
           </div>
-          <p className="mt-3 text-sm text-white/50">Step {nextStep} of 5</p>
+          <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-[#F59E0B]">
+            {completedCount} of {STEPS.length} audios completed
+          </p>
         </section>
 
-        <section className="mt-7 space-y-4">
-          {STEPS.map((step) => {
-            const completed = progress.includes(step.id);
-            const unlocked = step.id === 1 || progress.includes(step.id - 1);
-            const playing = playingStep === step.id;
+        {!allCompleted ? (
+          <section className="mt-5 rounded-[18px] border border-white/10 bg-white/[0.04] p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#F59E0B]">Next audio</p>
+            <div className="mt-3 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-heading text-xl font-extrabold">{nextStep.title}</h2>
+                <p className="mt-1 text-sm leading-6 text-white/55">{nextStep.desc}</p>
+              </div>
+              {playingStep !== nextStep.id ? (
+                <button
+                  type="button"
+                  onClick={() => startStep(nextStep.id, nextStep.file)}
+                  className="shrink-0 rounded-xl bg-[#F59E0B] px-4 py-3 text-sm font-extrabold text-black"
+                >
+                  Play
+                </button>
+              ) : null}
+            </div>
 
-            return (
-              <article
-                key={step.id}
-                className={`rounded-[14px] border p-4 transition-all duration-300 ${
-                  completed
-                    ? "border-white/10 bg-white/[0.03]"
-                    : unlocked
-                      ? "border-[rgba(245,158,11,0.5)] bg-white/[0.03] shadow-[0_0_30px_rgba(245,158,11,0.08)]"
-                      : "border-white/10 bg-white/[0.03] opacity-40"
-                }`}
-              >
-                {!unlocked ? (
-                  <div className="flex items-center gap-3">
-                    <span className="text-[#F59E0B]">🔒</span>
-                    <div>
-                      <h2 className="font-heading font-bold text-white/60">{step.title}</h2>
-                      <p className="text-sm text-white/40">Complete previous step first</p>
-                    </div>
-                  </div>
-                ) : completed ? (
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h2 className="font-heading font-bold text-white/60 line-through decoration-white/20">
-                        {step.title}
-                      </h2>
-                      <p className="mt-1 text-sm text-white/40">{step.desc}</p>
-                    </div>
-                    <div className="text-right text-[11px] font-extrabold uppercase tracking-wide text-emerald-400">
-                      ✅<br />Completed
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-xs font-bold text-[#F59E0B]">Step {step.id}</p>
-                        <h2 className="mt-1 font-heading text-lg font-extrabold">{step.title}</h2>
-                        <p className="mt-1 text-sm text-white/50">{step.desc}</p>
-                      </div>
-                      {!playing ? (
-                        <button
-                          type="button"
-                          onClick={() => startStep(step.id, step.file)}
-                          className="shrink-0 rounded-lg bg-[#F59E0B] px-4 py-2 text-sm font-extrabold text-black"
-                        >
-                          ▶ Play
-                        </button>
-                      ) : null}
-                    </div>
+            {playingStep === nextStep.id ? (
+              <div className="mt-5">
+                <audio
+                  ref={audioRef}
+                  onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+                  onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+                  onEnded={() => completeStep(nextStep.id)}
+                  onSeeking={(event) => {
+                    if (event.currentTarget.currentTime > currentTime + 1) {
+                      event.currentTarget.currentTime = currentTime;
+                    }
+                  }}
+                />
+                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-[#F59E0B] transition-all"
+                    style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                  />
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-white/50">
+                  <span>
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!audioRef.current) {
+                        return;
+                      }
 
-                    {playing ? (
-                      <div className="mt-5">
-                        <audio
-                          ref={audioRef}
-                          onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-                          onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
-                          onEnded={() => completeStep(step.id)}
-                          onSeeking={(event) => {
-                            if (event.currentTarget.currentTime > currentTime + 1) {
-                              event.currentTarget.currentTime = currentTime;
-                            }
-                          }}
-                        />
-                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                          <div
-                            className="h-full rounded-full bg-[#F59E0B] transition-all"
-                            style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                          />
-                        </div>
-                        <div className="mt-3 flex items-center justify-between text-xs text-white/50">
-                          <span>
-                            {formatTime(currentTime)} / {formatTime(duration)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (!audioRef.current) {
-                                return;
-                              }
+                      if (audioRef.current.paused) {
+                        await audioRef.current.play();
+                        setIsPlaying(true);
+                      } else {
+                        audioRef.current.pause();
+                        setIsPlaying(false);
+                      }
+                    }}
+                    className="rounded-lg border border-[rgba(245,158,11,0.35)] px-4 py-2 text-sm font-bold text-[#F59E0B]"
+                  >
+                    {isPlaying ? "Pause" : "Play"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </section>
+        ) : (
+          <section className="mt-5 rounded-[18px] border border-[rgba(245,158,11,0.35)] bg-[rgba(245,158,11,0.1)] p-5">
+            <h2 className="font-heading text-xl font-extrabold text-[#F59E0B]">Training complete</h2>
+            <p className="mt-2 text-sm leading-6 text-white/60">
+              Your referral link is ready. Activate now and share it with people who can listen and follow the same steps.
+            </p>
+            <Link href="/done" className="mt-4 block rounded-xl bg-[#F59E0B] px-4 py-3 text-center font-extrabold text-black">
+              Activate and Get Referral Link
+            </Link>
+          </section>
+        )}
 
-                              if (audioRef.current.paused) {
-                                await audioRef.current.play();
-                                setIsPlaying(true);
-                              } else {
-                                audioRef.current.pause();
-                                setIsPlaying(false);
-                              }
-                            }}
-                            className="rounded-lg border border-[rgba(245,158,11,0.35)] px-4 py-2 text-sm font-bold text-[#F59E0B]"
-                          >
-                            {isPlaying ? "Pause" : "Play"}
-                          </button>
-                        </div>
-                      </div>
+        <section className="mt-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-lg font-extrabold">Step by step audios</h2>
+            <span className="text-xs text-white/40">Locked in order</span>
+          </div>
+          <div className="mt-3 space-y-3">
+            {STEPS.map((step) => {
+              const completed = progress.includes(step.id);
+              const unlocked = step.id === 1 || progress.includes(step.id - 1);
+              const active = playingStep === step.id;
+
+              return (
+                <article
+                  key={step.id}
+                  className={`rounded-[14px] border p-4 ${
+                    completed
+                      ? "border-emerald-400/20 bg-emerald-400/[0.04]"
+                      : unlocked
+                        ? "border-white/10 bg-white/[0.04]"
+                        : "border-white/10 bg-white/[0.02] opacity-45"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-[#F59E0B]">Audio {step.id}</p>
+                      <h3 className="mt-1 truncate font-heading font-extrabold">{step.title}</h3>
+                      <p className="mt-1 text-sm text-white/45">
+                        {completed ? "Completed" : unlocked ? step.desc : "Complete previous audio first"}
+                      </p>
+                    </div>
+                    {!completed && unlocked && !active ? (
+                      <button
+                        type="button"
+                        onClick={() => startStep(step.id, step.file)}
+                        className="shrink-0 rounded-lg border border-[rgba(245,158,11,0.45)] px-3 py-2 text-xs font-extrabold text-[#F59E0B]"
+                      >
+                        Play
+                      </button>
                     ) : null}
                   </div>
-                )}
-              </article>
-            );
-          })}
+                </article>
+              );
+            })}
+          </div>
         </section>
 
-        {progress.includes(5) ? (
-          <section className="mt-6 rounded-[14px] border border-[rgba(245,158,11,0.3)] bg-[rgba(245,158,11,0.08)] p-5">
-            <h2 className="font-heading text-xl font-extrabold text-[#F59E0B]">🎉 You&apos;re ready to activate!</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <Link href="/resources" className="rounded-xl border border-[rgba(245,158,11,0.3)] px-4 py-3 text-center font-bold text-[#F59E0B]">
-                Go to Resources →
-              </Link>
-              <Link href="/done" className="rounded-xl bg-[#F59E0B] px-4 py-3 text-center font-extrabold text-black">
-                Activate Now →
-              </Link>
-            </div>
-          </section>
-        ) : null}
+        <section className="mt-6">
+          <h2 className="font-heading text-lg font-extrabold">SafePal and business links</h2>
+          <div className="mt-3 space-y-3">
+            {BUSINESS_LINKS.map((item) => (
+              <a
+                key={item.title}
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                className="block rounded-[14px] border border-white/10 bg-white/[0.04] p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-heading font-extrabold">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-5 text-white/50">{item.desc}</p>
+                    <p className="mt-2 break-all text-xs text-white/35">{item.href}</p>
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-white/10 px-3 py-2 text-xs font-extrabold text-[#F59E0B]">
+                    {item.cta}
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto grid max-w-md grid-cols-3 border-t border-white/10 bg-[#08070d]/95 px-4 py-3 text-center text-xs font-bold text-white/65 backdrop-blur">
+          <Link href="/journey" className="text-[#F59E0B]">
+            Home
+          </Link>
+          <Link href="/resources">Videos</Link>
+          <a href="https://wa.me/917591929909">Mentor</a>
+        </nav>
       </div>
     </main>
   );
 }
-
