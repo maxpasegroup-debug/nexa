@@ -21,7 +21,7 @@ function base64UrlDecode(value: string) {
 }
 
 function getSecret() {
-  const secret = process.env.UNIVERSE_JWT_SECRET ?? process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  const secret = process.env.UNIVERSE_JWT_SECRET;
 
   if (!secret) {
     throw new Error("UNIVERSE_JWT_SECRET is not configured");
