@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { BlizzwayBadge, BlizzwayCard, BlizzwayGradientPanel } from "@/components/blizzway";
+import { BlizzwayBadge, BlizzwayButton, BlizzwayCard, BlizzwayGradientPanel } from "@/components/blizzway";
 import {
   BlizzwayApi,
   earningUniverseApi,
@@ -136,6 +136,20 @@ function buildPreviews(data: DashboardData): PreviewCard[] {
   const marketplaceCount = data.growthBoard.marketplaceAgents.length;
 
   return [
+    {
+      title: "BDP",
+      href: "/bdp",
+      stat: "78% profile strength",
+      description: "Your living career identity gathers assessment signals, proof, confidence, and readiness.",
+      fallback: false,
+    },
+    {
+      title: "Assessments",
+      href: "/assessments",
+      stat: "2 free starters",
+      description: "Take NEXA-powered assessments to improve your BDP and pathway recommendations.",
+      fallback: false,
+    },
     {
       title: "My Pathway",
       href: "/my-pathway",
@@ -455,6 +469,38 @@ export function DashboardClient() {
           tone="gold"
           description="Growth signal derived from active Blizzway board momentum until a dedicated endpoint is available."
         />
+      </section>
+
+      <section className="mt-5 grid gap-5 xl:grid-cols-[0.72fr_1fr]">
+        <ScoreCard
+          title="BDP Score"
+          value="78%"
+          tone="purple"
+          description="Preview score for your Blizzway Digital Profile, shaped by assessments, proof, learning momentum, and readiness signals."
+        />
+        <BlizzwayCard as="section" className="c7-magical-glow">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Free BDP boost</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
+                Take free assessments to improve your BDP
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 c7-muted">
+                Start with Career Compass Starter or Happiness Baseline. NEXA uses the results to make your pathway, recommendations, and confidence signals sharper.
+              </p>
+            </div>
+            <BlizzwayButton href="/assessments" variant="dark" className="shrink-0">
+              Open assessments
+            </BlizzwayButton>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {["Pathway fit +9%", "BDP clarity +12%", "NEXA confidence +15%"].map((item) => (
+              <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-black text-slate-950">
+                {item}
+              </div>
+            ))}
+          </div>
+        </BlizzwayCard>
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.82fr]">

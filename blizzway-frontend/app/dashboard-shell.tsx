@@ -5,13 +5,13 @@ import { BlizzwayBadge, BlizzwaySidebar, LogoutButton, type BlizzwayNavItem } fr
 
 export const dashboardNavItems: BlizzwayNavItem[] = [
   { label: "Dashboard", href: "/dashboard", badge: "Home" },
+  { label: "BDP", href: "/bdp" },
+  { label: "Assessments", href: "/assessments", badge: "Free" },
   { label: "My Pathway", href: "/my-pathway" },
+  { label: "Admissions", href: "/admissions", badge: "Soon" },
   { label: "Learning Garden", href: "/learning-garden" },
   { label: "Earning Universe", href: "/earning-universe" },
-  { label: "Career Tests", href: "/career-tests", badge: "Soon" },
-  { label: "Admissions", href: "/admissions", badge: "Soon" },
   { label: "Magic Market", href: "/magic-market" },
-  { label: "Companions", href: "/companions" },
   { label: "Quick Boosts", href: "/quick-boosts" },
   { label: "Soul Vault", href: "/soul-vault" },
   { label: "Wallet", href: "/wallet" },
@@ -20,9 +20,9 @@ export const dashboardNavItems: BlizzwayNavItem[] = [
 
 const mobileNavItems = [
   { label: "Home", href: "/dashboard" },
+  { label: "BDP", href: "/bdp" },
+  { label: "Assess", href: "/assessments" },
   { label: "Pathway", href: "/my-pathway" },
-  { label: "Tests", href: "/career-tests" },
-  { label: "Market", href: "/magic-market" },
 ];
 
 type BlizzwayDashboardShellProps = {
