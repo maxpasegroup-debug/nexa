@@ -81,6 +81,9 @@ model User {
   blizzwayOnboardingProfiles BlizzwayOnboardingProfile[]
   blizzwayBdpProfiles BlizzwayBdpProfile[]
   blizzwayStarterPathways BlizzwayStarterPathway[]
+  blizzwayCompanionActivations BlizzwayCompanionActivation[]
+  blizzwayCompanionRuns BlizzwayCompanionRun[]
+  blizzwayCompanionRequests BlizzwayCompanionRequest[]
 
   @@index([email])
   @@index([role])
@@ -224,6 +227,9 @@ model Business {
   blizzwayOnboardingProfiles BlizzwayOnboardingProfile[]
   blizzwayBdpProfiles BlizzwayBdpProfile[]
   blizzwayStarterPathways BlizzwayStarterPathway[]
+  blizzwayCompanionActivations BlizzwayCompanionActivation[]
+  blizzwayCompanionRuns BlizzwayCompanionRun[]
+  blizzwayCompanionRequests BlizzwayCompanionRequest[]
   dataExports    CustomerDataExport[]
 }
 
@@ -395,6 +401,18 @@ model MarketplaceAgent {
   isRequestable   Boolean  @default(true)
   canAddToGrowthBoard Boolean @default(false)
   sortOrder       Int      @default(0)
+  businessModel   String   @default("blizzway")
+  businessId      String?
+  companionCategory String?
+  shortDescription String?
+  longDescription String?
+  pricingMode     String   @default("credits")
+  isTrending      Boolean  @default(false)
+  capabilities    Json     @default("[]")
+  expectedOutput  Json     @default("[]")
+  recommendedFor  Json     @default("[]")
+  requiredInputs  Json     @default("[]")
+  chargeOn        String   @default("run")
   features        Json     @default("[]")
   benefits        Json     @default("[]")
   howItWorks      Json     @default("[]")
@@ -405,12 +423,16 @@ model MarketplaceAgent {
   offers          AgentOffer[]
   notifyRequests  AgentNotifyRequest[]
   career7GrowthBoardAgents Career7GrowthBoardAgent[]
+  blizzwayCompanionActivations BlizzwayCompanionActivation[]
+  blizzwayCompanionRuns BlizzwayCompanionRun[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([career7Type])
   @@index([career7Status])
   @@index([canAddToGrowthBoard])
+  @@index([businessModel, businessId])
+  @@index([companionCategory])
 }
 
 enum AgentCategory {
@@ -633,6 +655,69 @@ model Career7CreditLedger {
   @@index([source])
   @@index([agentId])
   @@index([createdAt])
+}
+
+model BlizzwayCompanionActivation {
+  id            String   @id @default(cuid())
+  businessModel String   @default("blizzway")
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companionId   String
+  companion     MarketplaceAgent @relation(fields: [companionId], references: [id], onDelete: Cascade)
+  attachedTo    String   @default("pathway")
+  status        String   @default("ACTIVE")
+  activatedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([businessModel, businessId, userId, companionId])
+  @@index([businessModel, businessId, userId, status])
+  @@index([companionId])
+}
+
+model BlizzwayCompanionRun {
+  id              String   @id @default(cuid())
+  businessModel   String   @default("blizzway")
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companionId     String
+  companion       MarketplaceAgent @relation(fields: [companionId], references: [id], onDelete: Cascade)
+  activationId    String?
+  input           Json     @default("{}")
+  output          Json     @default("{}")
+  creditsCharged  Int      @default(0)
+  ledgerId        String?
+  idempotencyKey  String?  @unique
+  status          String   @default("COMPLETED")
+  createdAt       DateTime @default(now())
+
+  @@index([businessModel, businessId, userId])
+  @@index([companionId])
+  @@index([createdAt])
+}
+
+model BlizzwayCompanionRequest {
+  id              String   @id @default(cuid())
+  businessModel   String   @default("blizzway")
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  category        String
+  description     String
+  expectedOutput  String?
+  status          String   @default("PENDING")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([businessModel, businessId, userId])
+  @@index([status])
 }
 
 model AgentInstallation {
