@@ -35,5 +35,6 @@ export { bdpApi } from "./bdp";
 export { soulVaultApi } from "./soul-vault";
 export { walletApi } from "./wallet";
 export { nexaApi } from "./nexa";
+export { onboardingApi } from "./onboarding";
 export { BlizzwayApi, type AddGrowthBoardAgentRequest, type BlizzwayAgentFilters, type UpdateGrowthBoardAgentRequest } from "./blizzway";
 export type * from "./types";

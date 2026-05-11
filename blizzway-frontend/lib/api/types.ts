@@ -317,7 +317,54 @@ export type BlizzwayNexaResponse = {
   chips: string[];
   conversationId?: string;
   memory?: Record<string, unknown>;
-  recommendations?: BlizzwayNexaRecommendation[];
+  recommendations?: BlizzwayNexaRecommendationsV1 | BlizzwayNexaRecommendation[];
+};
+
+export type BlizzwayOnboardingInput = {
+  currentStatus: string;
+  dreamGoal: string;
+  preferredLocation?: string;
+  educationLevel?: string;
+  skills: string[];
+  interests: string[];
+  confidenceLevel?: string;
+  communicationLevel?: string;
+  financialReadiness?: string;
+  timeline?: string;
+  languageGoals: string[];
+  admissionsGoals: string[];
+  earningGoals: string[];
+  answers: Record<string, string>;
+  completed?: boolean;
+};
+
+export type BlizzwayNexaRecommendationsV1 = {
+  onboardingComplete: boolean;
+  greeting: string;
+  firstAssessments: BlizzwayAssessment[];
+  bdpSteps: string[];
+  pathwayMilestones: Array<{
+    id: string;
+    title: string;
+    status: string;
+    xp: number;
+    progress: number;
+    description: string;
+  }>;
+  learningSuggestions: string[];
+  earningSuggestions: string[];
+  admissionsSuggestions: string[];
+  quickBoosts: QuickBoost[];
+  companionSuggestions: string[];
+  safetyNote: string;
+};
+
+export type BlizzwayOnboardingResponse = {
+  onboarding: unknown;
+  bdp?: unknown;
+  pathway?: unknown;
+  status?: string;
+  recommendations: BlizzwayNexaRecommendationsV1;
 };
 
 export type BlizzwayBdpResponse = {

@@ -10,6 +10,7 @@ import {
   getApiErrorMessage,
   learningGardenApi,
   nexaApi,
+  onboardingApi,
   pathwayApi,
   sessionApi,
   soulVaultApi,
@@ -21,6 +22,7 @@ import {
   type LearningGardenResponse,
   type SoulVaultResponse,
   type BlizzwayPathwayResponse,
+  type BlizzwayOnboardingResponse,
 } from "@/lib/api";
 import { BlizzwayDashboardShell } from "../dashboard-shell";
 
@@ -60,6 +62,7 @@ type DashboardData = {
   learningGarden: LearningGardenResponse | null;
   earningUniverse: EarningUniverseResponse | null;
   soulVault: SoulVaultResponse | null;
+  onboarding: BlizzwayOnboardingResponse | null;
   nexaMessage: string | null;
   fallbackLabels: string[];
 };
@@ -238,15 +241,16 @@ async function loadDashboardData(): Promise<DashboardData> {
     BlizzwayApi.getGrowthBoard(),
   ]);
 
-  const [pathway, learningGarden, earningUniverse, soulVault, nexa] = await Promise.all([
+  const [pathway, learningGarden, earningUniverse, soulVault, onboarding, nexa] = await Promise.all([
     optional(pathwayApi.getPathway(), "My Pathway endpoint", fallbackLabels),
     optional(learningGardenApi.getLearningGarden(), "Learning Garden endpoint", fallbackLabels),
     optional(earningUniverseApi.getEarningUniverse(), "Earning Universe endpoint", fallbackLabels),
     optional(soulVaultApi.getSoulVault(), "Soul Vault endpoint", fallbackLabels),
+    optional(onboardingApi.getOnboarding(), "NEXA onboarding endpoint", fallbackLabels),
     optional(
-      nexaApi.askNexa({
-        quickAction: "dashboard_recommendation",
-        message: "Give one concise Blizzway dashboard recommendation for today.",
+      nexaApi.chat({
+        quickAction: "What should I do today?",
+        message: "What should I do today?",
       }),
       "NEXA recommendation endpoint",
       fallbackLabels,
@@ -262,6 +266,7 @@ async function loadDashboardData(): Promise<DashboardData> {
     learningGarden,
     earningUniverse,
     soulVault,
+    onboarding,
     nexaMessage: nexa?.message ?? null,
     fallbackLabels,
   };
@@ -392,8 +397,12 @@ export function DashboardClient() {
         : fallbackNextActions,
       nexaMessage:
         data.nexaMessage ||
+        data.onboarding?.recommendations.greeting ||
         data.growthBoard.nexaRecommendation ||
         "Use Academic Readiness and Global Readiness results to improve your BDP before choosing admissions pathways.",
+      onboardingStatus: data.onboarding?.status ?? (data.onboarding?.recommendations.onboardingComplete ? "COMPLETED" : "NOT_STARTED"),
+      recommendedAssessment: data.onboarding?.recommendations.firstAssessments[0]?.title ?? "Career Compass Starter",
+      bdpTask: data.onboarding?.recommendations.bdpSteps[0] ?? "Add proof and starter assessment signals to your BDP.",
       profileSummary: `${data.session.user?.role ?? "Blizzway member"}${data.session.user?.businessId ? " in a scoped Blizzway workspace" : ""}`,
     };
   }, [data]);
@@ -459,6 +468,20 @@ export function DashboardClient() {
           <div className="mt-5 rounded-2xl bg-indigo-50 p-4">
             <p className="text-sm font-black text-indigo-700">NEXA suggestion</p>
             <p className="mt-1 text-sm leading-6 text-indigo-700/75">{derived.nexaMessage}</p>
+          </div>
+          <div className="mt-4 grid gap-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Onboarding</p>
+              <p className="mt-1 text-sm font-black text-slate-950">{derived.onboardingStatus}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">First assessment</p>
+              <p className="mt-1 text-sm font-black text-slate-950">{derived.recommendedAssessment}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">BDP task</p>
+              <p className="mt-1 text-sm font-black text-slate-950">{derived.bdpTask}</p>
+            </div>
           </div>
         </BlizzwayCard>
       </section>

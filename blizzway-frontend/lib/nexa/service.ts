@@ -47,7 +47,9 @@ export async function sendNexaChatRequest({
       memory: state.memory,
       recommendations: state.recommendations,
     });
-    const apiRecommendations = response.recommendations?.map(toRecommendation) ?? [];
+    const apiRecommendations = Array.isArray(response.recommendations)
+      ? response.recommendations.map(toRecommendation)
+      : [];
     const reply = createNexaMessage("assistant", response.message, "bgos");
 
     return {

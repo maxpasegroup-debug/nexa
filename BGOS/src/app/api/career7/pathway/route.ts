@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getCareer7Context } from "@/lib/career7-auth";
-import { pathwaySteps } from "@/lib/career7-data";
+import { buildStarterPathway } from "@/lib/career7-data";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -18,16 +18,10 @@ export async function GET(request: Request) {
         status: "ACTIVE",
       },
     });
-    const steps = pathwaySteps(activeCount);
+    const pathway = await buildStarterPathway(authResult.context, activeCount);
 
     return NextResponse.json({
-      pathway: {
-        id: `pathway-${authResult.context.userId}`,
-        title: activeCount ? "Your active Blizzway pathway" : "Starter Blizzway pathway",
-        currentStepId: steps[0]?.id ?? null,
-        progress: Math.min(100, 25 + activeCount * 10),
-        steps,
-      },
+      pathway,
       source: activeCount ? "growth-board" : "starter",
     });
   } catch (error) {

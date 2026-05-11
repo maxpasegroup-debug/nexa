@@ -78,6 +78,9 @@ model User {
   career7CreditLedger Career7CreditLedger[]
   bgosPaymentIntents BgosPaymentIntent[]
   bgosPaymentTransactions BgosPaymentTransaction[]
+  blizzwayOnboardingProfiles BlizzwayOnboardingProfile[]
+  blizzwayBdpProfiles BlizzwayBdpProfile[]
+  blizzwayStarterPathways BlizzwayStarterPathway[]
 
   @@index([email])
   @@index([role])
@@ -218,6 +221,9 @@ model Business {
   bgosPaymentIntents BgosPaymentIntent[]
   bgosPaymentTransactions BgosPaymentTransaction[]
   bgosInvoicePlaceholders BgosInvoicePlaceholder[]
+  blizzwayOnboardingProfiles BlizzwayOnboardingProfile[]
+  blizzwayBdpProfiles BlizzwayBdpProfile[]
+  blizzwayStarterPathways BlizzwayStarterPathway[]
   dataExports    CustomerDataExport[]
 }
 
@@ -515,6 +521,78 @@ model BlizzwaySubscriptionPlan {
 
   @@unique([businessModel, slug])
   @@index([businessModel, active, sortOrder])
+}
+
+model BlizzwayOnboardingProfile {
+  id                   String   @id @default(cuid())
+  businessModel        String   @default("blizzway")
+  businessId           String
+  business             Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStatus        String
+  dreamGoal            String
+  preferredLocation    String?
+  educationLevel       String?
+  skills               Json     @default("[]")
+  interests            Json     @default("[]")
+  confidenceLevel      String?
+  communicationLevel   String?
+  financialReadiness   String?
+  timeline             String?
+  languageGoals        Json     @default("[]")
+  admissionsGoals      Json     @default("[]")
+  earningGoals         Json     @default("[]")
+  answers              Json     @default("{}")
+  completionStatus     String   @default("IN_PROGRESS")
+  completedAt          DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([businessModel, businessId, userId])
+  @@index([businessModel, businessId])
+}
+
+model BlizzwayBdpProfile {
+  id                 String   @id @default(cuid())
+  businessModel      String   @default("blizzway")
+  businessId         String
+  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline           String
+  currentStageSummary String  @db.Text
+  strengths          Json     @default("[]")
+  readiness          Json     @default("{}")
+  recommendedActions Json     @default("[]")
+  profileStrength    Int      @default(35)
+  source             String   @default("nexa_onboarding_v1")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([businessModel, businessId, userId])
+  @@index([businessModel, businessId])
+}
+
+model BlizzwayStarterPathway {
+  id              String   @id @default(cuid())
+  businessModel   String   @default("blizzway")
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  milestones      Json     @default("[]")
+  xp              Int      @default(0)
+  level           Int      @default(1)
+  progress        Int      @default(10)
+  achievementHooks Json    @default("[]")
+  source          String   @default("nexa_onboarding_v1")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([businessModel, businessId, userId])
+  @@index([businessModel, businessId])
 }
 
 model Career7CreditWallet {

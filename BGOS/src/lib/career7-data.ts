@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { Career7Context } from "@/lib/career7-auth";
 import { ensureCareer7Wallet } from "@/lib/career7-wallet";
 import { getBlizzwayVault } from "@/lib/blizzway-vault";
+import { getBlizzwayOnboardingProfile } from "@/lib/blizzway-nexa-engine";
 
 export const starterAssessments = [
   {
@@ -188,11 +189,20 @@ export async function getCareer7User(context: Career7Context) {
 }
 
 export async function buildBdp(context: Career7Context) {
-  const [vault, wallet, boardCount] = await Promise.all([
+  const [vault, wallet, boardCount, generatedBdp] = await Promise.all([
     getBlizzwayVault(context),
     ensureCareer7Wallet(context.businessId, context.userId),
     prisma.career7GrowthBoardAgent.count({
       where: { businessId: context.businessId, userId: context.userId, status: "ACTIVE" },
+    }),
+    prisma.blizzwayBdpProfile.findUnique({
+      where: {
+        businessModel_businessId_userId: {
+          businessModel: "blizzway",
+          businessId: context.businessId,
+          userId: context.userId,
+        },
+      },
     }),
   ]);
 
@@ -208,7 +218,7 @@ export async function buildBdp(context: Career7Context) {
 
   return {
     id: `bdp-${context.userId}`,
-    profileStrength,
+    profileStrength: Math.max(profileStrength, generatedBdp?.profileStrength ?? 0),
     assessmentsCompleted: 0,
     walletCredits: wallet.balance,
     metrics: {
@@ -233,11 +243,11 @@ export async function buildBdp(context: Career7Context) {
       suggestions: ["Add academic proof", "Complete Academic Readiness Check", "Save achievements in Soul Vault"],
     },
     publicPreview: {
-      headline: vault.digitalProfile.stage || "Blizzway Explorer",
-      summary: vault.digitalProfile.summary || "Your living career identity will grow as assessments, proof, and pathway signals are added.",
-      strengths: vault.digitalProfile.strengths,
+      headline: generatedBdp?.headline || vault.digitalProfile.stage || "Blizzway Explorer",
+      summary: generatedBdp?.currentStageSummary || vault.digitalProfile.summary || "Your living career identity will grow as assessments, proof, and pathway signals are added.",
+      strengths: Array.isArray(generatedBdp?.strengths) ? generatedBdp.strengths : vault.digitalProfile.strengths,
     },
-    nexaSuggestions: [
+    nexaSuggestions: Array.isArray(generatedBdp?.recommendedActions) ? generatedBdp.recommendedActions : [
       "Complete Academic Readiness Check before admissions shortlisting.",
       "Add two proof stories to Soul Vault.",
       "Choose one pathway companion from Magic Market.",
@@ -259,4 +269,43 @@ export function pathwaySteps(activeCount: number) {
     progress: Math.min(100, step.progress + activeCount * 5),
     status: index === 0 || activeCount > index ? step.status : step.status,
   }));
+}
+
+export async function buildStarterPathway(context: Career7Context, activeCount: number) {
+  const generated = await prisma.blizzwayStarterPathway.findUnique({
+    where: {
+      businessModel_businessId_userId: {
+        businessModel: "blizzway",
+        businessId: context.businessId,
+        userId: context.userId,
+      },
+    },
+  });
+
+  if (generated && Array.isArray(generated.milestones)) {
+    const milestones = generated.milestones as Array<{ id?: string; title: string; status: string; progress: number }>;
+    return {
+      id: generated.id,
+      title: generated.title,
+      currentStepId: milestones[0]?.id ?? null,
+      progress: generated.progress,
+      xp: generated.xp,
+      level: generated.level,
+      achievementHooks: generated.achievementHooks,
+      steps: milestones,
+    };
+  }
+
+  const profile = await getBlizzwayOnboardingProfile(context);
+  const steps = pathwaySteps(activeCount);
+  return {
+    id: `pathway-${context.userId}`,
+    title: profile ? `${profile.dreamGoal} Starter Pathway` : "Starter Blizzway pathway",
+    currentStepId: steps[0]?.id ?? null,
+    progress: Math.min(100, 25 + activeCount * 10),
+    xp: 0,
+    level: 1,
+    achievementHooks: [],
+    steps,
+  };
 }
