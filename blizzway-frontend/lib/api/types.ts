@@ -628,6 +628,67 @@ export type BlizzwayBdpResponse = {
   };
 };
 
+export type BlizzwayPublicBdpSettings = {
+  id: string;
+  publicSlug: string;
+  publicUrl: string;
+  isPublic: boolean;
+  headline: string;
+  summary: string;
+  location: string | null;
+  availability: string | null;
+  careerGoals: unknown[];
+  skills: unknown[];
+  languages: unknown[];
+  education: unknown[];
+  experience: unknown[];
+  projects: unknown[];
+  achievements: unknown[];
+  assessmentHighlights: unknown[];
+  pathwayHighlights: unknown[];
+  companionHighlights: unknown[];
+  documentHighlights: unknown[];
+  contactVisibility: "hidden" | "email" | string;
+  recruiterContactEmail: string | null;
+  lastPublishedAt: string | null;
+  viewCount: number;
+  privacySettings: unknown;
+  updatedAt: string;
+};
+
+export type BlizzwayPublicBdpSettingsResponse = {
+  profile: BlizzwayPublicBdpSettings;
+};
+
+export type BlizzwayPublishedBdpProfile = {
+  name: string;
+  publicSlug: string;
+  headline: string;
+  summary: string;
+  location: string | null;
+  availability: string | null;
+  careerGoals: unknown[];
+  skills: unknown[];
+  languages: unknown[];
+  education: unknown[];
+  experience: unknown[];
+  projects: unknown[];
+  achievements: unknown[];
+  assessmentHighlights: unknown[];
+  pathwayHighlights: unknown[];
+  companionHighlights: unknown[];
+  documentHighlights: unknown[];
+  contact: { email: string } | null;
+  lastPublishedAt: string | null;
+  viewCount: number;
+  exportReady: boolean;
+  poweredBy: string;
+};
+
+export type BlizzwayPublishedBdpResponse = {
+  profile: BlizzwayPublishedBdpProfile;
+};
+
 export type BlizzwayAssessment = {
   slug: string;
   title: string;

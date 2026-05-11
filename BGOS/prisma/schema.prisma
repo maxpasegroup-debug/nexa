@@ -80,6 +80,7 @@ model User {
   bgosPaymentTransactions BgosPaymentTransaction[]
   blizzwayOnboardingProfiles BlizzwayOnboardingProfile[]
   blizzwayBdpProfiles BlizzwayBdpProfile[]
+  blizzwayPublicBdpProfiles BlizzwayPublicBdpProfile[]
   blizzwayStarterPathways BlizzwayStarterPathway[]
   blizzwayCompanionActivations BlizzwayCompanionActivation[]
   blizzwayCompanionRuns BlizzwayCompanionRun[]
@@ -232,6 +233,7 @@ model Business {
   bgosInvoicePlaceholders BgosInvoicePlaceholder[]
   blizzwayOnboardingProfiles BlizzwayOnboardingProfile[]
   blizzwayBdpProfiles BlizzwayBdpProfile[]
+  blizzwayPublicBdpProfiles BlizzwayPublicBdpProfile[]
   blizzwayStarterPathways BlizzwayStarterPathway[]
   blizzwayCompanionActivations BlizzwayCompanionActivation[]
   blizzwayCompanionRuns BlizzwayCompanionRun[]
@@ -606,6 +608,43 @@ model BlizzwayBdpProfile {
 
   @@unique([businessModel, businessId, userId])
   @@index([businessModel, businessId])
+}
+
+model BlizzwayPublicBdpProfile {
+  id                     String   @id @default(cuid())
+  businessModel          String   @default("blizzway")
+  businessId             String
+  business               Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId                 String
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publicSlug             String   @unique
+  isPublic               Boolean  @default(false)
+  headline               String
+  summary                String   @db.Text
+  location               String?
+  availability           String?
+  careerGoals            Json     @default("[]")
+  skills                 Json     @default("[]")
+  languages              Json     @default("[]")
+  education              Json     @default("[]")
+  experience             Json     @default("[]")
+  projects               Json     @default("[]")
+  achievements           Json     @default("[]")
+  assessmentHighlights   Json     @default("[]")
+  pathwayHighlights      Json     @default("[]")
+  companionHighlights    Json     @default("[]")
+  documentHighlights     Json     @default("[]")
+  contactVisibility      String   @default("hidden")
+  recruiterContactEmail  String?
+  lastPublishedAt        DateTime?
+  viewCount              Int      @default(0)
+  privacySettings        Json     @default("{}")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@unique([businessModel, businessId, userId])
+  @@index([businessModel, isPublic])
+  @@index([publicSlug])
 }
 
 model BlizzwayStarterPathway {
