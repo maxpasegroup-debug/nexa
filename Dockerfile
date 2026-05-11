@@ -29,6 +29,7 @@ COPY --from=builder /app/7universe-frontend/package.json ./package.json
 COPY --from=builder /app/7universe-frontend/package-lock.json ./package-lock.json
 COPY --from=builder /app/7universe-frontend/node_modules ./node_modules
 COPY --from=builder /app/7universe-frontend/.next ./.next
+COPY --from=builder /app/7universe-frontend/public ./public
 COPY --from=builder /app/7universe-frontend/prisma ./prisma
 COPY --from=builder /app/7universe-frontend/next.config.mjs ./next.config.mjs
 

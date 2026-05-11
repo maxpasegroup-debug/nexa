@@ -39,7 +39,7 @@ const STEPS = [
 
 const SAFEPAL_REFERRAL_LINK = "https://7universe.org?ref=9067";
 const SAFEPAL_VIDEO_SOURCES = [
-  { src: "/video/safepal-malayalam.mp4", type: "video/mp4" },
+  { src: "/api/video/safepal-malayalam", type: "video/mp4" },
 ];
 
 const BUSINESS_LINKS = [

@@ -20,6 +20,14 @@ type RouteContext = {
   }>;
 };
 
+const ALLOWED_UPSTREAM_PREFIXES = [
+  "api/auth/",
+  "api/career7/",
+  "api/register",
+  "api/forgot-password",
+  "api/reset-password",
+];
+
 function getBgosBaseUrl() {
   const configured = process.env.BGOS_API_URL;
   if (configured) return configured.replace(/\/+$/, "");
@@ -30,6 +38,13 @@ function getBgosBaseUrl() {
   }
 
   return "http://localhost:3000";
+}
+
+function isAllowedUpstreamPath(path: string) {
+  const normalized = path.replace(/^\/+/, "");
+  return ALLOWED_UPSTREAM_PREFIXES.some((prefix) => (
+    normalized === prefix.replace(/\/$/, "") || normalized.startsWith(prefix)
+  ));
 }
 
 async function buildUpstreamUrl(request: Request, context: RouteContext) {
@@ -72,7 +87,13 @@ function getSetCookieHeaders(headers: Headers) {
 }
 
 async function proxy(request: Request, context: RouteContext) {
-  const upstreamUrl = await buildUpstreamUrl(request, context);
+  const params = await context.params;
+  const path = params.path?.join("/") ?? "";
+  if (!isAllowedUpstreamPath(path)) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+
+  const upstreamUrl = await buildUpstreamUrl(request, { params: Promise.resolve({ path: params.path }) });
   const method = request.method.toUpperCase();
   const hasBody = method !== "GET" && method !== "HEAD";
 

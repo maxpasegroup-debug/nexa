@@ -1,9 +1,59 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://career7.in";
+const siteName = "Blizzway";
+const description =
+  "Blizzway is The Magical Career Pathway: an AI-guided career ecosystem for students, professionals, and aspirants.";
+
 export const metadata: Metadata = {
-  title: "Blizzway | The Magical Career Pathway",
-  description: "A premium AI career ecosystem for Learning Garden, Earning Universe, companions, credits, and guided growth.",
+  metadataBase: new URL(siteUrl),
+  applicationName: siteName,
+  title: {
+    default: "Blizzway | The Magical Career Pathway",
+    template: "%s | Blizzway",
+  },
+  description,
+  alternates: {
+    canonical: "/",
+  },
+  keywords: [
+    "Blizzway",
+    "career pathway",
+    "AI career guidance",
+    "career planning",
+    "student career guidance",
+    "NEXA",
+  ],
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName,
+    title: "Blizzway | The Magical Career Pathway",
+    description,
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Blizzway career pathway dashboard preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Blizzway | The Magical Career Pathway",
+    description,
+    images: ["/opengraph-image"],
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
