@@ -1,5 +1,12 @@
 import { api } from "./client";
-import type { CompanionsResponse } from "./types";
+import type {
+  ActiveCompanionsResponse,
+  CompanionActivationResponse,
+  CompanionDetailResponse,
+  CompanionRunResponse,
+  CompanionsResponse,
+  CustomCompanionRequestResponse,
+} from "./types";
 
 export type CompanionFilters = {
   category?: string;
@@ -15,4 +22,14 @@ export const companionsApi = {
     api.get<CompanionsResponse>(COMPANIONS_PATH, { query: filters }),
   safeGetCompanions: (filters: CompanionFilters = {}) =>
     api.safeGet<CompanionsResponse>(COMPANIONS_PATH, { query: filters }),
+  getCompanion: (slug: string) =>
+    api.get<CompanionDetailResponse>(`${COMPANIONS_PATH}/${slug}`),
+  getActiveCompanions: () =>
+    api.get<ActiveCompanionsResponse>(`${COMPANIONS_PATH}/active`),
+  activateCompanion: (slug: string, idempotencyKey?: string) =>
+    api.post<CompanionActivationResponse>(`${COMPANIONS_PATH}/${slug}/activate`, { idempotencyKey }),
+  runCompanion: (slug: string, body: { inputs: Record<string, unknown>; idempotencyKey?: string }) =>
+    api.post<CompanionRunResponse>(`${COMPANIONS_PATH}/${slug}/run`, body),
+  requestCustomCompanion: (body: { title: string; category: string; description: string; expectedOutput?: string }) =>
+    api.post<CustomCompanionRequestResponse>(`${COMPANIONS_PATH}/request-custom`, body),
 };

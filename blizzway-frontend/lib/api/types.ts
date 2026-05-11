@@ -97,14 +97,34 @@ export type BlizzwayAgent = {
   slug: string;
   name: string;
   category: string;
+  marketplaceCategory?: string;
   type: string | null;
   creditPrice: number;
+  creditCost?: number;
+  pricingMode?: string;
   description: string;
+  shortDescription?: string;
+  longDescription?: string;
   icon: string;
   status: string;
   isPrebuilt: boolean;
   isRequestable: boolean;
   canAddToGrowthBoard: boolean;
+  isTrending?: boolean;
+  active?: boolean;
+  activation?: {
+    id: string;
+    status: string;
+    attachedTo: string;
+    activatedAt: string;
+  } | null;
+  capabilities?: string[];
+  expectedOutput?: string[];
+  recommendedFor?: string[];
+  requiredInputs?: string[];
+  chargeOn?: string;
+  nexaRecommendation?: string;
+  safetyNote?: string;
   colorPrimary: string;
   colorSecondary: string;
   gradient: string;
@@ -124,6 +144,52 @@ export type CompanionsResponse = {
   companions: BlizzwayAgent[];
   total: number;
   featured: BlizzwayAgent | null;
+  trending?: BlizzwayAgent[];
+  active?: BlizzwayAgent[];
+  categories?: string[];
+};
+
+export type CompanionDetailResponse = { companion: BlizzwayAgent };
+export type CompanionActivationResponse = {
+  activation: { id: string; status: string; attachedTo: string; activatedAt: string; duplicate: boolean };
+  companion: BlizzwayAgent;
+  ledger: { id: string; amount: number; balanceAfter: number; description: string } | null;
+};
+export type ActiveCompanionsResponse = {
+  companions: Array<{ id: string; attachedTo: string; status: string; activatedAt: string; companion: BlizzwayAgent }>;
+  total: number;
+  byAttachment: { pathway: number; learning: number; earning: number };
+};
+export type CompanionRunResponse = {
+  run: {
+    id: string;
+    status: string;
+    input: unknown;
+    output: {
+      summary?: string;
+      nextActions?: string[];
+      checklist?: string[];
+      missingInputs?: string[];
+      expectedOutput?: string[];
+      safetyNote?: string;
+      provider?: string;
+      [key: string]: unknown;
+    };
+    creditsCharged: number;
+    createdAt: string;
+    duplicate: boolean;
+  };
+};
+export type CustomCompanionRequestResponse = {
+  request: {
+    id: string;
+    title: string;
+    category: string;
+    description: string;
+    expectedOutput: string | null;
+    status: string;
+    createdAt: string;
+  };
 };
 
 export type QuickBoost = {

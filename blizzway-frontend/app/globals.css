@@ -28,6 +28,8 @@
   --c7-gradient-primary: linear-gradient(135deg, #20164f 0%, #8f5cf7 54%, #5fd8ee 100%);
   --c7-gradient-warm: linear-gradient(135deg, #8f5cf7 0%, #5fd8ee 58%, #f6c45b 100%);
   --c7-gradient-soft: linear-gradient(135deg, rgba(143, 92, 247, 0.12), rgba(95, 216, 238, 0.12));
+  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-mono: "Courier New", monospace;
 }
 
 @theme inline {

@@ -2,13 +2,19 @@ import { blizzwayCatalogue } from "./catalogue";
 import type { BlizzwayAgent } from "@/lib/api";
 
 export const blizzwayMarketplaceCategories = [
+  "BDP & Profile",
+  "Assessments",
+  "Career Growth",
   "Resume & Profile",
   "Language & Communication",
   "Exam Coaching",
-  "Career Growth",
+  "Admissions",
   "Migration & Global Mobility",
+  "Learning Garden",
+  "Earning Universe",
   "Earning & Money Discipline",
   "Happiness & Personal Growth",
+  "Finance & Money Discipline",
   "Blizzway Premium",
 ] as const;
 
@@ -49,6 +55,10 @@ function containsAny(value: string, terms: string[]) {
 }
 
 export function inferBlizzwayCategory(agent: BlizzwayAgent): BlizzwayMarketplaceCategory {
+  if (blizzwayMarketplaceCategories.includes(agent.category as BlizzwayMarketplaceCategory)) {
+    return agent.category as BlizzwayMarketplaceCategory;
+  }
+
   const haystack = `${agent.type ?? ""} ${agent.name} ${agent.description}`.toLowerCase();
 
   if (containsAny(haystack, ["premium", "guardian", "roadmap", "future vision", "transformation", "blizzway"])) {
@@ -56,7 +66,7 @@ export function inferBlizzwayCategory(agent: BlizzwayAgent): BlizzwayMarketplace
   }
 
   if (containsAny(haystack, ["resume", "profile", "linkedin", "portfolio", "ats", "cv"])) {
-    return "Resume & Profile";
+    return "BDP & Profile";
   }
 
   if (containsAny(haystack, ["visa", "migration", "country", "university", "relocation", "sop", "lor"])) {
@@ -72,7 +82,7 @@ export function inferBlizzwayCategory(agent: BlizzwayAgent): BlizzwayMarketplace
   }
 
   if (containsAny(haystack, ["earning", "finance", "freelance", "internship", "side hustle", "money", "income", "offer"])) {
-    return "Earning & Money Discipline";
+    return "Earning Universe";
   }
 
   if (containsAny(haystack, ["happiness", "focus", "confidence", "habit", "burnout", "reflection"])) {
@@ -108,7 +118,7 @@ export function toBlizzwayMarketplaceItem(agent: BlizzwayAgent): BlizzwayMarketp
     description: agent.description,
     credits: agent.creditPrice,
     level: levelForCredits(agent.creditPrice),
-    recommended: Boolean(agent.isFeatured),
+    recommended: Boolean(agent.isFeatured || agent.isTrending),
     status: agent.status,
     icon: agent.icon || initials(agent.name),
   };

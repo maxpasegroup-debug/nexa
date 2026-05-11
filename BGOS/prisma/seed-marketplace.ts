@@ -278,6 +278,101 @@ async function main() {
     })
   }
 
+  const blizzwayCompanions = [
+    ["bdp-builder-companion", "BDP Builder Companion", "BDP & Profile", "CAREER", 0, "free", "BDP", true],
+    ["resume-architect-companion", "Resume Architect Companion", "BDP & Profile", "CAREER", 120, "credits", "CV", true],
+    ["linkedin-profile-companion", "LinkedIn Profile Companion", "BDP & Profile", "CAREER", 90, "credits", "IN", false],
+    ["portfolio-builder-companion", "Portfolio Builder Companion", "BDP & Profile", "CAREER", 140, "credits", "PF", false],
+    ["career-compass-companion", "Career Compass Companion", "Career Growth", "CAREER", 0, "free", "CC", true],
+    ["english-speaking-companion", "English Speaking Companion", "Language & Communication", "LANGUAGE", 80, "credits", "EN", true],
+    ["ielts-companion", "IELTS Companion", "Exam Coaching", "EXAM", 180, "credits", "IE", false],
+    ["german-companion", "German Companion", "Language & Communication", "LANGUAGE", 130, "credits", "DE", false],
+    ["communication-coach-companion", "Communication Coach", "Language & Communication", "LANGUAGE", 70, "credits", "COM", false],
+    ["interview-companion", "Interview Companion", "Career Growth", "CAREER", 110, "credits", "INT", false],
+    ["sop-lor-companion", "SOP/LOR Companion", "Admissions", "MIGRATION", 160, "credits", "SOP", false],
+    ["college-admission-companion", "College Admission Companion", "Admissions", "MIGRATION", 150, "credits", "ADM", false],
+    ["scholarship-companion", "Scholarship Companion", "Admissions", "MIGRATION", 170, "credits", "SCH", false],
+    ["visa-readiness-companion", "Visa Readiness Companion", "Migration & Global Mobility", "MIGRATION", 190, "credits", "VISA", false],
+    ["freelance-finder-companion", "Freelance Finder Companion", "Earning Universe", "EARNING", 100, "credits", "FF", true],
+    ["job-match-companion", "Job Match Companion", "Earning Universe", "EARNING", 120, "credits", "JOB", false],
+    ["money-discipline-companion", "Money Discipline Companion", "Finance & Money Discipline", "FINANCE", 0, "free", "INR", false],
+    ["confidence-companion", "Confidence Companion", "Happiness & Personal Growth", "LEARNING", 60, "credits", "YOU", false],
+    ["focus-companion", "Focus Companion", "Happiness & Personal Growth", "LEARNING", 50, "credits", "FOC", false],
+    ["guardian-angel-pathway-companion", "Guardian Angel Pathway Companion", "Blizzway Premium", "BLIZZWAY", 300, "premium", "NEXA", true],
+  ]
+
+  for (let index = 0; index < blizzwayCompanions.length; index += 1) {
+    const [slug, name, companionCategory, career7Type, creditPrice, pricingMode, icon, featured] = blizzwayCompanions[index]
+    const description = `${name} helps Blizzway users complete focused pathway actions across ${companionCategory}.`
+    const chargeOn = slug === "resume-architect-companion" ? "activation" : "run"
+
+    await prisma.marketplaceAgent.upsert({
+      where: { slug: slug as string },
+      create: {
+        slug,
+        name,
+        tagline: description,
+        description,
+        shortDescription: description,
+        longDescription: `${description} This v1 companion uses safe rule-based execution and prepares a clean path for future LLM orchestration.`,
+        category: companionCategory === "Finance & Money Discipline" ? "FINANCE" : "EDUCATION",
+        type: "UI",
+        career7Type,
+        companionCategory,
+        creditPrice,
+        pricingMode,
+        career7Status: "ACTIVE",
+        businessModel: "blizzway",
+        icon,
+        colorPrimary: "#4F46E5",
+        colorSecondary: "#06B6D4",
+        gradient: "linear-gradient(135deg,#312e81,#0e7490)",
+        onboardingFee: 0,
+        monthlyFee: 0,
+        isFeatured: Boolean(featured),
+        isTrending: index < 8,
+        isPrebuilt: true,
+        isRequestable: true,
+        canAddToGrowthBoard: true,
+        sortOrder: 200 + index,
+        capabilities: ["Guided intake", "Rule-based action plan", "Pathway-ready checklist"],
+        expectedOutput: ["Summary", "Checklist", "Next actions", "Safety note"],
+        recommendedFor: ["Blizzway users", companionCategory],
+        requiredInputs: ["Goal", "Current status", "Main blocker"],
+        chargeOn,
+        features: ["Safe v1 execution", "Structured output", "Future LLM-ready architecture"],
+      } as any,
+      update: {
+        name,
+        tagline: description,
+        description,
+        shortDescription: description,
+        longDescription: `${description} This v1 companion uses safe rule-based execution and prepares a clean path for future LLM orchestration.`,
+        category: companionCategory === "Finance & Money Discipline" ? "FINANCE" : "EDUCATION",
+        type: "UI",
+        career7Type,
+        companionCategory,
+        creditPrice,
+        pricingMode,
+        career7Status: "ACTIVE",
+        businessModel: "blizzway",
+        icon,
+        isFeatured: Boolean(featured),
+        isTrending: index < 8,
+        isPrebuilt: true,
+        isRequestable: true,
+        canAddToGrowthBoard: true,
+        sortOrder: 200 + index,
+        capabilities: ["Guided intake", "Rule-based action plan", "Pathway-ready checklist"],
+        expectedOutput: ["Summary", "Checklist", "Next actions", "Safety note"],
+        recommendedFor: ["Blizzway users", companionCategory],
+        requiredInputs: ["Goal", "Current status", "Main blocker"],
+        chargeOn,
+        features: ["Safe v1 execution", "Structured output", "Future LLM-ready architecture"],
+      } as any,
+    })
+  }
+
   console.log("Marketplace agents seeded successfully")
 }
 

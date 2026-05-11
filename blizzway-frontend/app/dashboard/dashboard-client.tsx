@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BlizzwayBadge, BlizzwayButton, BlizzwayCard, BlizzwayGradientPanel } from "@/components/blizzway";
 import {
   BlizzwayApi,
+  companionsApi,
   earningUniverseApi,
   getApiErrorMessage,
   learningGardenApi,
@@ -23,6 +24,7 @@ import {
   type SoulVaultResponse,
   type BlizzwayPathwayResponse,
   type BlizzwayOnboardingResponse,
+  type CompanionsResponse,
 } from "@/lib/api";
 import { BlizzwayDashboardShell } from "../dashboard-shell";
 
@@ -63,6 +65,7 @@ type DashboardData = {
   earningUniverse: EarningUniverseResponse | null;
   soulVault: SoulVaultResponse | null;
   onboarding: BlizzwayOnboardingResponse | null;
+  companions: CompanionsResponse | null;
   nexaMessage: string | null;
   fallbackLabels: string[];
 };
@@ -241,12 +244,13 @@ async function loadDashboardData(): Promise<DashboardData> {
     BlizzwayApi.getGrowthBoard(),
   ]);
 
-  const [pathway, learningGarden, earningUniverse, soulVault, onboarding, nexa] = await Promise.all([
+  const [pathway, learningGarden, earningUniverse, soulVault, onboarding, companions, nexa] = await Promise.all([
     optional(pathwayApi.getPathway(), "My Pathway endpoint", fallbackLabels),
     optional(learningGardenApi.getLearningGarden(), "Learning Garden endpoint", fallbackLabels),
     optional(earningUniverseApi.getEarningUniverse(), "Earning Universe endpoint", fallbackLabels),
     optional(soulVaultApi.getSoulVault(), "Soul Vault endpoint", fallbackLabels),
     optional(onboardingApi.getOnboarding(), "NEXA onboarding endpoint", fallbackLabels),
+    optional(companionsApi.getCompanions(), "Companions endpoint", fallbackLabels),
     optional(
       nexaApi.chat({
         quickAction: "What should I do today?",
@@ -267,6 +271,7 @@ async function loadDashboardData(): Promise<DashboardData> {
     earningUniverse,
     soulVault,
     onboarding,
+    companions,
     nexaMessage: nexa?.message ?? null,
     fallbackLabels,
   };
@@ -404,6 +409,10 @@ export function DashboardClient() {
       recommendedAssessment: data.onboarding?.recommendations.firstAssessments[0]?.title ?? "Career Compass Starter",
       bdpTask: data.onboarding?.recommendations.bdpSteps[0] ?? "Add proof and starter assessment signals to your BDP.",
       profileSummary: `${data.session.user?.role ?? "Blizzway member"}${data.session.user?.businessId ? " in a scoped Blizzway workspace" : ""}`,
+      recommendedCompanions: (data.companions?.companions ?? [])
+        .filter((item) => item.isFeatured || item.isTrending)
+        .slice(0, 3),
+      activeCompanions: (data.companions?.active ?? data.companions?.companions.filter((item) => item.active) ?? []).slice(0, 3),
     };
   }, [data]);
 
@@ -598,6 +607,56 @@ export function DashboardClient() {
                 <BlizzwayBadge tone="slate">{time}</BlizzwayBadge>
               </div>
             ))}
+          </div>
+        </BlizzwayCard>
+      </section>
+
+      <section className="mt-5 grid gap-5 xl:grid-cols-2">
+        <BlizzwayCard as="section" className="c7-magical-glow">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Recommended companions</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">NEXA picks for your pathway</h2>
+            </div>
+            <BlizzwayButton href="/companions" variant="secondary" size="sm">Open</BlizzwayButton>
+          </div>
+          <div className="mt-5 grid gap-3">
+            {derived.recommendedCompanions.length ? (
+              derived.recommendedCompanions.map((item) => (
+                <Link key={item.id} href={`/companions/${item.slug}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="font-black text-slate-950">{item.name}</p>
+                  <p className="mt-1 text-sm font-semibold c7-muted">{item.description}</p>
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold c7-muted">
+                Recommended companions appear after BGOS returns companion catalogue data.
+              </p>
+            )}
+          </div>
+        </BlizzwayCard>
+
+        <BlizzwayCard as="section" className="c7-magical-glow">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Active companions</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Currently attached</h2>
+            </div>
+            <BlizzwayBadge tone="emerald">{derived.activeCompanions.length} active</BlizzwayBadge>
+          </div>
+          <div className="mt-5 grid gap-3">
+            {derived.activeCompanions.length ? (
+              derived.activeCompanions.map((item) => (
+                <Link key={item.id} href={`/companions/${item.slug}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="font-black text-slate-950">{item.name}</p>
+                  <p className="mt-1 text-sm font-semibold c7-muted">Attached to {item.activation?.attachedTo || "pathway"}</p>
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold c7-muted">
+                Activate a free companion to attach it to My Pathway, Learning Garden, or Earning Universe.
+              </p>
+            )}
           </div>
         </BlizzwayCard>
       </section>
