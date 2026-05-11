@@ -37,24 +37,15 @@ const STEPS = [
   },
 ];
 
+const SAFEPAL_REFERRAL_LINK = "https://7universe.org?ref=9067";
+const SAFEPAL_VIDEO_SRC = "/video/safepal-malayalam.mp4";
+
 const BUSINESS_LINKS = [
   {
     title: "Connect SafePal account",
-    desc: "Install SafePal and keep your wallet ready before activation.",
-    href: "https://safepal.com/download",
-    cta: "Open SafePal",
-  },
-  {
-    title: "What is OpBNB?",
-    desc: "Short YouTube video for understanding the network.",
-    href: "https://www.youtube.com/watch?v=QPn6BI3pM1Q",
-    cta: "Watch video",
-  },
-  {
-    title: "7 Slot Income Explained",
-    desc: "Use this video when you explain the business to someone.",
-    href: "https://www.youtube.com/watch?v=_kgL1XDk0Yg",
-    cta: "Watch video",
+    desc: "Open the 7Universe SafePal connection link and keep your wallet ready before activation.",
+    href: SAFEPAL_REFERRAL_LINK,
+    cta: "Connect",
   },
 ];
 
@@ -154,6 +145,7 @@ export default function JourneyPage() {
   const completedCount = progress.length;
   const nextStepNumber = Math.min(completedCount + 1, STEPS.length);
   const nextStep = STEPS.find((step) => step.id === nextStepNumber) ?? STEPS[0];
+  const currentStep = STEPS.find((step) => step.id === playingStep);
   const allCompleted = progress.includes(5);
 
   return (
@@ -221,52 +213,6 @@ export default function JourneyPage() {
                 </button>
               ) : null}
             </div>
-
-            {playingStep === nextStep.id ? (
-              <div className="mt-5">
-                <audio
-                  ref={audioRef}
-                  onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-                  onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
-                  onEnded={() => completeStep(nextStep.id)}
-                  onSeeking={(event) => {
-                    if (event.currentTarget.currentTime > currentTime + 1) {
-                      event.currentTarget.currentTime = currentTime;
-                    }
-                  }}
-                />
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-[#F59E0B] transition-all"
-                    style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                  />
-                </div>
-                <div className="mt-3 flex items-center justify-between text-xs text-white/50">
-                  <span>
-                    {formatTime(currentTime)} / {formatTime(duration)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!audioRef.current) {
-                        return;
-                      }
-
-                      if (audioRef.current.paused) {
-                        await audioRef.current.play();
-                        setIsPlaying(true);
-                      } else {
-                        audioRef.current.pause();
-                        setIsPlaying(false);
-                      }
-                    }}
-                    className="rounded-lg border border-[rgba(245,158,11,0.35)] px-4 py-2 text-sm font-bold text-[#F59E0B]"
-                  >
-                    {isPlaying ? "Pause" : "Play"}
-                  </button>
-                </div>
-              </div>
-            ) : null}
           </section>
         ) : (
           <section className="mt-5 rounded-[18px] border border-[rgba(245,158,11,0.35)] bg-[rgba(245,158,11,0.1)] p-5">
@@ -280,10 +226,60 @@ export default function JourneyPage() {
           </section>
         )}
 
+        {currentStep ? (
+          <section className="mt-5 rounded-[18px] border border-[rgba(245,158,11,0.35)] bg-white/[0.04] p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#F59E0B]">
+              Playing audio {currentStep.id}
+            </p>
+            <h2 className="mt-2 font-heading text-xl font-extrabold">{currentStep.title}</h2>
+            <audio
+              ref={audioRef}
+              onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+              onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+              onEnded={() => completeStep(currentStep.id)}
+              onSeeking={(event) => {
+                if (event.currentTarget.currentTime > currentTime + 1) {
+                  event.currentTarget.currentTime = currentTime;
+                }
+              }}
+            />
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-[#F59E0B] transition-all"
+                style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              />
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs text-white/50">
+              <span>
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!audioRef.current) {
+                    return;
+                  }
+
+                  if (audioRef.current.paused) {
+                    await audioRef.current.play();
+                    setIsPlaying(true);
+                  } else {
+                    audioRef.current.pause();
+                    setIsPlaying(false);
+                  }
+                }}
+                className="rounded-lg border border-[rgba(245,158,11,0.35)] px-4 py-2 text-sm font-bold text-[#F59E0B]"
+              >
+                {isPlaying ? "Pause" : "Play"}
+              </button>
+            </div>
+          </section>
+        ) : null}
+
         <section className="mt-5">
           <div className="flex items-center justify-between">
             <h2 className="font-heading text-lg font-extrabold">Step by step audios</h2>
-            <span className="text-xs text-white/40">Locked in order</span>
+            <span className="text-xs text-white/40">Replay anytime</span>
           </div>
           <div className="mt-3 space-y-3">
             {STEPS.map((step) => {
@@ -310,13 +306,13 @@ export default function JourneyPage() {
                         {completed ? "Completed" : unlocked ? step.desc : "Complete previous audio first"}
                       </p>
                     </div>
-                    {!completed && unlocked && !active ? (
+                    {unlocked && !active ? (
                       <button
                         type="button"
                         onClick={() => startStep(step.id, step.file)}
                         className="shrink-0 rounded-lg border border-[rgba(245,158,11,0.45)] px-3 py-2 text-xs font-extrabold text-[#F59E0B]"
                       >
-                        Play
+                        {completed ? "Replay" : "Play"}
                       </button>
                     ) : null}
                   </div>
@@ -324,6 +320,21 @@ export default function JourneyPage() {
               );
             })}
           </div>
+        </section>
+
+        <section className="mt-6">
+          <h2 className="font-heading text-lg font-extrabold">SafePal Malayalam video</h2>
+          <article className="mt-3 overflow-hidden rounded-[14px] border border-white/10 bg-white/[0.04]">
+            <video className="aspect-video w-full bg-black" controls preload="metadata" src={SAFEPAL_VIDEO_SRC}>
+              Your browser does not support the video tag.
+            </video>
+            <div className="p-4">
+              <h3 className="font-heading font-extrabold">How to use SafePal</h3>
+              <p className="mt-1 text-sm leading-5 text-white/50">
+                Watch this after the audio lessons to connect SafePal with 7Universe.
+              </p>
+            </div>
+          </article>
         </section>
 
         <section className="mt-6">

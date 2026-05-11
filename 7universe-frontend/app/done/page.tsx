@@ -7,12 +7,14 @@ type UniverseUser = {
   referralCode: string;
 };
 
+const SAFEPAL_REFERRAL_LINK = "https://7universe.org?ref=9067";
+
 export default function DonePage() {
   const router = useRouter();
   const [user, setUser] = useState<UniverseUser | null>(null);
   const [copied, setCopied] = useState(false);
   const referralLink = useMemo(
-    () => `https://7universe.org/?ref=${user?.referralCode ?? ""}`,
+    () => `https://7universe.org?ref=${user?.referralCode ?? ""}`,
     [user?.referralCode],
   );
 
@@ -68,7 +70,7 @@ export default function DonePage() {
         </div>
 
         <a
-          href="https://safepal.com/download"
+          href={SAFEPAL_REFERRAL_LINK}
           target="_blank"
           rel="noreferrer"
           className="mt-5 block w-full rounded-xl bg-[#F59E0B] px-5 py-4 font-extrabold text-black"
