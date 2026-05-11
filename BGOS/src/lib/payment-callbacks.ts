@@ -11,6 +11,8 @@ async function topUpBlizzwayCredits({ payment }: PaymentCallbackContext) {
     amount: credits,
     businessModel: payment.businessModel === "blizzway" ? "blizzway" : "career7",
     description: `Blizzway credit top-up via ${payment.gateway.toLowerCase()}`,
+    source: "payment_top_up",
+    idempotencyKey: `payment-success:${payment.id}`,
     metadata: {
       paymentGateway: payment.gateway,
       bgosPaymentIntentId: payment.id,

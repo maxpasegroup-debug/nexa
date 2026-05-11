@@ -184,6 +184,40 @@ export type BlizzwayWalletTransaction = {
   date: string;
 };
 
+export type BlizzwayCreditPackage = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  priceInr: number;
+  baseCredits: number;
+  bonusCredits: number;
+  totalCredits: number;
+  badgeLabel: string | null;
+  active: boolean;
+  sortOrder: number;
+};
+
+export type BlizzwaySubscriptionPlan = {
+  id: string;
+  slug: string;
+  name: string;
+  monthlyPriceInr: number;
+  monthlyCredits: number;
+  features: string[];
+  active: boolean;
+  sortOrder: number;
+};
+
+export type BlizzwayInvoicePlaceholder = {
+  id: string;
+  invoiceNumber: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+};
+
 export type BlizzwayWalletResponse = {
   wallet: {
     primaryBalance: number;
@@ -195,21 +229,22 @@ export type BlizzwayWalletResponse = {
     defaultGateway: string;
     currency: string;
   };
+  creditPackages: BlizzwayCreditPackage[];
+  subscriptionPlans: BlizzwaySubscriptionPlan[];
+  invoices: BlizzwayInvoicePlaceholder[];
 };
 
 export type BlizzwayWalletTopUpRequest = {
   gateway?: string;
-  amount?: number;
-  credits?: number;
+  packageId?: string;
+  packageSlug?: string;
+  idempotencyKey?: string;
 };
 
 export type BlizzwayWalletTopUpResponse = {
-  wallet: {
-    primaryBalance: number;
-    credits: number;
-  };
   payment: unknown;
   checkout: unknown;
+  package: BlizzwayCreditPackage;
 };
 
 export type SoulVaultItem = {

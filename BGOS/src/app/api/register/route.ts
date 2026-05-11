@@ -2,6 +2,7 @@ import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
 import { BLIZZWAY_AUTH_MODEL, getAuthBusinessModel, isCareer7Auth } from "@/lib/auth-business-model";
+import { BLIZZWAY_WELCOME_CREDITS } from "@/lib/blizzway-pricing";
 import { BLIZZWAY_BUSINESS_MODEL, CAREER7_BUSINESS_MODEL } from "@/lib/career7-wallet";
 import { generateClientId } from "@/lib/client-id";
 import { prisma } from "@/lib/prisma";
@@ -101,20 +102,42 @@ export async function POST(request: Request) {
           update: {},
         });
 
-        await tx.career7CreditWallet.create({
+        const wallet = await tx.career7CreditWallet.create({
           data: {
             businessId: business.id,
             userId: createdUser.id,
-            balance: 0,
+            balance: ventureBusinessModel === BLIZZWAY_BUSINESS_MODEL ? BLIZZWAY_WELCOME_CREDITS : 0,
           },
         });
+
+        if (ventureBusinessModel === BLIZZWAY_BUSINESS_MODEL) {
+          await tx.career7CreditLedger.create({
+            data: {
+              businessModel: BLIZZWAY_BUSINESS_MODEL,
+              businessId: business.id,
+              userId: createdUser.id,
+              walletId: wallet.id,
+              type: "REWARD",
+              amount: BLIZZWAY_WELCOME_CREDITS,
+              balanceAfter: BLIZZWAY_WELCOME_CREDITS,
+              source: "signup_welcome",
+              idempotencyKey: `blizzway:signup-welcome:${business.id}:${createdUser.id}`,
+              description: "Welcome credits for joining Blizzway",
+              metadata: {
+                reward: "SIGNUP_WELCOME",
+                credits: BLIZZWAY_WELCOME_CREDITS,
+              },
+            },
+          });
+        }
       }
 
       return createdUser;
     });
 
     return NextResponse.json({ user }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("[register]", error);
     return NextResponse.json(
       { error: "Unable to register user." },
       { status: 500 },

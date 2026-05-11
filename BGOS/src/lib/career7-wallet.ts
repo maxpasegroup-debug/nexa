@@ -42,6 +42,9 @@ export async function topUpCareer7Credits({
   amount,
   businessModel = CAREER7_BUSINESS_MODEL,
   description = "Dummy Career7 credit top-up",
+  source = "top_up",
+  idempotencyKey,
+  type = "TOP_UP",
   metadata = {},
 }: {
   businessId: string;
@@ -49,6 +52,9 @@ export async function topUpCareer7Credits({
   amount: number;
   businessModel?: BlizzwayBusinessModel;
   description?: string;
+  source?: string;
+  idempotencyKey?: string;
+  type?: "TOP_UP" | "ADJUSTMENT" | "REWARD" | "MONTHLY_GRANT";
   metadata?: Prisma.InputJsonValue;
 }) {
   const credits = Math.max(0, Math.round(amount));
@@ -57,6 +63,17 @@ export async function topUpCareer7Credits({
   }
 
   return prisma.$transaction(async (tx) => {
+    if (idempotencyKey) {
+      const existingLedger = await tx.career7CreditLedger.findUnique({
+        where: { idempotencyKey },
+      });
+
+      if (existingLedger) {
+        const wallet = await ensureCareer7Wallet(businessId, userId, tx);
+        return { wallet, ledger: existingLedger };
+      }
+    }
+
     await ensureCareer7Wallet(businessId, userId, tx);
 
     const wallet = await tx.career7CreditWallet.update({
@@ -70,15 +87,126 @@ export async function topUpCareer7Credits({
         businessId,
         userId,
         walletId: wallet.id,
-        type: "TOP_UP",
+        type,
         amount: credits,
         balanceAfter: wallet.balance,
+        source,
+        idempotencyKey,
         description,
         metadata,
       },
     });
 
     return { wallet, ledger };
+  });
+}
+
+export async function grantBlizzwaySignupWelcomeCredits({
+  businessId,
+  userId,
+}: {
+  businessId: string;
+  userId: string;
+}) {
+  return topUpCareer7Credits({
+    businessId,
+    userId,
+    amount: 500,
+    businessModel: BLIZZWAY_BUSINESS_MODEL,
+    type: "REWARD",
+    source: "signup_welcome",
+    idempotencyKey: `blizzway:signup-welcome:${businessId}:${userId}`,
+    description: "Welcome credits for joining Blizzway",
+    metadata: {
+      reward: "SIGNUP_WELCOME",
+      credits: 500,
+    },
+  });
+}
+
+export const BLIZZWAY_ACHIEVEMENT_REWARDS = {
+  first_assessment: {
+    credits: 25,
+    description: "Achievement reward: complete first assessment",
+  },
+  publish_bdp: {
+    credits: 50,
+    description: "Achievement reward: publish BDP",
+  },
+  seven_day_streak: {
+    credits: 30,
+    description: "Achievement reward: 7-day streak",
+  },
+  pathway_milestone: {
+    credits: 100,
+    description: "Achievement reward: complete pathway milestone",
+  },
+  refer_friend: {
+    credits: 250,
+    description: "Achievement reward: refer a friend",
+  },
+} as const;
+
+export type BlizzwayAchievementKey = keyof typeof BLIZZWAY_ACHIEVEMENT_REWARDS;
+
+export async function grantBlizzwayAchievementReward({
+  businessId,
+  userId,
+  achievementKey,
+  entityId,
+}: {
+  businessId: string;
+  userId: string;
+  achievementKey: BlizzwayAchievementKey;
+  entityId?: string;
+}) {
+  const reward = BLIZZWAY_ACHIEVEMENT_REWARDS[achievementKey];
+  const scopedEntity = entityId ?? "default";
+
+  return topUpCareer7Credits({
+    businessId,
+    userId,
+    amount: reward.credits,
+    businessModel: BLIZZWAY_BUSINESS_MODEL,
+    type: "REWARD",
+    source: `achievement:${achievementKey}`,
+    idempotencyKey: `blizzway:achievement:${businessId}:${userId}:${achievementKey}:${scopedEntity}`,
+    description: reward.description,
+    metadata: {
+      achievementKey,
+      entityId: entityId ?? null,
+      credits: reward.credits,
+    },
+  });
+}
+
+export async function grantBlizzwayMonthlyCreditsForPlan({
+  businessId,
+  userId,
+  planSlug,
+  monthlyCredits,
+  periodKey,
+}: {
+  businessId: string;
+  userId: string;
+  planSlug: string;
+  monthlyCredits: number;
+  periodKey: string;
+}) {
+  return topUpCareer7Credits({
+    businessId,
+    userId,
+    amount: monthlyCredits,
+    businessModel: BLIZZWAY_BUSINESS_MODEL,
+    type: "MONTHLY_GRANT",
+    source: `monthly_plan:${planSlug}`,
+    idempotencyKey: `blizzway:monthly:${businessId}:${userId}:${planSlug}:${periodKey}`,
+    description: `Monthly Blizzway credits for ${planSlug}`,
+    metadata: {
+      planSlug,
+      periodKey,
+      credits: monthlyCredits,
+    },
   });
 }
 
@@ -140,6 +268,7 @@ export async function debitCareer7Credits({
         balanceAfter: wallet.balance,
         agentId,
         growthBoardItemId,
+        source: "usage",
         description,
         metadata,
       },
