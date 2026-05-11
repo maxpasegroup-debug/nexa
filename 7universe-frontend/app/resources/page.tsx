@@ -5,12 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const SAFEPAL_REFERRAL_LINK = "https://7universe.org?ref=9067";
-const SAFEPAL_VIDEO_SRC = "/video/safepal-malayalam.mp4";
+const SAFEPAL_VIDEO_SOURCES = [
+  { src: "/video/safepal-malayalam.mp4", type: "video/mp4" },
+  { src: "/video/safepal-malayalam.webm", type: "video/webm" },
+  { src: "/video/safepal-malayalam", type: "video/mp4" },
+];
 
 const VIDEOS = [
   {
     title: "How to use SafePal",
-    src: SAFEPAL_VIDEO_SRC,
+    sources: SAFEPAL_VIDEO_SOURCES,
     desc: "Malayalam guide for connecting SafePal with 7Universe.",
   },
 ];
@@ -63,7 +67,12 @@ export default function ResourcesPage() {
           {VIDEOS.map((video) => (
             <article key={video.title} className="overflow-hidden rounded-[14px] border border-white/10 bg-white/[0.03]">
               <div className="aspect-video w-full bg-black">
-                <video className="h-full w-full" controls preload="metadata" src={video.src} />
+                <video className="h-full w-full" controls preload="metadata">
+                  {video.sources.map((source) => (
+                    <source key={source.src} src={source.src} type={source.type} />
+                  ))}
+                  Your browser does not support the video tag.
+                </video>
               </div>
               <div className="p-4">
                 <h3 className="font-heading text-lg font-extrabold">{video.title}</h3>
