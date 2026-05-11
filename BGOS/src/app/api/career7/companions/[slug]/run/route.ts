@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { findAvailableCompanion, runCompanion } from "@/lib/blizzway-companions";
+import { completePathwayQuest } from "@/lib/blizzway-gamification";
 import { getCareer7Context } from "@/lib/career7-auth";
 import { getString } from "@/lib/marketplace";
 
@@ -36,6 +37,12 @@ export async function POST(
       agent: companion,
       inputs,
       idempotencyKey: getString(body.idempotencyKey) || undefined,
+    });
+    await completePathwayQuest(authResult.context, "activate_first_companion", {
+      source: "companion_run",
+      slug: companion.slug,
+    }).catch((error) => {
+      console.error("[career7:companions:run:gamification]", error);
     });
 
     return NextResponse.json({

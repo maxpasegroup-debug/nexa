@@ -49,8 +49,114 @@ export type BlizzwayPathwayResponse = {
     title: string;
     currentStepId?: string | null;
     progress: number;
+    xp?: number;
+    level?: number;
     steps: BlizzwayPathwayStep[];
   };
+};
+
+export type BlizzwayPathwayLevel = {
+  level: number;
+  key: string;
+  title: string;
+  xpRequired: number;
+  status: "completed" | "active" | "locked";
+};
+
+export type BlizzwayPathwayQuest = {
+  key: string;
+  title: string;
+  description: string;
+  level: number;
+  xpReward: number;
+  achievementKey: string | null;
+  status: "completed" | "available";
+  completedAt: string | null;
+};
+
+export type BlizzwayPathwayAchievement = {
+  key: string;
+  title: string;
+  description: string;
+  category: string;
+  icon: string;
+  rewardCredits: number;
+  xpReward: number;
+  status: "locked" | "unlocked" | "claimed";
+  unlockedAt: string | null;
+  claimedAt: string | null;
+  claimable: boolean;
+};
+
+export type BlizzwayPathwayGamification = {
+  levels: BlizzwayPathwayLevel[];
+  progress: {
+    currentLevel: number;
+    currentLevelTitle: string;
+    totalXp: number;
+    levelXp: number;
+    nextLevelXp: number;
+    progress: number;
+    completedLevels: number[];
+  };
+  quests: BlizzwayPathwayQuest[];
+  achievements: BlizzwayPathwayAchievement[];
+  streak: {
+    currentCount: number;
+    longestCount: number;
+    lastCheckInKey: string | null;
+    checkedInToday: boolean;
+  };
+  rewards: {
+    available: number;
+    walletCredits: number;
+  };
+  nextQuest: {
+    key: string;
+    title: string;
+    description: string;
+    xpReward: number;
+    nexaNote: string;
+  } | null;
+};
+
+export type BlizzwayPathwayGamificationResponse = {
+  gamification: BlizzwayPathwayGamification;
+};
+
+export type BlizzwayQuestCompleteResponse = {
+  quest: { key: string; title: string; xpAwarded: number; completedAt: string; duplicate: boolean };
+  achievement: { key: string; status: string; rewardCredits: number } | null;
+  gamification: BlizzwayPathwayGamification;
+};
+
+export type BlizzwayAchievementsResponse = {
+  achievements: BlizzwayPathwayAchievement[];
+  rewards: BlizzwayPathwayGamification["rewards"];
+  total: number;
+};
+
+export type BlizzwayAchievementClaimResponse = {
+  achievement: {
+    key: string;
+    title: string;
+    rewardCredits: number;
+    status: string;
+    claimedAt: string | null;
+    duplicate: boolean;
+  };
+  ledger: { id: string; amount: number; balanceAfter: number; description: string } | null;
+  gamification: BlizzwayPathwayGamification;
+};
+
+export type BlizzwayStreakResponse = {
+  streak: BlizzwayPathwayGamification["streak"];
+};
+
+export type BlizzwayStreakCheckInResponse = {
+  streak: BlizzwayPathwayGamification["streak"] & { duplicate: boolean };
+  quest: { key: string; duplicate: boolean } | null;
+  gamification: BlizzwayPathwayGamification;
 };
 
 export type LearningGardenItem = {

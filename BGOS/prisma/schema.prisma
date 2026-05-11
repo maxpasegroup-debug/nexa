@@ -84,6 +84,11 @@ model User {
   blizzwayCompanionActivations BlizzwayCompanionActivation[]
   blizzwayCompanionRuns BlizzwayCompanionRun[]
   blizzwayCompanionRequests BlizzwayCompanionRequest[]
+  blizzwayUserQuests BlizzwayUserQuest[]
+  blizzwayUserAchievements BlizzwayUserAchievement[]
+  blizzwayXpEvents BlizzwayXpEvent[]
+  blizzwayPathwayStreaks BlizzwayPathwayStreak[]
+  blizzwayPathwayLevelProgress BlizzwayPathwayLevelProgress[]
 
   @@index([email])
   @@index([role])
@@ -230,6 +235,11 @@ model Business {
   blizzwayCompanionActivations BlizzwayCompanionActivation[]
   blizzwayCompanionRuns BlizzwayCompanionRun[]
   blizzwayCompanionRequests BlizzwayCompanionRequest[]
+  blizzwayUserQuests BlizzwayUserQuest[]
+  blizzwayUserAchievements BlizzwayUserAchievement[]
+  blizzwayXpEvents BlizzwayXpEvent[]
+  blizzwayPathwayStreaks BlizzwayPathwayStreak[]
+  blizzwayPathwayLevelProgress BlizzwayPathwayLevelProgress[]
   dataExports    CustomerDataExport[]
 }
 
@@ -718,6 +728,143 @@ model BlizzwayCompanionRequest {
 
   @@index([businessModel, businessId, userId])
   @@index([status])
+}
+
+model BlizzwayPathwayQuest {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  key            String
+  title          String
+  description    String
+  level          Int      @default(1)
+  xpReward       Int      @default(0)
+  achievementKey String?
+  sortOrder      Int      @default(0)
+  active         Boolean  @default(true)
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([businessModel, key])
+  @@index([businessModel, active, sortOrder])
+}
+
+model BlizzwayAchievement {
+  id            String   @id @default(cuid())
+  businessModel String   @default("blizzway")
+  key           String
+  title         String
+  description   String
+  category      String   @default("Pathway")
+  icon          String   @default("Star")
+  rewardCredits Int      @default(0)
+  xpReward      Int      @default(0)
+  sortOrder     Int      @default(0)
+  active        Boolean  @default(true)
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([businessModel, key])
+  @@index([businessModel, active, sortOrder])
+}
+
+model BlizzwayUserQuest {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questKey       String
+  status         String   @default("COMPLETED")
+  xpAwarded      Int      @default(0)
+  completedAt    DateTime @default(now())
+  idempotencyKey String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([businessModel, businessId, userId, questKey])
+  @@unique([idempotencyKey])
+  @@index([businessModel, businessId, userId, status])
+}
+
+model BlizzwayUserAchievement {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementKey String
+  status         String   @default("UNLOCKED")
+  unlockedAt     DateTime @default(now())
+  claimedAt      DateTime?
+  rewardCredits  Int      @default(0)
+  ledgerId       String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([businessModel, businessId, userId, achievementKey])
+  @@index([businessModel, businessId, userId, status])
+}
+
+model BlizzwayXpEvent {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source         String
+  questKey       String?
+  achievementKey String?
+  xp             Int
+  idempotencyKey String?  @unique
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  @@index([businessModel, businessId, userId])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model BlizzwayPathwayStreak {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentCount   Int      @default(0)
+  longestCount   Int      @default(0)
+  lastCheckInKey String?
+  lastCheckInAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([businessModel, businessId, userId])
+}
+
+model BlizzwayPathwayLevelProgress {
+  id              String   @id @default(cuid())
+  businessModel   String   @default("blizzway")
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentLevel    Int      @default(1)
+  totalXp         Int      @default(0)
+  levelXp         Int      @default(0)
+  progress        Int      @default(0)
+  completedLevels Json     @default("[]")
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@unique([businessModel, businessId, userId])
+  @@index([businessModel, businessId, userId, currentLevel])
 }
 
 model AgentInstallation {

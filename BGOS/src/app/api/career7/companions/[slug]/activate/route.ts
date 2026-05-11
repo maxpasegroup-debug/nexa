@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { activateCompanion, findAvailableCompanion, serializeCompanion } from "@/lib/blizzway-companions";
+import { completePathwayQuest } from "@/lib/blizzway-gamification";
 import { getCareer7Context } from "@/lib/career7-auth";
 import { getString } from "@/lib/marketplace";
 
@@ -20,6 +21,12 @@ export async function POST(
     if (companion.career7Status !== "ACTIVE") return NextResponse.json({ error: "Companion is not active yet." }, { status: 409 });
 
     const result = await activateCompanion(authResult.context, companion, getString(body.idempotencyKey) || undefined);
+    await completePathwayQuest(authResult.context, "activate_first_companion", {
+      source: "companion_activate",
+      slug: companion.slug,
+    }).catch((error) => {
+      console.error("[career7:companions:activate:gamification]", error);
+    });
     const activeCompanion = await findAvailableCompanion(params.slug, authResult.context);
 
     return NextResponse.json(

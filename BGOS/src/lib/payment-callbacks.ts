@@ -1,4 +1,5 @@
 import { topUpCareer7Credits } from "@/lib/career7-wallet";
+import { recordGamificationEvent } from "@/lib/blizzway-gamification";
 import { registerPaymentCallback, type PaymentCallbackContext } from "@/lib/payments";
 
 async function topUpBlizzwayCredits({ payment }: PaymentCallbackContext) {
@@ -19,6 +20,17 @@ async function topUpBlizzwayCredits({ payment }: PaymentCallbackContext) {
       providerOrderId: payment.providerOrderId,
       providerPaymentId: payment.providerPaymentId,
     },
+  });
+  await recordGamificationEvent(
+    {
+      businessModel: payment.businessModel === "blizzway" ? "blizzway" : "career7",
+      businessId: payment.businessId,
+      userId: payment.userId,
+    },
+    "wallet_top_up",
+    { source: "payment_top_up", paymentId: payment.id },
+  ).catch(() => {
+    return;
   });
 }
 

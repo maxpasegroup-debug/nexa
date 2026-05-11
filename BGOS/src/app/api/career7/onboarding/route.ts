@@ -8,6 +8,7 @@ import {
   getBlizzwayOnboardingProfile,
   saveBlizzwayOnboardingProfile,
 } from "@/lib/blizzway-nexa-engine";
+import { completePathwayQuest } from "@/lib/blizzway-gamification";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,14 @@ export async function POST(request: Request) {
     generateStarterPathway(authResult.context),
     buildNexaRecommendations(authResult.context),
   ]);
+  if (onboarding.completionStatus === "COMPLETED") {
+    await completePathwayQuest(authResult.context, "complete_onboarding", { source: "onboarding" }).catch((error) => {
+      console.error("[career7:onboarding:gamification]", error);
+    });
+    await completePathwayQuest(authResult.context, "generate_bdp", { source: "onboarding_bdp" }).catch((error) => {
+      console.error("[career7:onboarding:bdp:gamification]", error);
+    });
+  }
 
   return NextResponse.json({ onboarding, bdp, pathway, recommendations });
 }

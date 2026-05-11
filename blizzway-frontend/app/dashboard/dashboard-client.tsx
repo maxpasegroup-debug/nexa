@@ -25,6 +25,7 @@ import {
   type BlizzwayPathwayResponse,
   type BlizzwayOnboardingResponse,
   type CompanionsResponse,
+  type BlizzwayPathwayGamification,
 } from "@/lib/api";
 import { BlizzwayDashboardShell } from "../dashboard-shell";
 
@@ -66,6 +67,7 @@ type DashboardData = {
   soulVault: SoulVaultResponse | null;
   onboarding: BlizzwayOnboardingResponse | null;
   companions: CompanionsResponse | null;
+  gamification: BlizzwayPathwayGamification | null;
   nexaMessage: string | null;
   fallbackLabels: string[];
 };
@@ -244,8 +246,9 @@ async function loadDashboardData(): Promise<DashboardData> {
     BlizzwayApi.getGrowthBoard(),
   ]);
 
-  const [pathway, learningGarden, earningUniverse, soulVault, onboarding, companions, nexa] = await Promise.all([
+  const [pathway, gamification, learningGarden, earningUniverse, soulVault, onboarding, companions, nexa] = await Promise.all([
     optional(pathwayApi.getPathway(), "My Pathway endpoint", fallbackLabels),
+    optional(pathwayApi.getGamification().then((response) => response.gamification), "Pathway gamification endpoint", fallbackLabels),
     optional(learningGardenApi.getLearningGarden(), "Learning Garden endpoint", fallbackLabels),
     optional(earningUniverseApi.getEarningUniverse(), "Earning Universe endpoint", fallbackLabels),
     optional(soulVaultApi.getSoulVault(), "Soul Vault endpoint", fallbackLabels),
@@ -267,6 +270,7 @@ async function loadDashboardData(): Promise<DashboardData> {
     wallet,
     growthBoard,
     pathway,
+    gamification,
     learningGarden,
     earningUniverse,
     soulVault,
@@ -413,6 +417,13 @@ export function DashboardClient() {
         .filter((item) => item.isFeatured || item.isTrending)
         .slice(0, 3),
       activeCompanions: (data.companions?.active ?? data.companions?.companions.filter((item) => item.active) ?? []).slice(0, 3),
+      currentLevel: data.gamification?.progress.currentLevel ?? data.pathway?.pathway.level ?? 1,
+      currentLevelTitle: data.gamification?.progress.currentLevelTitle ?? "Discover Yourself",
+      totalXp: data.gamification?.progress.totalXp ?? data.pathway?.pathway.xp ?? 0,
+      xpProgress: data.gamification?.progress.progress ?? 0,
+      nextQuest: data.gamification?.nextQuest,
+      claimableReward: data.gamification?.achievements.find((item) => item.claimable) ?? null,
+      streak: data.gamification?.streak ?? null,
     };
   }, [data]);
 
@@ -490,6 +501,55 @@ export function DashboardClient() {
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">BDP task</p>
               <p className="mt-1 text-sm font-black text-slate-950">{derived.bdpTask}</p>
+            </div>
+          </div>
+        </BlizzwayCard>
+      </section>
+
+      <section className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+        <BlizzwayCard as="section" className="c7-magical-glow">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Pathway level</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
+                Level {derived.currentLevel}: {derived.currentLevelTitle}
+              </h2>
+              <p className="mt-3 text-sm leading-6 c7-muted">
+                {derived.totalXp} XP earned through meaningful Blizzway growth actions.
+              </p>
+            </div>
+            <BlizzwayBadge tone="purple">{Math.round(derived.xpProgress)}%</BlizzwayBadge>
+          </div>
+          <div className="mt-5 h-3 rounded-full bg-slate-200">
+            <div
+              className="h-3 rounded-full bg-gradient-to-r from-amber-300 via-cyan-300 to-purple-400"
+              style={{ width: `${Math.max(0, Math.min(100, Math.round(derived.xpProgress)))}%` }}
+            />
+          </div>
+        </BlizzwayCard>
+
+        <BlizzwayCard as="section" className="c7-magical-glow">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">Next quest</p>
+              <p className="mt-2 font-black text-slate-950">{derived.nextQuest?.title ?? "Complete onboarding"}</p>
+              <p className="mt-2 text-sm leading-6 c7-muted">
+                {derived.nextQuest?.description ?? "NEXA will choose a safe next quest after gamification data loads."}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">Reward</p>
+              <p className="mt-2 font-black text-slate-950">{derived.claimableReward?.title ?? "No reward waiting"}</p>
+              <p className="mt-2 text-sm leading-6 c7-muted">
+                {derived.claimableReward ? `+${derived.claimableReward.rewardCredits} platform credits ready to claim.` : "Claimable achievement rewards appear here."}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">Streak</p>
+              <p className="mt-2 font-black text-slate-950">{derived.streak?.currentCount ?? 0} days</p>
+              <p className="mt-2 text-sm leading-6 c7-muted">
+                {derived.streak?.checkedInToday ? "Checked in today." : "Check in from My Pathway to keep momentum visible."}
+              </p>
             </div>
           </div>
         </BlizzwayCard>
