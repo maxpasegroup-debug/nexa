@@ -39,6 +39,47 @@ function requestBusinessModelAllowed(request?: Request) {
   return Boolean(normalizeBlizzwayBusinessModel(requested));
 }
 
+const unsafeMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+function originOf(value: string | undefined | null) {
+  if (!value) return null;
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function allowedOriginsForRequest(request: Request) {
+  const envOrigins = [
+    process.env.AUTH_URL,
+    process.env.NEXTAUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.BLIZZWAY_ALLOWED_ORIGINS,
+  ]
+    .filter(Boolean)
+    .flatMap((value) => String(value).split(","))
+    .map((value) => originOf(value.trim()))
+    .filter((value): value is string => Boolean(value));
+
+  return new Set([
+    originOf(request.url),
+    "https://career7.in",
+    "https://www.career7.in",
+    ...envOrigins,
+  ].filter((value): value is string => Boolean(value)));
+}
+
+function requestOriginAllowed(request?: Request) {
+  if (!request || !unsafeMethods.has(request.method.toUpperCase())) return true;
+
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+
+  return allowedOriginsForRequest(request).has(originOf(origin) ?? "");
+}
+
 export async function getCareer7Context(request?: Request): Promise<
   | { context: Career7Context; response?: never }
   | { context?: never; response: NextResponse<{ error: string }> }
@@ -53,6 +94,15 @@ export async function getCareer7Context(request?: Request): Promise<
     return {
       response: NextResponse.json(
         { error: `Forbidden: expected businessModel ${BLIZZWAY_BUSINESS_MODEL}.` },
+        { status: 403 },
+      ),
+    };
+  }
+
+  if (!requestOriginAllowed(request)) {
+    return {
+      response: NextResponse.json(
+        { error: "Forbidden: request origin is not allowed." },
         { status: 403 },
       ),
     };

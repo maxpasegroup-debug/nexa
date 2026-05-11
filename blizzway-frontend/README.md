@@ -55,6 +55,8 @@ The frontend proxies BGOS through `/api/bgos`. The proxy intentionally allows on
 
 For production on `career7.in`, keep `NEXT_PUBLIC_API_URL=/api/bgos` and set `BGOS_API_URL` to the deployed BGOS origin. If Blizzway moves to a final standalone domain, update only `NEXT_PUBLIC_SITE_URL`, DNS, and the allowed callback/origin values in BGOS auth/payment providers.
 
+BGOS must also include the frontend origins in `BLIZZWAY_ALLOWED_ORIGINS`, for example `https://career7.in,https://www.career7.in`. Add the final Blizzway domain there before switching DNS.
+
 ## Railway Deployment
 
 This project is suitable for Railway deployment using Nixpacks. Railway can detect the Node/Next.js app from `package.json` and use:

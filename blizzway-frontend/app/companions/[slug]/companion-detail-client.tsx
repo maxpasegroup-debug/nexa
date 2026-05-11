@@ -161,7 +161,7 @@ export function CompanionDetailClient() {
             <input value={inputs.goal} onChange={(event) => setInputs((value) => ({ ...value, goal: event.target.value }))} placeholder="Goal" className="h-11 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-indigo-400" />
             <input value={inputs.currentStatus} onChange={(event) => setInputs((value) => ({ ...value, currentStatus: event.target.value }))} placeholder="Current status" className="h-11 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-indigo-400" />
             <input value={inputs.mainBlocker} onChange={(event) => setInputs((value) => ({ ...value, mainBlocker: event.target.value }))} placeholder="Main blocker" className="h-11 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-indigo-400" />
-            <BlizzwayButton type="button" onClick={runCompanion} disabled={busy || gated} variant="dark">{gated ? "Premium gated" : "Run companion"}</BlizzwayButton>
+            <BlizzwayButton type="button" onClick={runCompanion} disabled={busy || gated || !companion.active} variant="dark">{gated ? "Premium gated" : companion.active ? "Run companion" : "Activate first"}</BlizzwayButton>
           </div>
         </BlizzwayCard>
         <BlizzwayCard as="section">

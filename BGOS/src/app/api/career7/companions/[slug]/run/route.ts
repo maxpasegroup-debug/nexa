@@ -61,6 +61,10 @@ export async function POST(
       return NextResponse.json({ error: "Insufficient Blizzway credits." }, { status: 402 });
     }
 
+    if (error instanceof Error && error.message === "COMPANION_NOT_ACTIVE") {
+      return NextResponse.json({ error: "Activate this companion before running it." }, { status: 409 });
+    }
+
     console.error("[career7:companions:run]", error);
     return NextResponse.json({ error: "Unable to run companion." }, { status: 500 });
   }

@@ -308,7 +308,17 @@ export async function runCompanion({
   inputs: Record<string, unknown>;
   idempotencyKey?: string;
 }) {
-  const existing = idempotencyKey ? await prisma.blizzwayCompanionRun.findUnique({ where: { idempotencyKey } }) : null;
+  const existing = idempotencyKey
+    ? await prisma.blizzwayCompanionRun.findFirst({
+        where: {
+          idempotencyKey,
+          businessModel: context.businessModel,
+          businessId: context.businessId,
+          userId: context.userId,
+          companionId: agent.id,
+        },
+      })
+    : null;
   if (existing) return { run: existing, duplicate: true };
 
   const mode = pricingMode(agent);
@@ -326,6 +336,9 @@ export async function runCompanion({
         },
       },
     });
+    if (!activation || activation.status !== "ACTIVE") {
+      throw new Error("COMPANION_NOT_ACTIVE");
+    }
 
     const wallet = await ensureCareer7Wallet(context.businessId, context.userId, tx);
     let ledgerId: string | null = null;

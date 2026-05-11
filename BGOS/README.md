@@ -41,6 +41,7 @@ Required production values include:
 - `AUTH_SECRET`
 - `AUTH_URL` / `NEXTAUTH_URL`
 - `NEXT_PUBLIC_APP_URL`
+- `BLIZZWAY_ALLOWED_ORIGINS` with the frontend HTTPS origins, for example `https://career7.in,https://www.career7.in`
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` if Google login is enabled
 - Payment provider values such as `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET`
 - Blizzway payment flags: `BLIZZWAY_PAYMENT_GATEWAYS`, `BLIZZWAY_DEFAULT_PAYMENT_GATEWAY`, `BLIZZWAY_PAYMENT_CURRENCY`, `BLIZZWAY_PAYMENT_LIVE_GATEWAYS`
@@ -72,6 +73,7 @@ npx prisma validate
 - Public Blizzway user APIs still live under legacy `/api/career7/*`; callers must send `x-business-model: blizzway`.
 - Wallet ledger, payments, companion runs, quests, achievements, and rewards have idempotency keys or unique constraints where repeat submissions are expected.
 - Security headers are configured in `next.config.mjs`.
+- Authenticated Blizzway mutating APIs validate the request `Origin` against BGOS/app origins and `BLIZZWAY_ALLOWED_ORIGINS`.
 - Avoid raw onboarding/BDP answer dumps in frontend responses unless a route is explicitly user-scoped.
 
 ## Monitoring Readiness

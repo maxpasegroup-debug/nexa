@@ -6,6 +6,7 @@ Last updated: 2026-05-11
 
 - BGOS has production `DATABASE_URL`.
 - BGOS has `AUTH_SECRET`, `AUTH_URL`, `NEXTAUTH_URL`, and `NEXT_PUBLIC_APP_URL` set to HTTPS origins.
+- BGOS has `BLIZZWAY_ALLOWED_ORIGINS=https://career7.in,https://www.career7.in` plus the final Blizzway domain when selected.
 - Blizzway frontend has `NEXT_PUBLIC_API_URL=/api/bgos`.
 - Blizzway frontend has `BGOS_API_URL` set to the deployed BGOS HTTPS origin.
 - Blizzway frontend has `NEXT_PUBLIC_SITE_URL=https://career7.in` or the final Blizzway domain.
@@ -39,6 +40,7 @@ Last updated: 2026-05-11
 - Configure Razorpay/Stripe live keys only in BGOS production env.
 - Configure webhook endpoint, webhook secret, and provider dashboard event delivery.
 - Test payment success, failure, duplicate webhook, and ledger idempotency.
+- Confirm credit package order creation uses user-scoped idempotency keys and duplicate verification does not double-credit.
 
 ## 6. Security Smoke
 
@@ -47,6 +49,8 @@ Last updated: 2026-05-11
 - BGOS internal owner can access Blizzway admin overview.
 - Blizzway frontend `/api/bgos/*` proxy rejects internal BGOS paths.
 - Blizzway user data stays scoped to `businessModel=blizzway` and the session business.
+- Mutating `/api/career7/*` requests from unknown browser origins return `403`.
+- Companion run requires an active companion activation and user-scoped idempotency.
 - No raw secrets or sensitive onboarding dumps are visible in browser responses.
 
 ## 7. Functional Smoke
@@ -72,6 +76,7 @@ Last updated: 2026-05-11
 - Payment webhook logs include provider IDs and idempotency keys.
 - Admin actions include admin ID and reason where applicable.
 - Sentry, Logtail, or equivalent error monitoring is queued before broad launch.
+- Alert on repeated `career7:*`, `internal:blizzway:*`, payment verification, and auth failures.
 
 ## 10. Rollback Plan
 
@@ -80,3 +85,19 @@ Last updated: 2026-05-11
 - Roll back BGOS only after confirming no new migration dependency would break old code.
 - If payment or wallet integrity is affected, disable live gateways and switch to manual mode while investigating.
 - Preserve database snapshots/backups before migration deploys.
+
+## 11. Phase 12 Readiness Notes
+
+- BGOS build command: `npm run build` from `BGOS`.
+- BGOS start command: `npm run start` from `BGOS`.
+- Blizzway frontend build command: `npm run build` from `blizzway-frontend`.
+- Blizzway frontend start command: `npm run start` from `blizzway-frontend`.
+- Prisma validation command: `npx prisma validate` from `BGOS`.
+- Production migration command: `npx prisma migrate deploy` from `BGOS`.
+- Public route smoke targets: `/`, `/login`, `/signup`, `/magic-market`, `/companions`, `/assessments`, `/admissions`, `/career-tests`.
+- Protected route smoke targets: `/dashboard`, `/bdp`, `/my-pathway`, `/wallet`, `/companions/[slug]`.
+- Admin guard smoke target: BGOS `/api/internal/blizzway/overview` with anonymous, non-owner, and internal-owner sessions.
+- Wallet smoke: packages, top-up order creation, verify duplicate payment, transaction list, invoice placeholder.
+- NEXA smoke: onboarding save, starter pathway generation, NEXA chat/recommendations with user-scoped data only.
+- Companion smoke: list, detail, activate, duplicate activate, run before activation rejected, run after activation saved once per idempotency key.
+- Gamification smoke: quest completion duplicate, streak check-in duplicate, achievement claim duplicate.

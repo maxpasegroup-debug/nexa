@@ -2,17 +2,7 @@ import type { MetadataRoute } from "next";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://career7.in").replace(/\/+$/, "");
 
-const publicRoutes = [
-  "",
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/magic-market",
-  "/companions",
-  "/assessments",
-  "/admissions",
-  "/career-tests",
-];
+const publicRoutes = [""];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

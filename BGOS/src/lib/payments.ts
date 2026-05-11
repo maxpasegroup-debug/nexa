@@ -346,8 +346,13 @@ export async function createPaymentIntent({
   metadata?: JsonObject;
 }) {
   if (idempotencyKey) {
-    const existing = await prisma.bgosPaymentIntent.findUnique({
-      where: { idempotencyKey },
+    const existing = await prisma.bgosPaymentIntent.findFirst({
+      where: {
+        idempotencyKey,
+        businessModel,
+        businessId,
+        userId,
+      },
     });
 
     if (existing) {
