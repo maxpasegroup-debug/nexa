@@ -85,7 +85,7 @@ export const blizzwayCatalogue: BlizzwayCatalogueGroup[] = [
       { name: "Internship Finder", category: "Earning & Money Discipline", description: "Helps students discover starter opportunities with less anxiety.", credits: 150, level: "Starter" },
       { name: "Side Hustle Companion", category: "Earning & Money Discipline", description: "Turns interests into practical, low-risk earning experiments.", credits: 190, level: "Guided" },
       { name: "Money Discipline Companion", category: "Earning & Money Discipline", description: "Builds calm spending, saving, and weekly money awareness.", credits: 120, level: "Starter" },
-      { name: "Income Tracker", category: "Earning & Money Discipline", description: "Keeps dummy income goals and progress easy to understand.", credits: 100, level: "Starter" },
+      { name: "Income Tracker", category: "Earning & Money Discipline", description: "Keeps income goals and progress easy to understand during beta.", credits: 100, level: "Starter" },
       { name: "Offer Comparator", category: "Earning & Money Discipline", description: "Compares roles, internships, and offers with practical clarity.", credits: 180, level: "Guided" },
     ],
   },
@@ -104,7 +104,7 @@ export const blizzwayCatalogue: BlizzwayCatalogueGroup[] = [
   {
     title: "Blizzway Premium",
     tone: "Dreamscape intelligence",
-    summary: "High-touch dummy pathways for deeper transformation, planning, and future vision.",
+    summary: "High-touch beta pathways for deeper transformation, planning, and future vision.",
     items: [
       { name: "Guardian Angel Pathway", category: "Blizzway Premium", description: "A premium guided experience with NEXA watching the full journey.", credits: 500, level: "Premium", recommended: true },
       { name: "Magical Career Roadmap", category: "Blizzway Premium", description: "Creates a beautiful multi-stage roadmap from dream to launch.", credits: 420, level: "Premium" },

@@ -39,7 +39,7 @@ export function NexaAssistant() {
     });
 
     setState(result.state);
-    setStatusMessage(result.usedFallback ? "Using safe placeholder guidance while Guardian Angel AI backend is unavailable." : null);
+    setStatusMessage(result.usedFallback ? "Using beta-safe guidance while Guardian Angel AI connects to BGOS." : null);
     setIsSending(false);
   }
 

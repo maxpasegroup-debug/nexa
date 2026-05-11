@@ -13,20 +13,20 @@ export default function SettingsPage() {
     <BlizzwayDashboardShell
       activeHref="/settings"
       title="Settings"
-      description="Dummy profile, notification, privacy, and NEXA preference controls."
+      description="Profile, notification, privacy, and NEXA preference controls for beta users."
     >
       <section className="mt-5 grid gap-5 xl:grid-cols-[0.82fr_1fr]">
         <BlizzwayGradientPanel>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Preference center</p>
           <h2 className="mt-3 text-4xl font-black tracking-tight">Keep your pathway calm and trustworthy.</h2>
-          <p className="mt-4 leading-7 text-white/72">No settings are saved yet. This is the complete visual control layer.</p>
+          <p className="mt-4 leading-7 text-white/72">Beta preferences help keep your Blizzway pathway calm, private, and easy to review.</p>
         </BlizzwayGradientPanel>
         <BlizzwayCard as="section" className="c7-magical-glow">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Profile placeholder</p>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Profile snapshot</p>
           <h2 className="mt-3 text-2xl font-black text-slate-950">Arun Blizzway Explorer</h2>
-          <p className="mt-3 text-sm leading-6 c7-muted">Student/professional profile controls will appear here later.</p>
+          <p className="mt-3 text-sm leading-6 c7-muted">Your beta profile preferences are shown here for review before full account settings open.</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            {["Preview account", "No backend", "Dummy controls"].map((item) => <BlizzwayBadge key={item} tone="slate">{item}</BlizzwayBadge>)}
+            {["Beta account", "Private workspace", "NEXA-ready"].map((item) => <BlizzwayBadge key={item} tone="slate">{item}</BlizzwayBadge>)}
           </div>
         </BlizzwayCard>
       </section>

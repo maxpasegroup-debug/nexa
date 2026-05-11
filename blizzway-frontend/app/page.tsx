@@ -61,6 +61,9 @@ const footerLinks = [
   { label: "Start", href: "/signup" },
   { label: "Magic Market", href: "/magic-market" },
   { label: "Soul Vault", href: "/soul-vault" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+  { label: "Refund", href: "/refund" },
 ];
 
 function Logo() {

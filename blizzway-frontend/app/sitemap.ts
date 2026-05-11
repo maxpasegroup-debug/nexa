@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://career7.in").replace(/\/+$/, "");
 
-const publicRoutes = [""];
+const publicRoutes = ["", "/privacy", "/terms", "/refund"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

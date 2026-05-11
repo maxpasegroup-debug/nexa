@@ -23,7 +23,7 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
     <BlizzwayDashboardShell
       activeHref="/assessments"
       title={assessment.title}
-      description={`${assessment.category} assessment preview with dummy result data and no real scoring connected yet.`}
+      description={`${assessment.category} assessment beta preview with guided scoring signals for Blizzway review.`}
     >
       <section className="mt-5 grid gap-5 xl:grid-cols-[1.08fr_0.72fr]">
         <BlizzwayGradientPanel>

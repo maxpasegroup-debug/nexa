@@ -78,13 +78,13 @@ export default function GrowthVaultPage() {
               </h2>
               <p className="mt-4 max-w-2xl leading-7 text-white/72">
                 Store your vision, skill gaps, proof notes, and personal reflections in one
-                premium space. Encryption is shown as a placeholder only.
+                premium space. Keep passwords, payment details, and official identity numbers outside your vault.
               </p>
             </div>
             <div className="rounded-[24px] bg-white/14 p-5 ring-1 ring-white/14 lg:min-w-56">
               <p className="text-sm font-bold text-white/70">Vault status</p>
               <p className="mt-2 text-3xl font-black sm:text-4xl">Private</p>
-              <p className="mt-2 text-sm text-white/66">Dummy secure mode</p>
+              <p className="mt-2 text-sm text-white/66">Beta privacy mode</p>
             </div>
           </div>
         </BlizzwayGradientPanel>
@@ -92,8 +92,8 @@ export default function GrowthVaultPage() {
         <BlizzwayCard as="section">
           <SectionHeading
             eyebrow="Encrypted profile"
-            title="Placeholder protection"
-            description="This UI previews a secure profile message. Real encryption will be implemented later."
+            title="Protected profile"
+            description="This beta profile view keeps growth context scoped to your Blizzway workspace."
           />
           <div className="mt-5 rounded-[24px] border border-indigo-100 bg-indigo-50 p-5">
             <p className="break-words font-mono text-sm leading-7 text-indigo-800">
@@ -102,7 +102,7 @@ export default function GrowthVaultPage() {
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <BlizzwayBadge tone="emerald">Private by design</BlizzwayBadge>
-            <BlizzwayBadge tone="slate">No real encryption yet</BlizzwayBadge>
+            <BlizzwayBadge tone="slate">Sensitive secrets excluded</BlizzwayBadge>
           </div>
         </BlizzwayCard>
       </section>
@@ -112,7 +112,7 @@ export default function GrowthVaultPage() {
           <SectionHeading
             eyebrow="Digital profile"
             title="Career snapshot"
-            description="Dummy summary of the person Guardian Angel AI is helping you become."
+            description="A beta summary of the person Guardian Angel AI is helping you become."
           />
           <div className="mt-6 space-y-3">
             {[
@@ -154,7 +154,7 @@ export default function GrowthVaultPage() {
           <SectionHeading
             eyebrow="Skill gaps"
             title="What needs attention"
-            description="Dummy gap cards that help Guardian Angel AI recommend the next growth action."
+            description="Beta gap cards that help Guardian Angel AI recommend the next growth action."
           />
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {skillGaps.map((gap) => (

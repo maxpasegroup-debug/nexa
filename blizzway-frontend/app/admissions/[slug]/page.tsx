@@ -21,7 +21,7 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
     <BlizzwayDashboardShell
       activeHref="/admissions"
       title={pathway.title}
-      description={`${pathway.mode} admissions pathway placeholder for ${pathway.location}.`}
+      description={`${pathway.mode} admissions pathway guidance for ${pathway.location}.`}
     >
       <section className="mt-5 grid gap-5 xl:grid-cols-[1.08fr_0.72fr]">
         <BlizzwayGradientPanel>

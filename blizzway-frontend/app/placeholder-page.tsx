@@ -30,7 +30,7 @@ export function PlaceholderPage({
   previewDescription,
   highlights,
   emptyTitle = `${title} is ready for its next layer`,
-  emptyDescription = "This placeholder uses dummy data only while the real Blizzway workflows are designed.",
+  emptyDescription = "This beta view is ready for guided testing while deeper workflow automation is connected.",
   nexaSuggestion = "NEXA suggests choosing one calm action today, then saving the result in Soul Vault.",
 }: PlaceholderPageProps) {
   return (
@@ -49,7 +49,7 @@ export function PlaceholderPage({
             {highlights.map((item) => (
               <div key={item} className="rounded-2xl bg-white/14 p-4 ring-1 ring-white/14">
                 <p className="font-black">{item}</p>
-                <p className="mt-2 text-sm text-white/70">Dummy preview</p>
+                <p className="mt-2 text-sm text-white/70">Beta preview</p>
               </div>
             ))}
           </div>
@@ -60,9 +60,9 @@ export function PlaceholderPage({
           <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950">Guardian Angel guidance</h2>
           <p className="mt-3 text-sm leading-6 c7-muted">{nexaSuggestion}</p>
           <div className="mt-5 rounded-2xl bg-cyan-50 p-4">
-            <p className="text-sm font-black text-cyan-800">Preview only</p>
+            <p className="text-sm font-black text-cyan-800">Beta mode</p>
             <p className="mt-1 text-sm leading-6 text-cyan-800/75">
-              No backend API, auth, or saved state is connected on this page.
+              This page is available for beta navigation and will deepen as feedback is collected.
             </p>
           </div>
         </BlizzwayCard>
@@ -80,14 +80,14 @@ export function PlaceholderPage({
           <BlizzwaySectionTitle
             eyebrow="Route preview"
             title="What this page will become"
-            description="A beautiful placeholder card showing the intended product direction without connecting backend APIs."
+            description="A guided beta view showing the product direction for this workflow."
           />
           <div className="mt-5 grid gap-3 md:grid-cols-3">
-            {["Designed", "Dummy data", "Route ready"].map((item) => (
+            {["Designed", "Beta-ready", "Route ready"].map((item) => (
               <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <BlizzwayBadge tone="slate">{item}</BlizzwayBadge>
                 <p className="mt-3 text-sm leading-6 c7-muted">
-                  Navigation works and this page is ready for future implementation.
+                  Navigation works and this section is ready for beta feedback.
                 </p>
               </div>
             ))}

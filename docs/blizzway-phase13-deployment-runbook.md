@@ -10,6 +10,7 @@ Last updated: 2026-05-11
 - BGOS backend: already hosted and running
 - Schema changes for Phase 13: none planned
 - Production readiness gate: deploy frontend only after BGOS production env, migrations, seeds, and smoke tests are confirmed
+- Beta payment posture: `BLIZZWAY_PAYMENT_LIVE_GATEWAYS=false` and `BLIZZWAY_PAYMENT_GATEWAYS=MANUAL`
 
 ## Railway Frontend Service
 
@@ -19,6 +20,7 @@ Create a new Railway service from this repository.
 - Builder: Nixpacks / Node autodetect
 - Build command: `npm run build`
 - Start command: `npm run start`
+- Required Node version: `>=20.9.0` from `blizzway-frontend/package.json#engines`
 - Health check path: `/`
 - Expected runtime: Next.js standalone production server on Railway-provided `PORT`
 - Repo config: `blizzway-frontend/railway.json`
@@ -66,6 +68,26 @@ Confirm these exist in the BGOS Railway service or hosting provider before Blizz
 - `CAREER7_CREDIT_PAYMENT_ENABLED=true`
 
 Never place database URLs, payment secrets, SMTP passwords, auth secrets, or provider webhook secrets in `NEXT_PUBLIC_*` variables.
+
+## Beta Payment And Wallet Gate
+
+For controlled beta:
+
+```env
+BLIZZWAY_PAYMENT_LIVE_GATEWAYS=false
+BLIZZWAY_PAYMENT_GATEWAYS=MANUAL
+```
+
+Verify before inviting beta users:
+
+- Wallet packages load.
+- Payment order creation works in manual/test mode.
+- Duplicate payment verification does not double-credit.
+- Failed payment verification does not credit.
+- Admin manual credit requires `businessId`, `userId`, non-zero amount, reason, and admin ID metadata.
+- Ledger entries include source, user, business, amount, balanceAfter, and metadata.
+- Razorpay live checklist exists but live mode remains disabled until explicitly approved.
+- Stripe is not live-ready until signed webhook verification and production callback handling are fully tested.
 
 ## Migration Plan
 
@@ -166,6 +188,25 @@ Run these in production after DNS/SSL is active:
 - Wrong business context returns `403`.
 - Mobile smoke passes for landing, signup/login, dashboard, wallet, companions, and pathway.
 
+## Monitoring Readiness
+
+Minimum beta monitoring:
+
+- Configure Sentry, Logtail, Railway drains, or equivalent before opening beta beyond internal users.
+- Alert on repeated BGOS API `5xx` errors.
+- Alert on `career7:*`, `internal:blizzway:*`, payment verification, and auth failures.
+- Review payment failure logs and webhook logs daily during beta.
+- Review admin manual wallet adjustments daily during beta.
+- Keep a support issue tracker for `support@career7.in` and the approved WhatsApp/support number.
+
+Suggested alert labels:
+
+- `bgos-api-error`
+- `blizzway-auth-failure`
+- `blizzway-payment-failure`
+- `blizzway-wallet-ledger-risk`
+- `blizzway-admin-action`
+
 ## Safety Checks
 
 Before launch:
@@ -188,12 +229,13 @@ Expected:
 
 - Start with 20 beta users across students, professionals, and aspirants.
 - Create a feedback channel before inviting users.
-- Support placeholder: `support@career7.in` or the approved WhatsApp support number.
+- Support contact: `support@career7.in` or the approved WhatsApp support number.
 - Keep payments in manual/test mode for beta unless live mode has been explicitly approved.
+- Public trust pages on `career7.in`: `/privacy`, `/terms`, `/refund`.
 - Known limitations to disclose:
   - Some endpoints still use legacy `/api/career7/*` compatibility paths.
-  - Stripe is a placeholder unless webhook verification is fully wired for live mode.
-  - Soul Vault is private/user-scoped but not end-to-end encrypted.
+  - Stripe is disabled for live use until webhook verification is fully wired and tested.
+  - Soul Vault is private/user-scoped; users should not store passwords, payment details, or official identity numbers.
   - NEXA v1 companion outputs are rule-based where provider orchestration is not enabled.
 
 First 20-user flow:
@@ -203,6 +245,17 @@ First 20-user flow:
 3. Capture feedback on clarity, trust, mobile usability, payment confidence, and NEXA usefulness.
 4. Review BGOS logs and wallet ledgers after every 5 users.
 5. Pause invites if auth, wallet, payment, or data-isolation issues appear.
+
+Public launch gate:
+
+- Zero known data leakage.
+- Zero wallet double-credit issue.
+- Zero broken protected route.
+- SSL stable on `career7.in`.
+- Monitoring active.
+- Support ready.
+- Payments intentionally configured.
+- Rollback plan ready.
 
 ## Exact Command Set
 

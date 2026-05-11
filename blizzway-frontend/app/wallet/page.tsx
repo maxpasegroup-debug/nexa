@@ -100,7 +100,7 @@ export default function WalletPage() {
     <BlizzwayDashboardShell
       activeHref="/wallet"
       title="Wallet"
-      description="BGOS credit balance, packages, plans, ledger history, and payment placeholders for Blizzway."
+      description="BGOS credit balance, packages, plans, ledger history, and beta-safe payment orders for Blizzway."
       walletCredits={walletCredits}
     >
       <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.72fr]">
@@ -117,7 +117,7 @@ export default function WalletPage() {
           <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">NEXA wallet note</p>
           <h2 className="mt-3 text-2xl font-black text-slate-950">Checkout architecture is online.</h2>
           <p className="mt-3 text-sm leading-6 c7-muted">
-            Blizzway now creates server-validated top-up orders through the BGOS payment layer. Live gateway capture remains gated by backend credentials.
+            Blizzway creates server-validated top-up orders through BGOS. Beta payments stay in manual/test mode until live gateways are explicitly approved.
           </p>
           {paymentMessage ? (
             <p className={`mt-4 rounded-2xl border p-4 text-sm font-bold ${
@@ -179,7 +179,7 @@ export default function WalletPage() {
                 <p key={feature} className="text-sm font-semibold c7-muted">{feature}</p>
               ))}
             </div>
-            <BlizzwayButton type="button" disabled className="mt-5 w-full opacity-60">Subscription placeholder</BlizzwayButton>
+            <BlizzwayButton type="button" disabled className="mt-5 w-full opacity-60">Plan changes open after beta</BlizzwayButton>
           </BlizzwayCard>
         ))}
       </section>

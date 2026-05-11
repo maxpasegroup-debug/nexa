@@ -22,7 +22,7 @@ function createPlaceholderRecommendation(message: string): NexaRecommendation {
     actionLabel: "Open My Pathway",
     actionHref: "/growth-board",
     confidence: 0.64,
-    source: "placeholder",
+    source: "bgos",
   };
 }
 

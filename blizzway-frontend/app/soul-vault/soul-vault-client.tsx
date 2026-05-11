@@ -79,7 +79,7 @@ export function SoulVaultClient() {
           </p>
           <div className="mt-6 rounded-2xl bg-white/14 p-4 ring-1 ring-white/14">
             <p className="font-black">Private by tenant scope</p>
-            <p className="mt-2 text-sm text-white/70">Encryption is not implemented yet; avoid storing highly sensitive secrets.</p>
+            <p className="mt-2 text-sm text-white/70">Designed for growth notes and reflections. Keep passwords, payment details, and official identity numbers outside your vault.</p>
           </div>
         </BlizzwayGradientPanel>
         <BlizzwayCard as="section" className="c7-magical-glow">

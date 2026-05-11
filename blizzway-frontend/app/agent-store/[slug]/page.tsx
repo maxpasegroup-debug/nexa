@@ -235,7 +235,7 @@ export default async function AgentDetailPage({
               <span className="pb-2 text-sm font-bold c7-muted">credits</span>
             </div>
             <p className="mt-3 text-sm leading-6 c7-muted">
-              One-time dummy install cost for adding this companion to your Blizzway My Pathway.
+              One-time beta install cost for adding this companion to your Blizzway My Pathway.
             </p>
             <BlizzwayButton type="button" variant="primary" className="mt-5 w-full">
               Add to My Pathway
@@ -250,7 +250,7 @@ export default async function AgentDetailPage({
             <SectionTitle
               eyebrow="Benefits"
               title="Why add this companion"
-              description="Clear, practical gains this dummy specialist brings into your Blizzway workflow."
+              description="Clear, practical gains this specialist brings into your Blizzway workflow."
             />
             <div className="mt-5 grid gap-3 md:grid-cols-3">
               {companion.benefits.map((benefit, index) => (
@@ -311,7 +311,7 @@ export default async function AgentDetailPage({
           <SectionTitle
             eyebrow="Related companions"
             title="Build the next layer"
-            description="Other dummy specialists that pair well with this companion."
+            description="Other specialists that pair well with this companion."
           />
           <BlizzwayBadge tone="slate" className="self-start sm:self-auto">
             Dummy data only

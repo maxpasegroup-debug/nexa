@@ -200,7 +200,7 @@ export default function AdmissionsPage() {
           <BlizzwayCard as="section">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Application checklist</p>
             <p className="mt-3 text-sm leading-6 c7-muted">
-              Academic documents, SOP/LOR drafts, test scores, financial proof, and portfolio links are currently shown as dummy readiness signals.
+              Academic documents, SOP/LOR drafts, test scores, financial proof, and portfolio links are shown as beta readiness signals for review.
             </p>
           </BlizzwayCard>
 

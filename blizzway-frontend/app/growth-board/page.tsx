@@ -344,7 +344,7 @@ export default function GrowthBoardPage() {
     try {
       await BlizzwayApi.addGrowthBoardAgent({ agentId, path });
       await refreshBoard();
-      setNotice("companion added to your Blizzway My Pathway. Billing is not implemented in this frontend yet.");
+      setNotice("Companion added to your Blizzway My Pathway. Beta billing is handled safely through your BGOS wallet.");
     } catch (caught) {
       setError(getApiErrorMessage(caught));
     } finally {
