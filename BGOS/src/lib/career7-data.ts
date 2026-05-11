@@ -189,7 +189,7 @@ export async function getCareer7User(context: Career7Context) {
 }
 
 export async function buildBdp(context: Career7Context) {
-  const [vault, wallet, boardCount, generatedBdp] = await Promise.all([
+  const [vault, wallet, boardCount, generatedBdp, documents] = await Promise.all([
     getBlizzwayVault(context),
     ensureCareer7Wallet(context.businessId, context.userId),
     prisma.career7GrowthBoardAgent.count({
@@ -204,16 +204,37 @@ export async function buildBdp(context: Career7Context) {
         },
       },
     }),
+    prisma.blizzwayDocument.findMany({
+      where: {
+        businessModel: context.businessModel,
+        businessId: context.businessId,
+        userId: context.userId,
+        status: { in: ["uploaded", "parsed"] },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 25,
+    }),
   ]);
 
   const hasProfile = Boolean(vault.digitalProfile.summary || vault.digitalProfile.stage);
+  const parsedDocuments = documents.filter((document) => document.status === "parsed");
+  const documentTypes = new Set(documents.map((document) => document.documentType));
+  const documentReadinessItems = [
+    ["Academic transcripts", documentTypes.has("transcript") || documentTypes.has("marksheet")],
+    ["Identity proof", documentTypes.has("passport_id")],
+    ["SOP draft", documentTypes.has("sop_draft")],
+    ["LOR draft", documentTypes.has("lor_draft")],
+    ["Portfolio proof", documentTypes.has("portfolio") || documentTypes.has("certificate")],
+  ] as const;
+  const completedDocuments = documentReadinessItems.filter(([, complete]) => complete).length;
   const profileStrength = Math.min(
     100,
     25 +
       (hasProfile ? 25 : 0) +
       Math.min(20, vault.dreamGoals.length * 5) +
       Math.min(20, Object.keys(vault.onboardingAnswers).length * 3) +
-      Math.min(10, boardCount * 2),
+      Math.min(10, boardCount * 2) +
+      Math.min(10, parsedDocuments.length * 2),
   );
 
   return {
@@ -227,20 +248,24 @@ export async function buildBdp(context: Career7Context) {
       cq: null,
       aq: null,
       lq: null,
-      admissionsReadiness: Math.min(100, 35 + (hasProfile ? 15 : 0) + boardCount * 3),
+      admissionsReadiness: Math.min(100, 35 + (hasProfile ? 15 : 0) + boardCount * 3 + completedDocuments * 6),
     },
     studyGoals: vault.dreamGoals,
     countryPreferences: [],
     documentsReadiness: {
-      status: "starter",
-      completed: 0,
+      status: completedDocuments >= 4 ? "strong" : completedDocuments > 0 ? "in_progress" : "starter",
+      completed: completedDocuments,
       total: 5,
-      items: ["Academic transcripts", "Identity proof", "SOP draft", "LOR draft", "Portfolio proof"],
+      items: documentReadinessItems.map(([label, complete]) => `${label}: ${complete ? "ready" : "missing"}`),
     },
     scholarshipReadiness: {
-      status: "starter",
-      score: Math.min(100, 30 + vault.dreamGoals.length * 5),
-      suggestions: ["Add academic proof", "Complete Academic Readiness Check", "Save achievements in Soul Vault"],
+      status: documentTypes.has("transcript") || documentTypes.has("marksheet") ? "in_progress" : "starter",
+      score: Math.min(100, 30 + vault.dreamGoals.length * 5 + completedDocuments * 5),
+      suggestions: [
+        parsedDocuments.length ? "Review parsed document signals before scholarship shortlisting" : "Parse uploaded academic proof",
+        "Complete Academic Readiness Check",
+        "Save achievements in Soul Vault",
+      ],
     },
     publicPreview: {
       headline: generatedBdp?.headline || vault.digitalProfile.stage || "Blizzway Explorer",
@@ -248,6 +273,7 @@ export async function buildBdp(context: Career7Context) {
       strengths: Array.isArray(generatedBdp?.strengths) ? generatedBdp.strengths : vault.digitalProfile.strengths,
     },
     nexaSuggestions: Array.isArray(generatedBdp?.recommendedActions) ? generatedBdp.recommendedActions : [
+      parsedDocuments[0]?.parsedSummary ? `Use uploaded document insight: ${parsedDocuments[0].parsedSummary.slice(0, 140)}` : "Upload and parse one resume, SOP, certificate, or transcript.",
       "Complete Academic Readiness Check before admissions shortlisting.",
       "Add two proof stories to Soul Vault.",
       "Choose one pathway companion from Magic Market.",

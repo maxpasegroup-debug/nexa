@@ -15,3 +15,5 @@ node_modules/
 **/edge-smoke-profile-2/
 7universe-frontend/public/video/
 *.mp4
+BGOS/.blizzway-documents/
+BGOS/.data/

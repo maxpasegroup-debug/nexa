@@ -476,6 +476,42 @@ export type SoulVaultResponse = {
   };
 };
 
+export type BlizzwayDocument = {
+  id: string;
+  businessModel: string;
+  documentType: string;
+  originalFilename: string;
+  mimeType: string;
+  size: number;
+  parsedSummary: string | null;
+  parsedTextPreview?: string | null;
+  extractedMetadata: Record<string, unknown>;
+  privacyLevel: string;
+  status: "uploaded" | "parsed" | "failed" | "archived" | string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BlizzwayDocumentsResponse = {
+  documents: BlizzwayDocument[];
+  total: number;
+};
+
+export type BlizzwayDocumentResponse = {
+  document: BlizzwayDocument;
+};
+
+export type BlizzwayDocumentApplyResponse = {
+  ok: boolean;
+  document: BlizzwayDocument;
+  bdp: {
+    id: string;
+    profileStrength: number;
+    recommendedActions: unknown;
+    updatedAt: string;
+  };
+};
+
 export type BlizzwayNexaMessage = {
   role: "user" | "assistant";
   content: string;

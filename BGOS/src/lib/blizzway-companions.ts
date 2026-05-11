@@ -2,6 +2,7 @@ import type { MarketplaceAgent, Prisma } from "@prisma/client";
 
 import type { Career7Context } from "@/lib/career7-auth";
 import { generateBlizzwayCompanionOutput } from "@/lib/blizzway-ai-output";
+import { buildDocumentContextForCompanion } from "@/lib/blizzway-documents";
 import { ensureCareer7Wallet, isCareer7PaymentModeEnabled } from "@/lib/career7-wallet";
 import { prisma } from "@/lib/prisma";
 
@@ -326,7 +327,17 @@ export async function runCompanion({
     throw new Error("INSUFFICIENT_CREDITS");
   }
 
-  const generated = await generateBlizzwayCompanionOutput({ agent, inputs });
+  const documentContext = await buildDocumentContextForCompanion(
+    context,
+    `${agent.slug} ${agent.name} ${agent.companionCategory ?? ""}`,
+  );
+  const aiInputs = documentContext
+    ? {
+        ...inputs,
+        uploadedDocumentContext: documentContext,
+      }
+    : inputs;
+  const generated = await generateBlizzwayCompanionOutput({ agent, inputs: aiInputs });
 
   return prisma.$transaction(async (tx) => {
     const activeActivation = await tx.blizzwayCompanionActivation.findUnique({

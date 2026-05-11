@@ -213,7 +213,8 @@ export function sanitizeCompanionInputs(inputs: Record<string, unknown>) {
   const sanitized: Record<string, string> = {};
   for (const [key, value] of Object.entries(inputs)) {
     const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 50);
-    const safeValue = cleanText(value);
+    const rawValue = typeof value === "string" ? value : value === undefined || value === null ? "" : JSON.stringify(value);
+    const safeValue = cleanText(rawValue);
     if (safeKey && safeValue) sanitized[safeKey] = safeValue;
   }
   return sanitized;

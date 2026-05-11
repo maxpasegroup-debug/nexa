@@ -89,6 +89,7 @@ model User {
   blizzwayXpEvents BlizzwayXpEvent[]
   blizzwayPathwayStreaks BlizzwayPathwayStreak[]
   blizzwayPathwayLevelProgress BlizzwayPathwayLevelProgress[]
+  blizzwayDocuments BlizzwayDocument[]
 
   @@index([email])
   @@index([role])
@@ -240,6 +241,7 @@ model Business {
   blizzwayXpEvents BlizzwayXpEvent[]
   blizzwayPathwayStreaks BlizzwayPathwayStreak[]
   blizzwayPathwayLevelProgress BlizzwayPathwayLevelProgress[]
+  blizzwayDocuments BlizzwayDocument[]
   dataExports    CustomerDataExport[]
 }
 
@@ -728,6 +730,32 @@ model BlizzwayCompanionRequest {
 
   @@index([businessModel, businessId, userId])
   @@index([status])
+}
+
+model BlizzwayDocument {
+  id                String   @id @default(cuid())
+  businessModel     String   @default("blizzway")
+  businessId        String
+  business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentType      String
+  originalFilename  String
+  mimeType          String
+  size              Int
+  storageKey        String
+  parsedText        String?  @db.Text
+  parsedSummary     String?  @db.Text
+  extractedMetadata Json     @default("{}")
+  privacyLevel      String   @default("private")
+  status            String   @default("uploaded")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([businessModel, businessId, userId])
+  @@index([documentType])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model BlizzwayPathwayQuest {
