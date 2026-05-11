@@ -1,6 +1,6 @@
 # BGOS
 
-BGOS is the shared backend/core platform for the Nexa apps, including Blizzway. It owns auth, Prisma data, wallet/payment flows, Blizzway admin operations, and legacy `/api/career7/*` endpoints used by the Blizzway frontend.
+BGOS is the shared backend/core platform for the Nexa apps, including Blizzway. It owns auth, Prisma data, wallet/payment flows, Blizzway admin operations, and legacy internal `/api/career7/*` compatibility endpoints used by the Blizzway frontend.
 
 ## Getting Started
 
@@ -41,7 +41,7 @@ Required production values include:
 - `AUTH_SECRET`
 - `AUTH_URL` / `NEXTAUTH_URL`
 - `NEXT_PUBLIC_APP_URL`
-- `BLIZZWAY_ALLOWED_ORIGINS` with the frontend HTTPS origins, for example `https://career7.in,https://www.career7.in`
+- `BLIZZWAY_ALLOWED_ORIGINS` with the frontend HTTPS origins, for example `https://blizzway.com,https://www.blizzway.com`
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` if Google login is enabled
 - Payment provider values such as `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET`
 - Blizzway payment flags: `BLIZZWAY_PAYMENT_GATEWAYS`, `BLIZZWAY_DEFAULT_PAYMENT_GATEWAY`, `BLIZZWAY_PAYMENT_CURRENCY`, `BLIZZWAY_PAYMENT_LIVE_GATEWAYS`
@@ -70,7 +70,7 @@ npx prisma validate
 ## Blizzway Production Notes
 
 - Blizzway admin APIs live under `/api/internal/blizzway/*` and require the existing BGOS internal owner guard.
-- Public Blizzway user APIs still live under legacy `/api/career7/*`; callers must send `x-business-model: blizzway`.
+- Public Blizzway user APIs still route through legacy internal `/api/career7/*` compatibility endpoints; callers must send `x-business-model: blizzway`.
 - Wallet ledger, payments, companion runs, quests, achievements, and rewards have idempotency keys or unique constraints where repeat submissions are expected.
 - Security headers are configured in `next.config.mjs`.
 - Authenticated Blizzway mutating APIs validate the request `Origin` against BGOS/app origins and `BLIZZWAY_ALLOWED_ORIGINS`.
@@ -81,4 +81,4 @@ npx prisma validate
 - Add Sentry or a Logtail-compatible logger before broad public launch.
 - Keep payment webhook/event logs queryable by provider event ID.
 - Keep admin wallet actions tied to reason metadata and admin user ID.
-- Review production logs for `career7:*`, `internal:blizzway:*`, auth, and payment webhook errors after each deployment.
+- Review production logs for legacy internal Blizzway compatibility handlers, `internal:blizzway:*`, auth, and payment webhook errors after each deployment.

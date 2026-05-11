@@ -82,7 +82,7 @@ export function LoginClient({ businessModel, callbackUrl }: Props) {
           >
             <span style={{ color: isCareer7 ? "#101633" : "#F0EEF8" }}>Welcome to </span>
             <span style={{ color: isCareer7 ? "#4f46e5" : "#7C6FFF" }}>
-              {isCareer7 ? "Career7" : "BGOS"}
+              {isCareer7 ? "Blizzway" : "BGOS"}
             </span>
           </div>
           <div style={{ fontSize: "13px", color: isCareer7 ? "#64748b" : "#6B6878", fontWeight: 300 }}>

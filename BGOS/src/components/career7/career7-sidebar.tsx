@@ -66,7 +66,7 @@ export function Career7Sidebar({ userName }: Career7SidebarProps) {
           7
         </div>
         <div>
-          <h1 className="text-2xl font-bold leading-tight">Career7</h1>
+          <h1 className="text-2xl font-bold leading-tight">Blizzway</h1>
           <p className="text-xs text-slate-400">{userName}</p>
         </div>
       </div>

@@ -41,7 +41,7 @@ export async function topUpCareer7Credits({
   userId,
   amount,
   businessModel = CAREER7_BUSINESS_MODEL,
-  description = "Dummy Career7 credit top-up",
+  description = "Blizzway credit top-up",
   source = "top_up",
   idempotencyKey,
   type = "TOP_UP",
@@ -248,7 +248,7 @@ export async function debitCareer7Credits({
           ok: false as const,
           wallet: existing,
           ledger: null,
-          error: "Insufficient Career7 credits.",
+          error: "Insufficient Blizzway credits.",
         };
       }
     }

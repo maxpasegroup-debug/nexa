@@ -127,7 +127,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("[career7:growth-board:get]", error);
     return NextResponse.json(
-      { error: "Unable to load Career7 Growth Board." },
+      { error: "Unable to load Blizzway growth board." },
       { status: 500 },
     );
   }
@@ -161,7 +161,7 @@ export async function POST(request: Request) {
 
     if (!agent) {
       return NextResponse.json(
-        { error: "Agent is not available for the Career7 Growth Board." },
+        { error: "Companion is not available for the Blizzway growth board." },
         { status: 404 },
       );
     }
@@ -258,14 +258,14 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof Error && error.message === "INSUFFICIENT_CREDITS") {
       return NextResponse.json(
-        { error: "Insufficient Career7 credits." },
+        { error: "Insufficient Blizzway credits." },
         { status: 402 },
       );
     }
 
     console.error("[career7:growth-board:add]", error);
     return NextResponse.json(
-      { error: "Unable to add agent to Career7 Growth Board." },
+      { error: "Unable to add companion to Blizzway growth board." },
       { status: 500 },
     );
   }
@@ -311,7 +311,7 @@ export async function PATCH(request: Request) {
   } catch (error) {
     console.error("[career7:growth-board:update]", error);
     return NextResponse.json(
-      { error: "Unable to update Career7 Growth Board agent." },
+      { error: "Unable to update Blizzway growth board companion." },
       { status: 500 },
     );
   }

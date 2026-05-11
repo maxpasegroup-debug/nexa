@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         <Link href="/" className="text-sm font-black text-indigo-600">Blizzway</Link>
         <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950">Privacy</h1>
         <p className="mt-4 text-sm leading-7 c7-muted">
-          This beta privacy note explains how Blizzway handles launch-stage career pathway data on career7.in.
+          This beta privacy note explains how Blizzway handles launch-stage career pathway data on blizzway.com.
         </p>
         <div className="mt-8 grid gap-4">
           {items.map((item) => (
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
             </article>
           ))}
         </div>
-        <p className="mt-8 text-sm font-semibold c7-muted">Support: support@career7.in</p>
+        <p className="mt-8 text-sm font-semibold c7-muted">Support: support@blizzway.com</p>
       </section>
     </main>
   );

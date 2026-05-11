@@ -65,8 +65,8 @@ function allowedOriginsForRequest(request: Request) {
 
   return new Set([
     originOf(request.url),
-    "https://career7.in",
-    "https://www.career7.in",
+    "https://blizzway.com",
+    "https://www.blizzway.com",
     ...envOrigins,
   ].filter((value): value is string => Boolean(value)));
 }

@@ -15,7 +15,7 @@ const securityHeaders = [
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-      "connect-src 'self' https://career7.in https://www.career7.in https://bgos.online",
+      "connect-src 'self' https://blizzway.com https://www.blizzway.com https://bgos.online",
       "form-action 'self'",
       "upgrade-insecure-requests",
     ].join("; "),

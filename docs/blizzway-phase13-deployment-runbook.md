@@ -4,7 +4,7 @@ Last updated: 2026-05-11
 
 ## Status
 
-- Target production domain: `https://career7.in`
+- Target production domain: `https://blizzway.com`
 - Deployment target: Railway
 - Frontend service root: `blizzway-frontend`
 - BGOS backend: already hosted and running
@@ -34,9 +34,9 @@ Use safe public values only. Do not add BGOS secrets to the frontend service.
 ```env
 NEXT_PUBLIC_API_URL=/api/bgos
 BGOS_API_URL=https://YOUR_BGOS_PRODUCTION_DOMAIN
-NEXT_PUBLIC_SITE_URL=https://career7.in
-NEXT_PUBLIC_APP_URL=https://career7.in
-ALLOWED_ORIGINS=https://career7.in
+NEXT_PUBLIC_SITE_URL=https://blizzway.com
+NEXT_PUBLIC_APP_URL=https://blizzway.com
+ALLOWED_ORIGINS=https://blizzway.com,https://www.blizzway.com
 ```
 
 Notes:
@@ -55,7 +55,7 @@ Confirm these exist in the BGOS Railway service or hosting provider before Blizz
 - `AUTH_URL=https://YOUR_BGOS_PRODUCTION_DOMAIN`
 - `NEXTAUTH_URL=https://YOUR_BGOS_PRODUCTION_DOMAIN`
 - `NEXT_PUBLIC_APP_URL=https://YOUR_BGOS_PRODUCTION_DOMAIN`
-- `BLIZZWAY_ALLOWED_ORIGINS=https://career7.in,https://www.career7.in`
+- `BLIZZWAY_ALLOWED_ORIGINS=https://blizzway.com,https://www.blizzway.com`
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` if Google login is enabled
 - `FROM_EMAIL` or `BREVO_FROM_EMAIL` if email flows are enabled
 - `BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`, `BREVO_SMTP_PASS` if SMTP is enabled
@@ -141,26 +141,26 @@ Avoid reset/dev migration commands in production.
 ## Domain Setup
 
 1. In Railway, open the Blizzway frontend service.
-2. Add custom domain `career7.in`.
-3. Add `www.career7.in` if the launch should support `www`.
+2. Add custom domain `blizzway.com`.
+3. Add `www.blizzway.com` if the launch should support `www`.
 4. Copy the DNS values Railway provides for each domain.
-5. In the DNS provider for `career7.in`, add Railway's recommended records:
-   - Apex `career7.in`: use Railway's recommended `A`, `ALIAS`, `ANAME`, or `CNAME flattening` record.
-   - `www.career7.in`: usually a `CNAME` to the Railway-provided target.
+5. In the DNS provider for `blizzway.com`, add Railway's recommended records:
+   - Apex `blizzway.com`: use Railway's recommended `A`, `ALIAS`, `ANAME`, or `CNAME flattening` record.
+   - `www.blizzway.com`: usually a `CNAME` to the Railway-provided target.
 6. Wait for DNS propagation.
 7. Confirm Railway marks SSL as issued/active.
-8. Confirm final URL: `https://career7.in`.
+8. Confirm final URL: `https://blizzway.com`.
 9. Decide redirect direction:
-   - Recommended: `www.career7.in` redirects to `career7.in`.
+   - Recommended: `www.blizzway.com` redirects to `blizzway.com`.
    - Keep both in `BLIZZWAY_ALLOWED_ORIGINS` either way.
 
 ## Production Smoke Checklist
 
 Run these in production after DNS/SSL is active:
 
-- Landing page: `GET https://career7.in/` returns `200`.
-- Robots: `GET https://career7.in/robots.txt` returns `200`.
-- Sitemap: `GET https://career7.in/sitemap.xml` returns `200`.
+- Landing page: `GET https://blizzway.com/` returns `200`.
+- Robots: `GET https://blizzway.com/robots.txt` returns `200`.
+- Sitemap: `GET https://blizzway.com/sitemap.xml` returns `200`.
 - Signup creates a Blizzway business/user and welcome credits once.
 - Login creates a BGOS session and redirects to dashboard.
 - Logout clears session and protected pages redirect to login.
@@ -194,10 +194,10 @@ Minimum beta monitoring:
 
 - Configure Sentry, Logtail, Railway drains, or equivalent before opening beta beyond internal users.
 - Alert on repeated BGOS API `5xx` errors.
-- Alert on `career7:*`, `internal:blizzway:*`, payment verification, and auth failures.
+- Alert on legacy internal Blizzway compatibility logs, `internal:blizzway:*`, payment verification, and auth failures.
 - Review payment failure logs and webhook logs daily during beta.
 - Review admin manual wallet adjustments daily during beta.
-- Keep a support issue tracker for `support@career7.in` and the approved WhatsApp/support number.
+- Keep a support issue tracker for `support@blizzway.com` and the approved WhatsApp/support number.
 
 Suggested alert labels:
 
@@ -223,17 +223,17 @@ Expected:
 - `node_modules` is not tracked.
 - `.next` is not tracked.
 - Browser smoke profiles are not tracked.
-- Legacy Career7 wording appears only where intentionally documenting BGOS `/api/career7/*` compatibility.
+- Legacy `/api/career7/*` route naming appears only where intentionally documenting BGOS internal compatibility.
 
 ## Beta Launch Plan
 
 - Start with 20 beta users across students, professionals, and aspirants.
 - Create a feedback channel before inviting users.
-- Support contact: `support@career7.in` or the approved WhatsApp support number.
+- Support contact: `support@blizzway.com` or the approved WhatsApp support number.
 - Keep payments in manual/test mode for beta unless live mode has been explicitly approved.
-- Public trust pages on `career7.in`: `/privacy`, `/terms`, `/refund`.
+- Public trust pages on `blizzway.com`: `/privacy`, `/terms`, `/refund`.
 - Known limitations to disclose:
-  - Some endpoints still use legacy `/api/career7/*` compatibility paths.
+  - Some endpoints still use legacy internal `/api/career7/*` compatibility paths.
   - Stripe is disabled for live use until webhook verification is fully wired and tested.
   - Soul Vault is private/user-scoped; users should not store passwords, payment details, or official identity numbers.
   - NEXA v1 companion outputs are rule-based where provider orchestration is not enabled.
@@ -251,7 +251,7 @@ Public launch gate:
 - Zero known data leakage.
 - Zero wallet double-credit issue.
 - Zero broken protected route.
-- SSL stable on `career7.in`.
+- SSL stable on `blizzway.com`.
 - Monitoring active.
 - Support ready.
 - Payments intentionally configured.

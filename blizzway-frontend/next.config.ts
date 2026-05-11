@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const bgosApiUrl = process.env.BGOS_API_URL || "http://localhost:3000";
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://career7.in";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://blizzway.com";
 
 function originOf(value: string) {
   try {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://career7.in";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://blizzway.com";
 const siteName = "Blizzway";
 const description =
   "Blizzway is The Magical Career Pathway: an AI-guided career ecosystem for students, professionals, and aspirants.";

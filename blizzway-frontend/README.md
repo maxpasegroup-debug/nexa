@@ -48,14 +48,16 @@ Copy `.env.example` to `.env.local` for local development and set values as need
 ```env
 NEXT_PUBLIC_API_URL=/api/bgos
 BGOS_API_URL=http://localhost:3000
-NEXT_PUBLIC_SITE_URL=https://career7.in
+NEXT_PUBLIC_SITE_URL=https://blizzway.com
+NEXT_PUBLIC_APP_URL=https://blizzway.com
+ALLOWED_ORIGINS=https://blizzway.com,https://www.blizzway.com
 ```
 
-The frontend proxies BGOS through `/api/bgos`. The proxy intentionally allows only Blizzway-required BGOS paths: `/api/auth/*`, `/api/register`, `/api/forgot-password`, `/api/reset-password`, and legacy `/api/career7/*`. BGOS currently keeps several Blizzway-compatible endpoints under legacy `/api/career7/*` paths, so do not rename those API paths until BGOS exposes native `/api/blizzway/*` routes.
+The frontend proxies BGOS through `/api/bgos`. The proxy intentionally allows only Blizzway-required BGOS paths: `/api/auth/*`, `/api/register`, `/api/forgot-password`, `/api/reset-password`, and legacy internal `/api/career7/*` compatibility routes. BGOS currently keeps several Blizzway-compatible endpoints under those legacy internal paths, so do not rename them until BGOS exposes native `/api/blizzway/*` routes.
 
-For production on `career7.in`, keep `NEXT_PUBLIC_API_URL=/api/bgos` and set `BGOS_API_URL` to the deployed BGOS origin. If Blizzway moves to a final standalone domain, update only `NEXT_PUBLIC_SITE_URL`, DNS, and the allowed callback/origin values in BGOS auth/payment providers.
+For production on `blizzway.com`, keep `NEXT_PUBLIC_API_URL=/api/bgos` and set `BGOS_API_URL` to the deployed BGOS origin. Configure DNS, metadata, and BGOS allowed origins for `https://blizzway.com` and `https://www.blizzway.com`.
 
-BGOS must also include the frontend origins in `BLIZZWAY_ALLOWED_ORIGINS`, for example `https://career7.in,https://www.career7.in`. Add the final Blizzway domain there before switching DNS.
+BGOS must also include the frontend origins in `BLIZZWAY_ALLOWED_ORIGINS`, for example `https://blizzway.com,https://www.blizzway.com`.
 
 ## Railway Deployment
 

@@ -78,7 +78,7 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/internal", req.url));
   }
 
-  // Career7: Accessible to all authenticated users
+  // Legacy Blizzway compatibility route: accessible to all authenticated users.
   if (pathname.startsWith("/career7")) {
     return NextResponse.next();
   }

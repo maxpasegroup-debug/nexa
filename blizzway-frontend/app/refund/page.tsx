@@ -4,7 +4,7 @@ const items = [
   "For beta, Blizzway payments should remain in manual or test mode unless live gateways are explicitly approved.",
   "If a live payment is enabled for a beta user, refund requests should be reviewed by the Blizzway/BGOS team against the payment record and wallet ledger.",
   "Duplicate credits, failed payment credits, or accidental beta charges should be escalated immediately and resolved through admin audit notes.",
-  "Support target for beta refund/payment help: support@career7.in.",
+  "Support target for beta refund/payment help: support@blizzway.com.",
 ];
 
 export default function RefundPage() {

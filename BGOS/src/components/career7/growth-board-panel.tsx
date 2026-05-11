@@ -341,7 +341,7 @@ export function GrowthBoardPanel() {
           <div>
             <h3 className="font-bold text-slate-950">Marketplace Agents</h3>
             <p className="mt-1 text-sm text-slate-500">
-              Add requestable Career7 agents to your Learning or Earning path.
+              Add requestable Blizzway companions to your Learning or Earning path.
             </p>
           </div>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
@@ -418,9 +418,9 @@ export function GrowthBoardPanel() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-            <p className="font-semibold text-slate-700">No Career7 marketplace agents available yet.</p>
+            <p className="font-semibold text-slate-700">No Blizzway marketplace companions available yet.</p>
             <p className="mt-1 text-sm text-slate-500">
-              Add Career7-enabled agents in the existing marketplace admin.
+              Add Blizzway-enabled companions in the existing marketplace admin.
             </p>
           </div>
         )}

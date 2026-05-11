@@ -8,7 +8,7 @@ async function main() {
       slug: "career7-english-teacher",
       name: "English Teacher",
       tagline: "Speak clearer every week.",
-      description: "Daily spoken English practice, grammar cleanup, and confidence drills for Career7 learners.",
+      description: "Daily spoken English practice, grammar cleanup, and confidence drills for Blizzway learners.",
       category: "EDUCATION",
       type: "UI",
       career7Type: "LEARNING",

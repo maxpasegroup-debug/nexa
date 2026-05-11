@@ -23,7 +23,7 @@ export default function TermsPage() {
             </article>
           ))}
         </div>
-        <p className="mt-8 text-sm font-semibold c7-muted">Support: support@career7.in</p>
+        <p className="mt-8 text-sm font-semibold c7-muted">Support: support@blizzway.com</p>
       </section>
     </main>
   );

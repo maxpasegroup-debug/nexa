@@ -79,7 +79,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("[career7:wallet:get]", error);
     return NextResponse.json(
-      { error: "Unable to load Career7 wallet." },
+      { error: "Unable to load Blizzway wallet." },
       { status: 500 },
     );
   }

@@ -83,7 +83,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("[career7:agents]", error);
     return NextResponse.json(
-      { error: "Unable to fetch Career7 agents." },
+      { error: "Unable to fetch Blizzway companions." },
       { status: 500 },
     );
   }

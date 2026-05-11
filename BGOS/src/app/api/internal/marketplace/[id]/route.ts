@@ -58,14 +58,14 @@ function updateData(
   if ("career7Type" in body) {
     const career7Type = getCareer7AgentType(body.career7Type);
     if (!career7Type && body.career7Type !== null) {
-      return { error: "Invalid Career7 agent type." };
+      return { error: "Invalid Blizzway companion type." };
     }
     data.career7Type = career7Type ?? null;
   }
 
   if ("career7Status" in body || "status" in body) {
     const career7Status = getCareer7MarketplaceStatus(body.career7Status ?? body.status);
-    if (!career7Status) return { error: "Invalid Career7 marketplace status." };
+    if (!career7Status) return { error: "Invalid Blizzway marketplace status." };
     data.career7Status = career7Status;
   }
 

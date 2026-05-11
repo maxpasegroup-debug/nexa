@@ -6,16 +6,16 @@ Last updated: 2026-05-11
 
 - BGOS has production `DATABASE_URL`.
 - BGOS has `AUTH_SECRET`, `AUTH_URL`, `NEXTAUTH_URL`, and `NEXT_PUBLIC_APP_URL` set to HTTPS origins.
-- BGOS has `BLIZZWAY_ALLOWED_ORIGINS=https://career7.in,https://www.career7.in` plus the final Blizzway domain when selected.
+- BGOS has `BLIZZWAY_ALLOWED_ORIGINS=https://blizzway.com,https://www.blizzway.com` plus the final Blizzway domain when selected.
 - Blizzway frontend has `NEXT_PUBLIC_API_URL=/api/bgos`.
 - Blizzway frontend has `BGOS_API_URL` set to the deployed BGOS HTTPS origin.
-- Blizzway frontend has `NEXT_PUBLIC_SITE_URL=https://career7.in` or the final Blizzway domain.
+- Blizzway frontend has `NEXT_PUBLIC_SITE_URL=https://blizzway.com` or the final Blizzway domain.
 - No private keys, database URLs, webhook secrets, or provider secrets are committed.
 
 ## 2. DNS and SSL
 
-- `career7.in` points to the Blizzway frontend deployment.
-- `www.career7.in` either redirects to apex or is configured as an alias.
+- `blizzway.com` points to the Blizzway frontend deployment.
+- `www.blizzway.com` either redirects to apex or is configured as an alias.
 - BGOS API/admin deployment has its own HTTPS origin.
 - SSL certificates are active for all production domains.
 
@@ -49,7 +49,7 @@ Last updated: 2026-05-11
 - BGOS internal owner can access Blizzway admin overview.
 - Blizzway frontend `/api/bgos/*` proxy rejects internal BGOS paths.
 - Blizzway user data stays scoped to `businessModel=blizzway` and the session business.
-- Mutating `/api/career7/*` requests from unknown browser origins return `403`.
+- Mutating legacy internal `/api/career7/*` compatibility requests from unknown browser origins return `403`.
 - Companion run requires an active companion activation and user-scoped idempotency.
 - No raw secrets or sensitive onboarding dumps are visible in browser responses.
 
@@ -76,7 +76,7 @@ Last updated: 2026-05-11
 - Payment webhook logs include provider IDs and idempotency keys.
 - Admin actions include admin ID and reason where applicable.
 - Sentry, Logtail, or equivalent error monitoring is queued before broad launch.
-- Alert on repeated `career7:*`, `internal:blizzway:*`, payment verification, and auth failures.
+- Alert on repeated legacy internal Blizzway compatibility logs, `internal:blizzway:*`, payment verification, and auth failures.
 
 ## 10. Rollback Plan
 

@@ -103,8 +103,8 @@ export function RegisterClient({ businessModel }: { businessModel: AuthBusinessM
         <div className="text-center font-heading text-4xl font-bold tracking-normal">
           {isCareer7 ? (
             <>
-              <span className="text-[#101633]">Career</span>
-              <span className="text-indigo-600">7</span>
+              <span className="text-[#101633]">Blizz</span>
+              <span className="text-indigo-600">way</span>
             </>
           ) : (
             <>
@@ -118,7 +118,7 @@ export function RegisterClient({ businessModel }: { businessModel: AuthBusinessM
             Create your account
           </h1>
           <p className={isCareer7 ? "text-sm text-slate-500" : "text-sm text-zinc-400"}>
-            {isCareer7 ? "Start your Career7 growth workspace with BGOS auth." : "Start with a boss account for your business."}
+            {isCareer7 ? "Start your Blizzway growth workspace with BGOS auth." : "Start with a boss account for your business."}
           </p>
         </div>
 

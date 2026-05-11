@@ -126,7 +126,7 @@ export function NexaGuide({ userName }: { userName: string }) {
                   <div className="flex items-center gap-2">
                     <h2 className="text-base font-bold">NEXA</h2>
                     <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-100">
-                      Career7 Guide
+                      Blizzway Guide
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-slate-300">
