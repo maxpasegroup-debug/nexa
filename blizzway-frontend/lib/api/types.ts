@@ -130,6 +130,7 @@ export type QuickBoost = {
   id: string;
   title: string;
   description: string;
+  category?: string;
   creditPrice: number;
   status: "available" | "coming_soon" | "archived";
 };
@@ -282,4 +283,102 @@ export type BlizzwayNexaResponse = {
   conversationId?: string;
   memory?: Record<string, unknown>;
   recommendations?: BlizzwayNexaRecommendation[];
+};
+
+export type BlizzwayBdpResponse = {
+  bdp: {
+    id: string;
+    profileStrength: number;
+    assessmentsCompleted: number;
+    walletCredits: number;
+    metrics: {
+      iq: number | null;
+      eq: number | null;
+      cq: number | null;
+      aq: number | null;
+      lq: number | null;
+      admissionsReadiness: number;
+    };
+    studyGoals: string[];
+    countryPreferences: string[];
+    documentsReadiness: {
+      status: string;
+      completed: number;
+      total: number;
+      items: string[];
+    };
+    scholarshipReadiness: {
+      status: string;
+      score: number;
+      suggestions: string[];
+    };
+    publicPreview: {
+      headline: string;
+      summary: string;
+      strengths: string[];
+    };
+    nexaSuggestions: string[];
+    updatedAt: string;
+  };
+};
+
+export type BlizzwayAssessment = {
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  purpose: string;
+  measures: string[];
+  timeRequired: string;
+  creditCost: number;
+  bdpImpact: string;
+  repeatable: boolean;
+  nexaRecommendation: string;
+  status: string;
+  admissionsSignal: boolean;
+};
+
+export type BlizzwayAssessmentsResponse = {
+  assessments: BlizzwayAssessment[];
+  total: number;
+  completed: unknown[];
+  recommended: BlizzwayAssessment[];
+  bdpImpact: {
+    profileStrength: number;
+    admissionsReadiness: number;
+    message: string;
+  };
+};
+
+export type BlizzwayAdmissionPathway = {
+  slug: string;
+  title: string;
+  location: string;
+  countryRegion: string;
+  level: string;
+  mode: string;
+  intakeDeadline: string;
+  eligibilityStatus: string;
+  credits: string;
+  eligibilitySummary: string;
+  documents: string[];
+  deadlines: string[];
+  budget: string;
+  scholarships: string[];
+  nexaAdvice: string;
+  recommendedAssessments: string[];
+  recommendedCompanions: string[];
+};
+
+export type BlizzwayAdmissionsResponse = {
+  pathways: BlizzwayAdmissionPathway[];
+  total: number;
+  shortlist: unknown[];
+  readiness: {
+    academicFit: number;
+    globalFit: number;
+    documents: BlizzwayBdpResponse["bdp"]["documentsReadiness"];
+    scholarships: BlizzwayBdpResponse["bdp"]["scholarshipReadiness"];
+  };
+  nexaRecommendation: string;
 };

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { BlizzwayBadge, BlizzwayButton, BlizzwayCard, BlizzwayEmptyState, BlizzwayGradientPanel } from "@/components/blizzway";
-import { BlizzwayApi, getApiErrorMessage } from "@/lib/api";
+import { companionsApi, getApiErrorMessage } from "@/lib/api";
 import {
   blizzwayMarketplaceCategories,
   filterMarketplaceItems,
@@ -71,9 +71,9 @@ export function CompanionsClient() {
       setError("");
 
       try {
-        const response = await BlizzwayApi.getMarketplaceAgents();
+        const response = await companionsApi.getCompanions();
         if (!active) return;
-        setItems(response.agents.map(toBlizzwayMarketplaceItem));
+        setItems(response.companions.map(toBlizzwayMarketplaceItem));
       } catch (caught) {
         if (!active) return;
         setItems([]);

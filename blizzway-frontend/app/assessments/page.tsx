@@ -1,14 +1,14 @@
-import Link from "next/link";
+"use client";
 
-import { BlizzwayBadge, BlizzwayButton, BlizzwayCard, BlizzwayGradientPanel } from "@/components/blizzway";
-import { assessmentCategories, assessments } from "@/lib/blizzway/assessments";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+import { BlizzwayBadge, BlizzwayButton, BlizzwayCard, BlizzwayEmptyState, BlizzwayGradientPanel } from "@/components/blizzway";
+import { assessmentsApi, getApiErrorMessage, type BlizzwayAssessment, type BlizzwayAssessmentsResponse } from "@/lib/api";
+import { assessmentCategories } from "@/lib/blizzway/assessments";
 import { BlizzwayDashboardShell } from "../dashboard-shell";
 
-const recommended = assessments.filter((assessment) =>
-  ["academic-readiness-check", "global-readiness-scan", "career-compass-starter"].includes(assessment.slug),
-);
-
-function AssessmentCard({ assessment }: { assessment: (typeof assessments)[number] }) {
+function AssessmentCard({ assessment }: { assessment: BlizzwayAssessment }) {
   return (
     <BlizzwayCard as="article" className="c7-lift-card flex min-h-full flex-col">
       <div className="flex flex-wrap items-center gap-2">
@@ -41,9 +41,31 @@ function AssessmentCard({ assessment }: { assessment: (typeof assessments)[numbe
 }
 
 export default function AssessmentsPage() {
-  const featured = assessments.filter((assessment) =>
-    ["career-compass-starter", "academic-readiness-check", "global-readiness-scan", "communication-spark"].includes(assessment.slug),
-  );
+  const [data, setData] = useState<BlizzwayAssessmentsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    assessmentsApi.getAssessments()
+      .then((response) => {
+        if (active) setData(response);
+      })
+      .catch((caught) => {
+        if (active) setError(getApiErrorMessage(caught));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const featured = data?.assessments ?? [];
+  const recommended = data?.recommended ?? [];
 
   return (
     <BlizzwayDashboardShell
@@ -51,6 +73,13 @@ export default function AssessmentsPage() {
       title="Assessments"
       description="A grand marketplace of NEXA-powered tests that improve your BDP, pathway accuracy, recommendations, and confidence."
     >
+      {error ? (
+        <BlizzwayCard as="section" className="mt-5">
+          <p className="text-sm font-black text-rose-700">Unable to load assessments</p>
+          <p className="mt-2 text-sm leading-6 c7-muted">{error}</p>
+        </BlizzwayCard>
+      ) : null}
+
       <section className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.72fr]">
         <BlizzwayGradientPanel>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">NEXA assessment engine</p>
@@ -77,7 +106,11 @@ export default function AssessmentsPage() {
             Dummy results currently update only this preview, but the intended engine will improve BDP quality, NEXA guidance, pathway fit, admissions recommendations, and user confidence.
           </p>
           <div className="mt-5 grid gap-3">
-            {["Profile strength +12%", "Pathway accuracy +9%", "Recommendation confidence +15%"].map((item) => (
+            {[
+              `Profile strength ${data?.bdpImpact.profileStrength ?? 0}%`,
+              `Admissions readiness ${data?.bdpImpact.admissionsReadiness ?? 0}%`,
+              "Results ready for future scoring",
+            ].map((item) => (
               <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 font-black text-slate-950">
                 {item}
               </div>
@@ -112,9 +145,9 @@ export default function AssessmentsPage() {
             <BlizzwayBadge tone="purple">Marketplace preview</BlizzwayBadge>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {featured.map((assessment) => (
+            {loading ? [0, 1, 2, 3].map((item) => <div key={item} className="h-80 animate-pulse rounded-[22px] bg-white" />) : featured.length ? featured.map((assessment) => (
               <AssessmentCard key={assessment.slug} assessment={assessment} />
-            ))}
+            )) : <BlizzwayEmptyState title="No assessments available" description="NEXA will show starter assessments here when the backend catalogue is ready." />}
           </div>
         </div>
 
@@ -122,7 +155,7 @@ export default function AssessmentsPage() {
           <BlizzwayCard as="section" className="c7-magical-glow">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Recommended by NEXA</p>
             <div className="mt-5 grid gap-3">
-              {recommended.map((assessment) => (
+              {loading ? <div className="h-24 animate-pulse rounded-2xl bg-slate-100" /> : recommended.map((assessment) => (
                 <Link key={assessment.slug} href={`/assessments/${assessment.slug}`} className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-indigo-200 hover:bg-indigo-50/40">
                   <p className="font-black text-slate-950">{assessment.title}</p>
                   <p className="mt-1 text-sm font-semibold c7-muted">{assessment.nexaRecommendation}</p>
@@ -144,7 +177,7 @@ export default function AssessmentsPage() {
           <BlizzwayCard as="section">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">BDP impact preview</p>
             <div className="mt-4 space-y-3">
-              {["IQ 72", "EQ 88", "CQ 69", "AQ 74", "LQ 76", "Admissions readiness 74"].map((metric) => (
+              {["IQ pending", "EQ pending", "CQ pending", "AQ pending", "LQ pending", `Admissions readiness ${data?.bdpImpact.admissionsReadiness ?? 0}`].map((metric) => (
                 <div key={metric} className="rounded-2xl bg-slate-50 p-3 text-sm font-black text-slate-950">{metric}</div>
               ))}
             </div>

@@ -1,5 +1,10 @@
-import { BlizzwayBadge, BlizzwayButton, BlizzwayCard, BlizzwayGradientPanel } from "@/components/blizzway";
-import { admissionPathways, admissionsCategories } from "@/lib/blizzway/admissions";
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { BlizzwayBadge, BlizzwayButton, BlizzwayCard, BlizzwayEmptyState, BlizzwayGradientPanel } from "@/components/blizzway";
+import { admissionsApi, getApiErrorMessage, type BlizzwayAdmissionPathway, type BlizzwayAdmissionsResponse } from "@/lib/api";
+import { admissionsCategories } from "@/lib/blizzway/admissions";
 import { BlizzwayDashboardShell } from "../dashboard-shell";
 
 const modules = [
@@ -14,7 +19,7 @@ const modules = [
   "Application Checklist",
 ];
 
-function AdmissionCard({ pathway }: { pathway: (typeof admissionPathways)[number] }) {
+function AdmissionCard({ pathway }: { pathway: BlizzwayAdmissionPathway }) {
   return (
     <BlizzwayCard as="article" className="c7-lift-card flex min-h-full flex-col">
       <div className="flex flex-wrap items-center gap-2">
@@ -48,12 +53,44 @@ function AdmissionCard({ pathway }: { pathway: (typeof admissionPathways)[number
 }
 
 export default function AdmissionsPage() {
+  const [data, setData] = useState<BlizzwayAdmissionsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    admissionsApi.getAdmissions()
+      .then((response) => {
+        if (active) setData(response);
+      })
+      .catch((caught) => {
+        if (active) setError(getApiErrorMessage(caught));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const pathways = data?.pathways ?? [];
+
   return (
     <BlizzwayDashboardShell
       activeHref="/admissions"
       title="Admissions"
       description="Explore, shortlist, and prepare for national and international college pathways with NEXA guidance."
     >
+      {error ? (
+        <BlizzwayCard as="section" className="mt-5">
+          <p className="text-sm font-black text-rose-700">Unable to load admissions</p>
+          <p className="mt-2 text-sm leading-6 c7-muted">{error}</p>
+        </BlizzwayCard>
+      ) : null}
+
       <section className="mt-5 grid gap-5 xl:grid-cols-[1.08fr_0.72fr]">
         <BlizzwayGradientPanel>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Admissions ecosystem</p>
@@ -80,7 +117,11 @@ export default function AdmissionsPage() {
             NEXA combines academic readiness, global readiness, career fit, proof signals, and budget intent to suggest calmer admission pathways.
           </p>
           <div className="mt-5 grid gap-3">
-            {["Take Academic Readiness before entrance planning", "Use Global Readiness for study-abroad shortlists", "Strengthen BDP documents before applications"].map((item) => (
+            {[
+              data?.nexaRecommendation ?? "Complete readiness assessments before shortlisting.",
+              "Use Global Readiness for study-abroad shortlists",
+              "Strengthen BDP documents before applications",
+            ].map((item) => (
               <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-black text-slate-950">
                 {item}
               </div>
@@ -111,9 +152,9 @@ export default function AdmissionsPage() {
           <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">BDP Admissions Readiness Preview</p>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {[
-              ["Academic fit", "74%"],
-              ["Document readiness", "58%"],
-              ["Scholarship readiness", "46%"],
+              ["Academic fit", `${data?.readiness.academicFit ?? 0}%`],
+              ["Document readiness", `${data?.readiness.documents.completed ?? 0}/${data?.readiness.documents.total ?? 0}`],
+              ["Scholarship readiness", `${data?.readiness.scholarships.score ?? 0}%`],
             ].map(([label, value]) => (
               <div key={label} className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-3xl font-black text-slate-950">{value}</p>
@@ -131,9 +172,9 @@ export default function AdmissionsPage() {
             <BlizzwayBadge tone="purple">Dummy catalogue</BlizzwayBadge>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {admissionPathways.map((pathway) => (
+            {loading ? [0, 1, 2, 3].map((item) => <div key={item} className="h-80 animate-pulse rounded-[22px] bg-white" />) : pathways.length ? pathways.map((pathway) => (
               <AdmissionCard key={pathway.slug} pathway={pathway} />
-            ))}
+            )) : <BlizzwayEmptyState title="No admissions pathways yet" description="NEXA will show national and international routes here when the backend has data." />}
           </div>
         </div>
 
