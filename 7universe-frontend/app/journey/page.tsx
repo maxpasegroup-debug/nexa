@@ -40,8 +40,6 @@ const STEPS = [
 const SAFEPAL_REFERRAL_LINK = "https://7universe.org?ref=9067";
 const SAFEPAL_VIDEO_SOURCES = [
   { src: "/video/safepal-malayalam.mp4", type: "video/mp4" },
-  { src: "/video/safepal-malayalam.webm", type: "video/webm" },
-  { src: "/video/safepal-malayalam", type: "video/mp4" },
 ];
 
 const BUSINESS_LINKS = [
@@ -329,7 +327,7 @@ export default function JourneyPage() {
         <section className="mt-6">
           <h2 className="font-heading text-lg font-extrabold">SafePal Malayalam video</h2>
           <article className="mt-3 overflow-hidden rounded-[14px] border border-white/10 bg-white/[0.04]">
-            <video className="aspect-video w-full bg-black" controls preload="metadata">
+            <video className="aspect-video w-full bg-black" controls preload="metadata" playsInline>
               {SAFEPAL_VIDEO_SOURCES.map((source) => (
                 <source key={source.src} src={source.src} type={source.type} />
               ))}

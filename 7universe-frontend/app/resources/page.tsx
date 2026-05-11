@@ -7,8 +7,6 @@ import { useRouter } from "next/navigation";
 const SAFEPAL_REFERRAL_LINK = "https://7universe.org?ref=9067";
 const SAFEPAL_VIDEO_SOURCES = [
   { src: "/video/safepal-malayalam.mp4", type: "video/mp4" },
-  { src: "/video/safepal-malayalam.webm", type: "video/webm" },
-  { src: "/video/safepal-malayalam", type: "video/mp4" },
 ];
 
 const VIDEOS = [
@@ -67,7 +65,7 @@ export default function ResourcesPage() {
           {VIDEOS.map((video) => (
             <article key={video.title} className="overflow-hidden rounded-[14px] border border-white/10 bg-white/[0.03]">
               <div className="aspect-video w-full bg-black">
-                <video className="h-full w-full" controls preload="metadata">
+                <video className="h-full w-full" controls preload="metadata" playsInline>
                   {video.sources.map((source) => (
                     <source key={source.src} src={source.src} type={source.type} />
                   ))}

@@ -7,6 +7,7 @@ import { signOut } from "next-auth/react";
 import {
   Bot,
   Building2,
+  Compass,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -97,6 +98,7 @@ const navItems = [
   { label: "My Team", href: "/internal/team", icon: Users },
   { label: "BGOS Leads", href: "/internal/leads", icon: Target },
   { label: "NEXA", href: "/internal/nexa", icon: Bot },
+  { label: "Blizzway", href: "/internal/blizzway", icon: Compass },
   { label: "Marketplace", href: "/internal/marketplace", icon: ShoppingCart },
   { label: "Settings", href: "/internal/settings", icon: Settings },
 ];

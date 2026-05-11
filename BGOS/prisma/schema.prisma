@@ -867,6 +867,65 @@ model BlizzwayPathwayLevelProgress {
   @@index([businessModel, businessId, userId, currentLevel])
 }
 
+model BlizzwayAssessmentDefinition {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  slug           String
+  title          String
+  category       String
+  description    String   @db.Text
+  purpose        String?
+  creditCost     Int      @default(0)
+  pricingMode    String   @default("free")
+  repeatable     Boolean  @default(true)
+  active         Boolean  @default(true)
+  bdpImpactLabel String?
+  questionSet    Json     @default("[]")
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([businessModel, slug])
+  @@index([businessModel, active, category])
+}
+
+model BlizzwayAdmissionPathwayDefinition {
+  id                      String   @id @default(cuid())
+  businessModel           String   @default("blizzway")
+  slug                    String
+  title                   String
+  countryRegion           String
+  level                   String
+  deadline                String?
+  eligibilitySummary      String   @db.Text
+  documents               Json     @default("[]")
+  scholarships            Json     @default("[]")
+  recommendedAssessments  Json     @default("[]")
+  recommendedCompanions   Json     @default("[]")
+  active                  Boolean  @default(true)
+  metadata                Json     @default("{}")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@unique([businessModel, slug])
+  @@index([businessModel, active, countryRegion])
+}
+
+model BlizzwayContentConfig {
+  id            String   @id @default(cuid())
+  businessModel String   @default("blizzway")
+  key           String
+  title         String
+  value         Json     @default("{}")
+  active        Boolean  @default(true)
+  updatedBy     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([businessModel, key])
+  @@index([businessModel, active])
+}
+
 model AgentInstallation {
   id                String   @id @default(cuid())
   agentId           String

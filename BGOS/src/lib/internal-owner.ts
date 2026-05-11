@@ -61,6 +61,11 @@ export async function requireInternalOwner() {
 export async function requireInternalOwnerApi() {
   const authResult = await requireRole("OWNER");
   if (authResult.response) return { error: authResult.response };
+  if (!authResult.user) {
+    return {
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
 
   const owner = await prisma.user.findUnique({
     where: { id: authResult.user.id },
