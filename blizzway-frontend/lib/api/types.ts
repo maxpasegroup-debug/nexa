@@ -266,21 +266,37 @@ export type ActiveCompanionsResponse = {
   total: number;
   byAttachment: { pathway: number; learning: number; earning: number };
 };
+
+export type CompanionStructuredOutput = {
+  title?: string;
+  summary?: string;
+  sections?: Array<{ heading?: string; content?: string; bullets?: string[] }>;
+  actionSteps?: string[];
+  warnings?: string[];
+  recommendedNextActions?: string[];
+  bdpImpact?: string;
+  pathwayImpact?: string;
+  nexaNote?: string;
+  missingInputs?: string[];
+  expectedOutput?: string[];
+  safetyNote?: string;
+  nextActions?: string[];
+  checklist?: string[];
+  provider?: string;
+  model?: string;
+  promptTemplateKey?: string;
+  generatedAt?: string;
+  outputVersion?: string;
+  fallbackUsed?: boolean;
+  [key: string]: unknown;
+};
+
 export type CompanionRunResponse = {
   run: {
     id: string;
     status: string;
     input: unknown;
-    output: {
-      summary?: string;
-      nextActions?: string[];
-      checklist?: string[];
-      missingInputs?: string[];
-      expectedOutput?: string[];
-      safetyNote?: string;
-      provider?: string;
-      [key: string]: unknown;
-    };
+    output: CompanionStructuredOutput;
     creditsCharged: number;
     createdAt: string;
     duplicate: boolean;

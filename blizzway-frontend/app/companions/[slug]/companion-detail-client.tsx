@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
 import { BlizzwayBadge, BlizzwayButton, BlizzwayCard, BlizzwayEmptyState, BlizzwayGradientPanel } from "@/components/blizzway";
-import { companionsApi, getApiErrorMessage, type BlizzwayAgent, type CompanionRunResponse } from "@/lib/api";
+import { companionsApi, getApiErrorMessage, type BlizzwayAgent, type CompanionRunResponse, type CompanionStructuredOutput } from "@/lib/api";
 import { BlizzwayDashboardShell } from "../../dashboard-shell";
 
 function listOrFallback(items: string[] | undefined, fallback: string[]) {
@@ -29,6 +29,108 @@ function DetailList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
+function OutputList({ title, items, tone = "indigo" }: { title: string; items?: string[]; tone?: "indigo" | "amber" | "emerald" | "slate" }) {
+  if (!items?.length) return null;
+  const toneClass = {
+    indigo: "bg-indigo-50 text-indigo-800",
+    amber: "bg-amber-50 text-amber-800",
+    emerald: "bg-emerald-50 text-emerald-800",
+    slate: "bg-slate-50 text-slate-700",
+  }[tone];
+
+  return (
+    <div>
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">{title}</p>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        {items.map((item) => (
+          <div key={item} className={`rounded-2xl p-4 text-sm font-bold leading-6 ${toneClass}`}>{item}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StructuredRunOutput({
+  output,
+  onCopy,
+  onPlaceholderAction,
+}: {
+  output: CompanionStructuredOutput;
+  onCopy: () => void;
+  onPlaceholderAction: (label: string) => void;
+}) {
+  const actionSteps = output.actionSteps?.length ? output.actionSteps : output.nextActions;
+  const warnings = output.warnings?.length ? output.warnings : output.safetyNote ? [output.safetyNote] : [];
+
+  return (
+    <div className="mt-5 grid gap-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-2xl font-black tracking-tight text-slate-950">{output.title || "Blizzway guidance"}</h3>
+          <p className="mt-2 text-sm font-semibold leading-6 c7-muted">{output.summary}</p>
+        </div>
+        <button type="button" onClick={onCopy} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700">
+          Copy output
+        </button>
+      </div>
+
+      {output.nexaNote ? (
+        <div className="rounded-3xl bg-slate-950 p-5 text-white">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">NEXA note</p>
+          <p className="mt-3 text-sm font-semibold leading-6 text-white/72">{output.nexaNote}</p>
+        </div>
+      ) : null}
+
+      {output.sections?.length ? (
+        <div className="grid gap-4">
+          {output.sections.map((section, index) => (
+            <div key={`${section.heading}-${index}`} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <p className="font-black text-slate-950">{section.heading || `Section ${index + 1}`}</p>
+              {section.content ? <p className="mt-2 text-sm font-semibold leading-6 c7-muted">{section.content}</p> : null}
+              {section.bullets?.length ? (
+                <ul className="mt-3 grid gap-2">
+                  {section.bullets.map((bullet) => <li key={bullet} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700">{bullet}</li>)}
+                </ul>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <OutputList title="Action steps" items={actionSteps} tone="indigo" />
+      <OutputList title="Recommended next actions" items={output.recommendedNextActions} tone="emerald" />
+      <OutputList title="Warnings and disclaimers" items={warnings} tone="amber" />
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {output.bdpImpact ? (
+          <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-5">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-700">BDP impact</p>
+            <p className="mt-3 text-sm font-bold leading-6 text-indigo-900">{output.bdpImpact}</p>
+          </div>
+        ) : null}
+        {output.pathwayImpact ? (
+          <div className="rounded-3xl border border-cyan-100 bg-cyan-50 p-5">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">Pathway impact</p>
+            <p className="mt-3 text-sm font-bold leading-6 text-cyan-900">{output.pathwayImpact}</p>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <button type="button" onClick={() => onPlaceholderAction("Save to BDP")} className="rounded-full bg-indigo-600 px-4 py-2 text-xs font-black text-white transition hover:bg-indigo-700">
+          Save to BDP
+        </button>
+        <button type="button" onClick={() => onPlaceholderAction("Add to My Pathway")} className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white transition hover:bg-slate-800">
+          Add to My Pathway
+        </button>
+        <span className="rounded-full bg-slate-100 px-4 py-2 text-xs font-black text-slate-600">
+          {output.provider || "provider"} {output.fallbackUsed ? "fallback" : "generated"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function CompanionDetailClient() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
@@ -36,7 +138,9 @@ export function CompanionDetailClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [running, setRunning] = useState(false);
   const [notice, setNotice] = useState("");
+  const [runError, setRunError] = useState("");
   const [inputs, setInputs] = useState({ goal: "", currentStatus: "", mainBlocker: "" });
   const [run, setRun] = useState<CompanionRunResponse["run"] | null>(null);
 
@@ -80,17 +184,30 @@ export function CompanionDetailClient() {
 
   async function runCompanion() {
     setBusy(true);
+    setRunning(true);
     setNotice("");
+    setRunError("");
     setRun(null);
     try {
       const response = await companionsApi.runCompanion(slug, { inputs, idempotencyKey: idempotencyKey("run") });
       setRun(response.run);
       setNotice(`Run completed. ${response.run.creditsCharged} credits charged.`);
     } catch (caught) {
-      setNotice(getApiErrorMessage(caught));
+      setRunError(getApiErrorMessage(caught));
     } finally {
       setBusy(false);
+      setRunning(false);
     }
+  }
+
+  async function copyOutput() {
+    if (!run) return;
+    await navigator.clipboard.writeText(JSON.stringify(run.output, null, 2));
+    setNotice("Output copied.");
+  }
+
+  function placeholderAction(label: string) {
+    setNotice(`${label} is queued as a beta placeholder. Your generated output remains saved in run history.`);
   }
 
   if (loading) {
@@ -161,12 +278,27 @@ export function CompanionDetailClient() {
             <input value={inputs.goal} onChange={(event) => setInputs((value) => ({ ...value, goal: event.target.value }))} placeholder="Goal" className="h-11 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-indigo-400" />
             <input value={inputs.currentStatus} onChange={(event) => setInputs((value) => ({ ...value, currentStatus: event.target.value }))} placeholder="Current status" className="h-11 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-indigo-400" />
             <input value={inputs.mainBlocker} onChange={(event) => setInputs((value) => ({ ...value, mainBlocker: event.target.value }))} placeholder="Main blocker" className="h-11 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-indigo-400" />
-            <BlizzwayButton type="button" onClick={runCompanion} disabled={busy || gated || !companion.active} variant="dark">{gated ? "Premium gated" : companion.active ? "Run companion" : "Activate first"}</BlizzwayButton>
+            <BlizzwayButton type="button" onClick={runCompanion} disabled={busy || gated || !companion.active} variant="dark">{running ? "NEXA is crafting..." : gated ? "Premium gated" : companion.active ? "Run companion" : "Activate first"}</BlizzwayButton>
           </div>
         </BlizzwayCard>
         <BlizzwayCard as="section">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Structured output</p>
-          {run ? <div className="mt-5 grid gap-4"><p className="text-lg font-black text-slate-950">{run.output.summary}</p><div className="grid gap-3 md:grid-cols-2">{run.output.nextActions?.map((item) => <div key={item} className="rounded-2xl bg-indigo-50 p-4 text-sm font-bold text-indigo-800">{item}</div>)}</div><div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold c7-muted">{run.output.safetyNote}</div></div> : <p className="mt-3 text-sm leading-6 c7-muted">Run history will appear here. V1 returns rule-based structured output and saves each run in BGOS for future LLM provider integration.</p>}
+          {running ? (
+            <div className="mt-5 rounded-3xl border border-indigo-100 bg-indigo-50 p-5 text-sm font-black text-indigo-800">
+              NEXA is crafting your guidance...
+            </div>
+          ) : run ? (
+            <StructuredRunOutput output={run.output} onCopy={copyOutput} onPlaceholderAction={placeholderAction} />
+          ) : runError ? (
+            <div className="mt-5 rounded-3xl border border-red-100 bg-red-50 p-5">
+              <p className="text-sm font-black text-red-700">{runError}</p>
+              <BlizzwayButton type="button" onClick={runCompanion} disabled={busy || gated || !companion.active} variant="secondary" className="mt-4">
+                Retry safely
+              </BlizzwayButton>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 c7-muted">Run history will appear here. Outputs are AI-generated when available, with a safe rule-based fallback preserved by BGOS.</p>
+          )}
         </BlizzwayCard>
       </section>
     </BlizzwayDashboardShell>

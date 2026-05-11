@@ -1,6 +1,7 @@
 import type { MarketplaceAgent, Prisma } from "@prisma/client";
 
 import type { Career7Context } from "@/lib/career7-auth";
+import { generateBlizzwayCompanionOutput } from "@/lib/blizzway-ai-output";
 import { ensureCareer7Wallet, isCareer7PaymentModeEnabled } from "@/lib/career7-wallet";
 import { prisma } from "@/lib/prisma";
 
@@ -276,27 +277,6 @@ export async function activateCompanion(context: Career7Context, agent: Marketpl
   });
 }
 
-function buildRuleBasedOutput(agent: MarketplaceAgent, inputs: Record<string, unknown>) {
-  const category = agent.companionCategory || "Career Growth";
-  const goal = typeof inputs.goal === "string" ? inputs.goal : "your current Blizzway goal";
-
-  return {
-    summary: `${agent.name} prepared a v1 action plan for ${goal}.`,
-    category,
-    confidence: "guided",
-    nextActions: [
-      `Clarify the exact outcome for ${goal}.`,
-      "Save one proof point or document that supports this pathway.",
-      "Review this output with NEXA before making high-stakes decisions.",
-    ],
-    checklist: ["Current status captured", "Immediate blocker identified", "Next pathway action drafted", "Safety note attached"],
-    missingInputs: [],
-    expectedOutput: asStringArray(agent.expectedOutput),
-    safetyNote: safetyNoteForCategory(category),
-    provider: "rule_based_v1",
-  };
-}
-
 export async function runCompanion({
   context,
   agent,
@@ -323,10 +303,33 @@ export async function runCompanion({
 
   const mode = pricingMode(agent);
   const creditCost = isCareer7PaymentModeEnabled() && mode === "credits" && agent.chargeOn !== "activation" ? agent.creditPrice : 0;
-  const output = buildRuleBasedOutput(agent, inputs);
+
+  const [activation, wallet] = await Promise.all([
+    prisma.blizzwayCompanionActivation.findUnique({
+      where: {
+        businessModel_businessId_userId_companionId: {
+          businessModel: context.businessModel,
+          businessId: context.businessId,
+          userId: context.userId,
+          companionId: agent.id,
+        },
+      },
+    }),
+    ensureCareer7Wallet(context.businessId, context.userId),
+  ]);
+
+  if (!activation || activation.status !== "ACTIVE") {
+    throw new Error("COMPANION_NOT_ACTIVE");
+  }
+
+  if (creditCost > 0 && wallet.balance < creditCost) {
+    throw new Error("INSUFFICIENT_CREDITS");
+  }
+
+  const generated = await generateBlizzwayCompanionOutput({ agent, inputs });
 
   return prisma.$transaction(async (tx) => {
-    const activation = await tx.blizzwayCompanionActivation.findUnique({
+    const activeActivation = await tx.blizzwayCompanionActivation.findUnique({
       where: {
         businessModel_businessId_userId_companionId: {
           businessModel: context.businessModel,
@@ -336,7 +339,7 @@ export async function runCompanion({
         },
       },
     });
-    if (!activation || activation.status !== "ACTIVE") {
+    if (!activeActivation || activeActivation.status !== "ACTIVE") {
       throw new Error("COMPANION_NOT_ACTIVE");
     }
 
@@ -364,7 +367,16 @@ export async function runCompanion({
           source: "companion_run",
           idempotencyKey: idempotencyKey ? `companion-run-ledger:${idempotencyKey}` : undefined,
           description: `Ran ${agent.name} companion`,
-          metadata: { slug: agent.slug, pricingMode: mode, chargeOn: agent.chargeOn },
+          metadata: {
+            slug: agent.slug,
+            pricingMode: mode,
+            chargeOn: agent.chargeOn,
+            provider: generated.output.provider,
+            model: generated.output.model,
+            promptTemplateKey: generated.output.promptTemplateKey,
+            outputVersion: generated.output.outputVersion,
+            fallbackUsed: generated.output.fallbackUsed,
+          },
         },
       });
       ledgerId = ledger.id;
@@ -376,9 +388,9 @@ export async function runCompanion({
         businessId: context.businessId,
         userId: context.userId,
         companionId: agent.id,
-        activationId: activation?.id,
-        input: inputs as Prisma.InputJsonObject,
-        output,
+        activationId: activeActivation.id,
+        input: generated.sanitizedInputs as Prisma.InputJsonObject,
+        output: generated.output as unknown as Prisma.InputJsonObject,
         creditsCharged: creditCost,
         ledgerId,
         idempotencyKey,
