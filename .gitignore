@@ -13,3 +13,4 @@ node_modules/
 */.env
 */.env.local
 **/edge-smoke-profile-2/
+"7universe-frontend/public/video/" 
