@@ -1,12 +1,12 @@
-import { createReadStream, existsSync, statSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
-import { Readable } from "node:stream";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const LOCAL_VIDEO_PATH = path.join(process.cwd(), "public", "video", "7universe-malayalam.mov");
+const LOCAL_VIDEO_PATH = path.join(process.cwd(), "public", "video", "7universe-malayalam.mp4");
+const LOCAL_VIDEO_URL = "/video/7universe-malayalam.mp4";
 
 function getConfiguredVideoUrl() {
   const configuredUrl = process.env.UNIVERSE_MALAYALAM_VIDEO_URL?.trim();
@@ -60,47 +60,6 @@ async function streamHostedVideo(request: Request, videoUrl: URL | string, metho
   });
 }
 
-function streamLocalVideo(request: Request, method: "GET" | "HEAD") {
-  const stats = statSync(LOCAL_VIDEO_PATH);
-  const range = request.headers.get("range");
-  const headers = new Headers();
-
-  headers.set("Accept-Ranges", "bytes");
-  headers.set("Cache-Control", "public, max-age=3600, s-maxage=86400");
-  headers.set("Content-Type", "video/mp4");
-
-  if (!range) {
-    headers.set("Content-Length", stats.size.toString());
-
-    const body = method === "HEAD" ? null : (Readable.toWeb(createReadStream(LOCAL_VIDEO_PATH)) as unknown as BodyInit);
-
-    return new Response(body, {
-      headers,
-      status: 200,
-    });
-  }
-
-  const [startText, endText] = range.replace(/bytes=/, "").split("-");
-  const start = Number.parseInt(startText, 10);
-  const end = endText ? Number.parseInt(endText, 10) : stats.size - 1;
-
-  if (!Number.isFinite(start) || !Number.isFinite(end) || start >= stats.size || end >= stats.size || start > end) {
-    headers.set("Content-Range", `bytes */${stats.size}`);
-    return new Response(null, { headers, status: 416 });
-  }
-
-  headers.set("Content-Length", (end - start + 1).toString());
-  headers.set("Content-Range", `bytes ${start}-${end}/${stats.size}`);
-
-  const body =
-    method === "HEAD" ? null : (Readable.toWeb(createReadStream(LOCAL_VIDEO_PATH, { start, end })) as unknown as BodyInit);
-
-  return new Response(body, {
-    headers,
-    status: 206,
-  });
-}
-
 async function handleVideoRequest(request: Request, method: "GET" | "HEAD") {
   const configuredUrl = getConfiguredVideoUrl();
 
@@ -109,7 +68,7 @@ async function handleVideoRequest(request: Request, method: "GET" | "HEAD") {
   }
 
   if (existsSync(LOCAL_VIDEO_PATH)) {
-    return streamLocalVideo(request, method);
+    return NextResponse.redirect(new URL(LOCAL_VIDEO_URL, request.url), 307);
   }
 
   return NextResponse.json({ error: "7Universe Malayalam video is unavailable." }, { status: 404 });
