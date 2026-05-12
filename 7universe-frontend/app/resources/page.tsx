@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 const SAFEPAL_REFERRAL_LINK = "https://7universe.org?ref=9067";
 const UNIVERSE_VIDEO_SOURCES = [
-  { src: "/video/7universe-malayalam.mov", type: "video/quicktime" },
+  { src: "/api/video/7universe-malayalam", type: "video/mp4" },
 ];
 const SAFEPAL_VIDEO_SOURCES = [
   { src: "/api/video/safepal-malayalam", type: "video/mp4" },
