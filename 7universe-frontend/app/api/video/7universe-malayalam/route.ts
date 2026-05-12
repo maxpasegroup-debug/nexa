@@ -7,6 +7,8 @@ export const runtime = "nodejs";
 
 const LOCAL_VIDEO_PATH = path.join(process.cwd(), "public", "video", "7universe-malayalam.mp4");
 const LOCAL_VIDEO_URL = "/video/7universe-malayalam.mp4";
+const FALLBACK_VIDEO_URL =
+  "https://github.com/maxpasegroup-debug/nexa/releases/download/7universe-video-v1/7universe-malayalam.mp4";
 
 function getConfiguredVideoUrl() {
   const configuredUrl = process.env.UNIVERSE_MALAYALAM_VIDEO_URL?.trim();
@@ -67,11 +69,15 @@ async function handleVideoRequest(request: Request, method: "GET" | "HEAD") {
     return streamHostedVideo(request, configuredUrl, method);
   }
 
+  if (process.env.NODE_ENV === "production") {
+    return streamHostedVideo(request, FALLBACK_VIDEO_URL, method);
+  }
+
   if (existsSync(LOCAL_VIDEO_PATH)) {
     return NextResponse.redirect(new URL(LOCAL_VIDEO_URL, request.url), 307);
   }
 
-  return NextResponse.json({ error: "7Universe Malayalam video is unavailable." }, { status: 404 });
+  return streamHostedVideo(request, FALLBACK_VIDEO_URL, method);
 }
 
 export async function GET(request: Request) {
