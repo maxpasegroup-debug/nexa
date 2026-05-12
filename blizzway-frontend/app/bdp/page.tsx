@@ -192,6 +192,14 @@ export default function BdpPage() {
         <BlizzwayCard as="section">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">NEXA profile improvement suggestions</p>
           <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Next upgrades for a stronger BDP</h2>
+          {bdp?.latestAssessment ? (
+            <div className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
+              <p className="text-sm font-black text-indigo-800">Latest assessment intelligence</p>
+              <p className="mt-2 text-2xl font-black text-slate-950">{bdp.latestAssessment.percentage}% · {bdp.latestAssessment.readinessLevel}</p>
+              <p className="mt-2 text-sm font-semibold text-indigo-800/80">{bdp.latestAssessment.title}</p>
+              <p className="mt-2 text-sm leading-6 c7-muted">{bdp.latestAssessment.insight}</p>
+            </div>
+          ) : null}
           <div className="mt-5 grid gap-3">
             {(bdp?.nexaSuggestions ?? []).map((suggestion) => (
               <div key={suggestion} className="rounded-2xl bg-indigo-50 p-4 text-sm font-bold leading-6 text-indigo-800">

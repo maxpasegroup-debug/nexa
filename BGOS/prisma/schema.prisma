@@ -91,6 +91,9 @@ model User {
   blizzwayPathwayStreaks BlizzwayPathwayStreak[]
   blizzwayPathwayLevelProgress BlizzwayPathwayLevelProgress[]
   blizzwayDocuments BlizzwayDocument[]
+  blizzwayAssessmentAttempts BlizzwayAssessmentAttempt[]
+  blizzwayAssessmentAnswers BlizzwayAssessmentAnswer[]
+  blizzwayAssessmentResults BlizzwayAssessmentResult[]
 
   @@index([email])
   @@index([role])
@@ -244,6 +247,9 @@ model Business {
   blizzwayPathwayStreaks BlizzwayPathwayStreak[]
   blizzwayPathwayLevelProgress BlizzwayPathwayLevelProgress[]
   blizzwayDocuments BlizzwayDocument[]
+  blizzwayAssessmentAttempts BlizzwayAssessmentAttempt[]
+  blizzwayAssessmentAnswers BlizzwayAssessmentAnswer[]
+  blizzwayAssessmentResults BlizzwayAssessmentResult[]
   dataExports    CustomerDataExport[]
 }
 
@@ -942,18 +948,154 @@ model BlizzwayAssessmentDefinition {
   category       String
   description    String   @db.Text
   purpose        String?
+  timeRequired   String?
   creditCost     Int      @default(0)
+  isFree         Boolean  @default(true)
   pricingMode    String   @default("free")
   repeatable     Boolean  @default(true)
+  status         String   @default("active")
   active         Boolean  @default(true)
   bdpImpactLabel String?
+  dimensionsMeasured Json  @default("[]")
   questionSet    Json     @default("[]")
   metadata       Json     @default("{}")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  questions      BlizzwayAssessmentQuestion[]
+  attempts       BlizzwayAssessmentAttempt[]
+  results        BlizzwayAssessmentResult[]
 
   @@unique([businessModel, slug])
   @@index([businessModel, active, category])
+}
+
+model BlizzwayAssessmentQuestion {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  assessmentId   String
+  assessment     BlizzwayAssessmentDefinition @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  questionKey    String
+  prompt         String   @db.Text
+  questionType   String
+  dimensionKey   String
+  sortOrder      Int      @default(0)
+  required       Boolean  @default(true)
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  options        BlizzwayAssessmentOption[]
+  answers        BlizzwayAssessmentAnswer[]
+
+  @@unique([assessmentId, questionKey])
+  @@index([businessModel, assessmentId, sortOrder])
+}
+
+model BlizzwayAssessmentOption {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  questionId     String
+  question       BlizzwayAssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionKey      String
+  label          String
+  score          Int      @default(0)
+  metadata       Json     @default("{}")
+  sortOrder      Int      @default(0)
+
+  @@unique([questionId, optionKey])
+  @@index([businessModel, questionId, sortOrder])
+}
+
+model BlizzwayAssessmentAttempt {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessmentId   String
+  assessment     BlizzwayAssessmentDefinition @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  status         String   @default("IN_PROGRESS")
+  idempotencyKey String?
+  creditsCharged Int      @default(0)
+  ledgerId       String?
+  startedAt      DateTime @default(now())
+  submittedAt    DateTime?
+  metadata       Json     @default("{}")
+  answers        BlizzwayAssessmentAnswer[]
+  result         BlizzwayAssessmentResult?
+
+  @@unique([idempotencyKey])
+  @@index([businessModel, businessId, userId, status])
+  @@index([assessmentId])
+}
+
+model BlizzwayAssessmentAnswer {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attemptId      String
+  attempt        BlizzwayAssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       BlizzwayAssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  value          Json     @default("{}")
+  score          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([attemptId, questionId])
+  @@index([businessModel, businessId, userId])
+}
+
+model BlizzwayAssessmentResult {
+  id                     String   @id @default(cuid())
+  businessModel          String   @default("blizzway")
+  businessId             String
+  business               Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId                 String
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attemptId              String   @unique
+  attempt                BlizzwayAssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  assessmentId           String
+  assessment             BlizzwayAssessmentDefinition @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  totalScore             Int
+  maxScore               Int
+  percentage             Int
+  percentile             Int?
+  readinessLevel         String
+  dimensionScores        Json     @default("[]")
+  strengths              Json     @default("[]")
+  improvementAreas       Json     @default("[]")
+  recommendations        Json     @default("[]")
+  aiInsight              String   @db.Text
+  bdpImpact              Json     @default("{}")
+  pathwayImpact          Json     @default("{}")
+  safetyNote             String   @db.Text
+  generatedBy            String   @default("rule_based")
+  outputVersion          String   @default("assessment_result_v1")
+  createdAt              DateTime @default(now())
+
+  @@index([businessModel, businessId, userId, createdAt])
+  @@index([assessmentId])
+}
+
+model BlizzwayAssessmentRecommendation {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  category       String
+  triggerKey     String
+  assessmentSlug String
+  reason         String   @db.Text
+  priority       Int      @default(0)
+  active         Boolean  @default(true)
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([businessModel, triggerKey, assessmentSlug])
+  @@index([businessModel, active, priority])
 }
 
 model BlizzwayAdmissionPathwayDefinition {

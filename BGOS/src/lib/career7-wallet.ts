@@ -218,6 +218,7 @@ export async function debitCareer7Credits({
   agentId,
   growthBoardItemId,
   description,
+  idempotencyKey,
   metadata = {},
 }: {
   businessId: string;
@@ -227,11 +228,20 @@ export async function debitCareer7Credits({
   agentId?: string;
   growthBoardItemId?: string;
   description: string;
+  idempotencyKey?: string;
   metadata?: Prisma.InputJsonValue;
 }) {
   const credits = Math.max(0, Math.round(amount));
 
   return prisma.$transaction(async (tx) => {
+    if (idempotencyKey) {
+      const existingLedger = await tx.career7CreditLedger.findUnique({ where: { idempotencyKey } });
+      if (existingLedger) {
+        const wallet = await ensureCareer7Wallet(businessId, userId, tx);
+        return { ok: true as const, wallet, ledger: existingLedger, error: null, duplicate: true as const };
+      }
+    }
+
     const existing = await ensureCareer7Wallet(businessId, userId, tx);
 
     if (credits > 0) {
@@ -269,11 +279,12 @@ export async function debitCareer7Credits({
         agentId,
         growthBoardItemId,
         source: "usage",
+        idempotencyKey,
         description,
         metadata,
       },
     });
 
-    return { ok: true as const, wallet, ledger, error: null };
+    return { ok: true as const, wallet, ledger, error: null, duplicate: false as const };
   });
 }

@@ -189,7 +189,7 @@ export async function getCareer7User(context: Career7Context) {
 }
 
 export async function buildBdp(context: Career7Context) {
-  const [vault, wallet, boardCount, generatedBdp, documents] = await Promise.all([
+  const [vault, wallet, boardCount, generatedBdp, documents, assessmentResults] = await Promise.all([
     getBlizzwayVault(context),
     ensureCareer7Wallet(context.businessId, context.userId),
     prisma.career7GrowthBoardAgent.count({
@@ -214,6 +214,16 @@ export async function buildBdp(context: Career7Context) {
       orderBy: { updatedAt: "desc" },
       take: 25,
     }),
+    prisma.blizzwayAssessmentResult.findMany({
+      where: {
+        businessModel: context.businessModel,
+        businessId: context.businessId,
+        userId: context.userId,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      include: { assessment: { select: { category: true, title: true, slug: true } } },
+    }),
   ]);
 
   const hasProfile = Boolean(vault.digitalProfile.summary || vault.digitalProfile.stage);
@@ -227,6 +237,12 @@ export async function buildBdp(context: Career7Context) {
     ["Portfolio proof", documentTypes.has("portfolio") || documentTypes.has("certificate")],
   ] as const;
   const completedDocuments = documentReadinessItems.filter(([, complete]) => complete).length;
+  const latestAssessment = assessmentResults[0] ?? null;
+  const scoreForCategory = (category: string) =>
+    assessmentResults.find((result) => result.assessment.category === category)?.percentage ?? null;
+  const readinessObject = generatedBdp?.readiness && typeof generatedBdp.readiness === "object" && !Array.isArray(generatedBdp.readiness)
+    ? generatedBdp.readiness as Record<string, unknown>
+    : {};
   const profileStrength = Math.min(
     100,
     25 +
@@ -240,16 +256,25 @@ export async function buildBdp(context: Career7Context) {
   return {
     id: `bdp-${context.userId}`,
     profileStrength: Math.max(profileStrength, generatedBdp?.profileStrength ?? 0),
-    assessmentsCompleted: 0,
+    assessmentsCompleted: assessmentResults.length,
     walletCredits: wallet.balance,
     metrics: {
-      iq: null,
-      eq: null,
-      cq: null,
-      aq: null,
-      lq: null,
-      admissionsReadiness: Math.min(100, 35 + (hasProfile ? 15 : 0) + boardCount * 3 + completedDocuments * 6),
+      iq: scoreForCategory("IQ & Aptitude"),
+      eq: scoreForCategory("EQ & Emotional Intelligence") ?? scoreForCategory("Happiness & Wellbeing"),
+      cq: scoreForCategory("CQ & Cultural Intelligence") ?? scoreForCategory("Global Readiness"),
+      aq: scoreForCategory("Academic Readiness"),
+      lq: scoreForCategory("Learning Style"),
+      admissionsReadiness: Math.min(100, latestAssessment?.percentage ?? 35 + (hasProfile ? 15 : 0) + boardCount * 3 + completedDocuments * 6),
     },
+    latestAssessment: latestAssessment ? {
+      title: latestAssessment.assessment.title,
+      slug: latestAssessment.assessment.slug,
+      category: latestAssessment.assessment.category,
+      percentage: latestAssessment.percentage,
+      readinessLevel: latestAssessment.readinessLevel,
+      insight: latestAssessment.aiInsight,
+      createdAt: latestAssessment.createdAt.toISOString(),
+    } : readinessObject.latestAssessment ?? null,
     studyGoals: vault.dreamGoals,
     countryPreferences: [],
     documentsReadiness: {
@@ -274,7 +299,7 @@ export async function buildBdp(context: Career7Context) {
     },
     nexaSuggestions: Array.isArray(generatedBdp?.recommendedActions) ? generatedBdp.recommendedActions : [
       parsedDocuments[0]?.parsedSummary ? `Use uploaded document insight: ${parsedDocuments[0].parsedSummary.slice(0, 140)}` : "Upload and parse one resume, SOP, certificate, or transcript.",
-      "Complete Academic Readiness Check before admissions shortlisting.",
+      latestAssessment ? `Use latest assessment signal: ${latestAssessment.assessment.title} (${latestAssessment.percentage}%).` : "Complete Academic Readiness Check before admissions shortlisting.",
       "Add two proof stories to Soul Vault.",
       "Choose one pathway companion from Magic Market.",
     ],

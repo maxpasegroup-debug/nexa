@@ -605,6 +605,15 @@ export type BlizzwayBdpResponse = {
       lq: number | null;
       admissionsReadiness: number;
     };
+    latestAssessment: {
+      title: string;
+      slug: string;
+      category: string;
+      percentage: number;
+      readinessLevel: string;
+      insight: string;
+      createdAt: string;
+    } | null;
     studyGoals: string[];
     countryPreferences: string[];
     documentsReadiness: {
@@ -690,31 +699,121 @@ export type BlizzwayPublishedBdpResponse = {
 };
 
 export type BlizzwayAssessment = {
+  id?: string;
   slug: string;
   title: string;
   category: string;
   description: string;
   purpose: string;
   measures: string[];
+  dimensionsMeasured?: string[];
   timeRequired: string;
   creditCost: number;
+  isFree?: boolean;
   bdpImpact: string;
+  bdpImpactLabel?: string;
   repeatable: boolean;
   nexaRecommendation: string;
   status: string;
   admissionsSignal: boolean;
+  disclaimer?: string;
+  questions?: BlizzwayAssessmentQuestion[];
+  reason?: string;
 };
 
 export type BlizzwayAssessmentsResponse = {
   assessments: BlizzwayAssessment[];
   total: number;
-  completed: unknown[];
+  completed: BlizzwayAssessmentResult[];
   recommended: BlizzwayAssessment[];
   bdpImpact: {
     profileStrength: number;
     admissionsReadiness: number;
+    intelligenceScore?: number;
     message: string;
   };
+};
+
+export type BlizzwayAssessmentQuestion = {
+  id: string;
+  questionKey: string;
+  prompt: string;
+  questionType: "single_choice" | "multiple_choice" | "scale" | "text";
+  dimensionKey: string;
+  sortOrder: number;
+  options: Array<{
+    id: string;
+    optionKey: string;
+    label: string;
+    score: number;
+    sortOrder: number;
+  }>;
+};
+
+export type BlizzwayAssessmentAttempt = {
+  id: string;
+  status: string;
+  creditsCharged: number;
+  duplicate?: boolean;
+};
+
+export type BlizzwayAssessmentResult = {
+  id: string;
+  assessment: {
+    slug: string;
+    title: string;
+    category: string;
+  };
+  totalScore: number;
+  maxScore: number;
+  percentage: number;
+  percentile: number;
+  readinessLevel: string;
+  dimensionScores: Array<{
+    key: string;
+    label: string;
+    score: number;
+    maxScore: number;
+    percentage: number;
+  }>;
+  strengths: string[];
+  improvementAreas: string[];
+  recommendations: string[];
+  aiInsight: string;
+  bdpImpact: unknown;
+  pathwayImpact: unknown;
+  safetyNote: string;
+  createdAt: string;
+};
+
+export type BlizzwayAssessmentDetailResponse = {
+  assessment: BlizzwayAssessment;
+};
+
+export type BlizzwayAssessmentStartResponse = {
+  attempt: BlizzwayAssessmentAttempt;
+  assessment: BlizzwayAssessment;
+};
+
+export type BlizzwayAssessmentAnswerResponse = {
+  answer: {
+    id: string;
+    questionId: string;
+    score: number;
+  };
+};
+
+export type BlizzwayAssessmentSubmitResponse = {
+  result: BlizzwayAssessmentResult;
+  duplicate: boolean;
+};
+
+export type BlizzwayAssessmentResultsResponse = {
+  results: BlizzwayAssessmentResult[];
+};
+
+export type BlizzwayAssessmentRecommendationsResponse = {
+  recommendations: BlizzwayAssessment[];
 };
 
 export type BlizzwayAdmissionPathway = {

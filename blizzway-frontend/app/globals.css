@@ -145,6 +145,12 @@ a {
     radial-gradient(circle at 86% 12%, rgba(95, 216, 238, 0.26), transparent 30%),
     linear-gradient(135deg, rgba(143, 92, 247, 0.16), rgba(255, 255, 255, 0));
   content: "";
+  pointer-events: none;
+}
+
+.c7-magical-glow > * {
+  position: relative;
+  z-index: 1;
 }
 
 .c7-button-primary {
