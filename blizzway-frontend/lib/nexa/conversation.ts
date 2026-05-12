@@ -19,6 +19,7 @@ export function createNexaMessage(
   role: NexaRole,
   content: string,
   source: NexaMessageSource = "local",
+  structured?: NexaConversationMessage["structured"],
 ): NexaConversationMessage {
   return {
     id: createId("msg"),
@@ -26,6 +27,7 @@ export function createNexaMessage(
     content,
     createdAt: new Date().toISOString(),
     source,
+    structured,
   };
 }
 

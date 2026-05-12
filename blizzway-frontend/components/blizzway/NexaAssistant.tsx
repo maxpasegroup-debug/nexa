@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import { createInitialNexaState, sendNexaChatRequest } from "@/lib/nexa";
 
 const quickActions = [
-  "Plan my next 7 days",
-  "Improve my resume",
-  "Suggest Learning Garden path",
-  "Find Earning Universe opportunities",
+  "Plan my day",
+  "Improve my BDP",
+  "Recommend assessments",
+  "Suggest companions",
 ];
 
 export function NexaAssistant() {
@@ -85,15 +85,26 @@ export function NexaAssistant() {
                 key={message.id}
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <p
+                <div
                   className={`max-w-[86%] rounded-[20px] px-4 py-3 text-sm leading-6 ${
                     message.role === "user"
                       ? "bg-slate-950 font-semibold text-white"
                       : "border border-slate-200 bg-white font-medium text-slate-700"
                   }`}
                 >
-                  {message.content}
-                </p>
+                  {message.structured?.title ? <p className="mb-2 font-black text-slate-950">{message.structured.title}</p> : null}
+                  <p>{message.content}</p>
+                  {message.structured?.actionSteps?.length ? (
+                    <ul className="mt-3 space-y-2">
+                      {message.structured.actionSteps.slice(0, 4).map((step) => (
+                        <li key={step} className="rounded-xl bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">{step}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {message.structured?.safetyNote ? (
+                    <p className="mt-3 text-xs font-semibold text-slate-500">{message.structured.safetyNote}</p>
+                  ) : null}
+                </div>
               </div>
             ))}
             {isSending ? (
@@ -111,6 +122,18 @@ export function NexaAssistant() {
                 {statusMessage}
               </p>
             ) : null}
+            <div className="mb-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setState(createInitialNexaState());
+                  setStatusMessage(null);
+                }}
+                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-black text-slate-600 hover:border-indigo-200 hover:text-indigo-700"
+              >
+                New chat
+              </button>
+            </div>
             <div className="grid gap-2">
               {quickActions.map((action) => (
                 <button

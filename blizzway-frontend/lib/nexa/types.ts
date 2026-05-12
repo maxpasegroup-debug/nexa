@@ -8,6 +8,16 @@ export type NexaConversationMessage = {
   content: string;
   createdAt: string;
   source?: NexaMessageSource;
+  structured?: {
+    title?: string;
+    actionSteps?: string[];
+    recommendedModules?: string[];
+    recommendedCompanions?: string[];
+    recommendedAssessments?: string[];
+    pathwayImpact?: string;
+    bdpImpact?: string;
+    safetyNote?: string;
+  };
 };
 
 export type NexaMemorySnapshot = {

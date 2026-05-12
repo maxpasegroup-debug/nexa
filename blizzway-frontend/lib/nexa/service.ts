@@ -49,8 +49,31 @@ export async function sendNexaChatRequest({
     });
     const apiRecommendations = Array.isArray(response.recommendations)
       ? response.recommendations.map(toRecommendation)
-      : [];
-    const reply = createNexaMessage("assistant", response.message, "bgos");
+      : [
+          ...(response.recommendedModules ?? []).map((item, index) => ({
+            id: `module-${index}-${item}`,
+            title: item,
+            description: "Recommended by NEXA from your Blizzway context.",
+            source: "bgos" as const,
+          })),
+          ...(response.recommendedAssessments ?? []).map((item, index) => ({
+            id: `assessment-${index}-${item}`,
+            title: item,
+            description: "Assessment signal NEXA recommends next.",
+            actionHref: "/assessments",
+            source: "bgos" as const,
+          })),
+        ];
+    const reply = createNexaMessage("assistant", response.message, "bgos", {
+      title: response.title,
+      actionSteps: response.actionSteps,
+      recommendedModules: response.recommendedModules,
+      recommendedCompanions: response.recommendedCompanions,
+      recommendedAssessments: response.recommendedAssessments,
+      pathwayImpact: response.pathwayImpact,
+      bdpImpact: response.bdpImpact,
+      safetyNote: response.safetyNote,
+    });
 
     return {
       reply,
@@ -62,7 +85,7 @@ export async function sendNexaChatRequest({
         memory: response.memory ?? state.memory,
         recommendations: apiRecommendations,
       },
-      usedFallback: false,
+      usedFallback: Boolean(response.fallbackUsed),
     };
   } catch {
     const fallback = getPlaceholderNexaResponse(message, quickAction);

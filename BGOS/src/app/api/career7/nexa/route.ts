@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { generateAdvancedNexaResponse } from "@/lib/blizzway-nexa-advanced";
 import { getCareer7Context } from "@/lib/career7-auth";
-import { getNexaChatReply } from "@/lib/blizzway-nexa-engine";
 import type { Career7NexaMessage } from "@/lib/career7-nexa";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     message?: string;
     quickAction?: string;
     history?: Career7NexaMessage[];
+    conversationId?: string;
   };
 
   const message = body.message?.trim() || body.quickAction?.trim();
@@ -21,7 +22,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "message is required." }, { status: 400 });
   }
 
-  const reply = await getNexaChatReply(authResult.context, message, body.quickAction);
-
-  return NextResponse.json(reply);
+  return NextResponse.json(await generateAdvancedNexaResponse(authResult.context, {
+    message,
+    quickAction: body.quickAction,
+    conversationId: body.conversationId,
+  }));
 }

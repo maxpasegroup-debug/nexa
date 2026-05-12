@@ -94,6 +94,7 @@ model User {
   blizzwayAssessmentAttempts BlizzwayAssessmentAttempt[]
   blizzwayAssessmentAnswers BlizzwayAssessmentAnswer[]
   blizzwayAssessmentResults BlizzwayAssessmentResult[]
+  blizzwayNexaConversations BlizzwayNexaConversation[]
 
   @@index([email])
   @@index([role])
@@ -250,6 +251,7 @@ model Business {
   blizzwayAssessmentAttempts BlizzwayAssessmentAttempt[]
   blizzwayAssessmentAnswers BlizzwayAssessmentAnswer[]
   blizzwayAssessmentResults BlizzwayAssessmentResult[]
+  blizzwayNexaConversations BlizzwayNexaConversation[]
   dataExports    CustomerDataExport[]
 }
 
@@ -1096,6 +1098,27 @@ model BlizzwayAssessmentRecommendation {
 
   @@unique([businessModel, triggerKey, assessmentSlug])
   @@index([businessModel, active, priority])
+}
+
+model BlizzwayNexaConversation {
+  id             String   @id @default(cuid())
+  businessModel  String   @default("blizzway")
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  intent         String   @default("general_guidance")
+  messages       Json     @default("[]")
+  contextSummary Json     @default("{}")
+  provider       String   @default("rule_based")
+  model          String?
+  fallbackUsed   Boolean  @default(false)
+  generatedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([businessModel, businessId, userId, updatedAt])
 }
 
 model BlizzwayAdmissionPathwayDefinition {

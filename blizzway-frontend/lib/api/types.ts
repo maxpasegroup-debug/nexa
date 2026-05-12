@@ -537,11 +537,42 @@ export type BlizzwayNexaRequest = {
 };
 
 export type BlizzwayNexaResponse = {
+  title?: string;
   message: string;
+  actionSteps?: string[];
+  recommendedModules?: string[];
+  recommendedCompanions?: string[];
+  recommendedAssessments?: string[];
+  pathwayImpact?: string;
+  bdpImpact?: string;
+  safetyNote?: string;
   chips: string[];
   conversationId?: string;
   memory?: Record<string, unknown>;
   recommendations?: BlizzwayNexaRecommendationsV1 | BlizzwayNexaRecommendation[];
+  provider?: "openai" | "rule_based";
+  model?: string;
+  fallbackUsed?: boolean;
+  generatedAt?: string;
+  outputVersion?: string;
+  contextSummary?: Record<string, unknown>;
+};
+
+export type BlizzwayNexaConversationSummary = {
+  id: string;
+  title: string;
+  intent: string;
+  provider: string;
+  fallbackUsed: boolean;
+  generatedAt: string;
+  updatedAt: string;
+};
+
+export type BlizzwayNexaConversation = BlizzwayNexaConversationSummary & {
+  messages: unknown[];
+  contextSummary: Record<string, unknown>;
+  model?: string | null;
+  createdAt: string;
 };
 
 export type BlizzwayOnboardingInput = {

@@ -255,10 +255,7 @@ async function loadDashboardData(): Promise<DashboardData> {
     optional(onboardingApi.getOnboarding(), "NEXA onboarding endpoint", fallbackLabels),
     optional(companionsApi.getCompanions(), "Companions endpoint", fallbackLabels),
     optional(
-      nexaApi.chat({
-        quickAction: "What should I do today?",
-        message: "What should I do today?",
-      }),
+      nexaApi.dailyPlan(),
       "NEXA recommendation endpoint",
       fallbackLabels,
     ),
