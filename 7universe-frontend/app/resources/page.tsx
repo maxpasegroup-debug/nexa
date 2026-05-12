@@ -5,11 +5,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const SAFEPAL_REFERRAL_LINK = "https://7universe.org?ref=9067";
+const UNIVERSE_VIDEO_SOURCES = [
+  { src: "/video/7universe-malayalam.mov", type: "video/quicktime" },
+];
 const SAFEPAL_VIDEO_SOURCES = [
   { src: "/api/video/safepal-malayalam", type: "video/mp4" },
 ];
 
 const VIDEOS = [
+  {
+    title: "7Universe Malayalam video",
+    sources: UNIVERSE_VIDEO_SOURCES,
+    desc: "Watch this after the dashboard audios, before the SafePal setup video.",
+  },
   {
     title: "How to use SafePal",
     sources: SAFEPAL_VIDEO_SOURCES,

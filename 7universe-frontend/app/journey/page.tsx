@@ -38,8 +38,24 @@ const STEPS = [
 ];
 
 const SAFEPAL_REFERRAL_LINK = "https://7universe.org?ref=9067";
+const UNIVERSE_VIDEO_SOURCES = [
+  { src: "/video/7universe-malayalam.mov", type: "video/quicktime" },
+];
 const SAFEPAL_VIDEO_SOURCES = [
   { src: "/api/video/safepal-malayalam", type: "video/mp4" },
+];
+
+const BUSINESS_VIDEOS = [
+  {
+    title: "7Universe Malayalam video",
+    sources: UNIVERSE_VIDEO_SOURCES,
+    desc: "Watch this after completing the audios, before the SafePal setup video.",
+  },
+  {
+    title: "How to use SafePal",
+    sources: SAFEPAL_VIDEO_SOURCES,
+    desc: "Watch this after the 7Universe video to connect SafePal with 7Universe.",
+  },
 ];
 
 const BUSINESS_LINKS = [
@@ -220,7 +236,7 @@ export default function JourneyPage() {
           <section className="mt-5 rounded-[18px] border border-[rgba(245,158,11,0.35)] bg-[rgba(245,158,11,0.1)] p-5">
             <h2 className="font-heading text-xl font-extrabold text-[#F59E0B]">Training complete</h2>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              Your referral link is ready. Activate now and share it with people who can listen and follow the same steps.
+              Watch the 7Universe Malayalam video, then the SafePal video. After that, activate and share your referral link.
             </p>
             <Link href="/done" className="mt-4 block rounded-xl bg-[#F59E0B] px-4 py-3 text-center font-extrabold text-black">
               Activate and Get Referral Link
@@ -325,21 +341,23 @@ export default function JourneyPage() {
         </section>
 
         <section className="mt-6">
-          <h2 className="font-heading text-lg font-extrabold">SafePal Malayalam video</h2>
-          <article className="mt-3 overflow-hidden rounded-[14px] border border-white/10 bg-white/[0.04]">
-            <video className="aspect-video w-full bg-black" controls preload="metadata" playsInline>
-              {SAFEPAL_VIDEO_SOURCES.map((source) => (
-                <source key={source.src} src={source.src} type={source.type} />
-              ))}
-              Your browser does not support the video tag.
-            </video>
-            <div className="p-4">
-              <h3 className="font-heading font-extrabold">How to use SafePal</h3>
-              <p className="mt-1 text-sm leading-5 text-white/50">
-                Watch this after the audio lessons to connect SafePal with 7Universe.
-              </p>
-            </div>
-          </article>
+          <h2 className="font-heading text-lg font-extrabold">Malayalam videos</h2>
+          <div className="mt-3 space-y-4">
+            {BUSINESS_VIDEOS.map((video) => (
+              <article key={video.title} className="overflow-hidden rounded-[14px] border border-white/10 bg-white/[0.04]">
+                <video className="aspect-video w-full bg-black" controls preload="metadata" playsInline>
+                  {video.sources.map((source) => (
+                    <source key={source.src} src={source.src} type={source.type} />
+                  ))}
+                  Your browser does not support the video tag.
+                </video>
+                <div className="p-4">
+                  <h3 className="font-heading font-extrabold">{video.title}</h3>
+                  <p className="mt-1 text-sm leading-5 text-white/50">{video.desc}</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="mt-6">
