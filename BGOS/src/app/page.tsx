@@ -12,12 +12,23 @@ import NexaDemoSection from "@/components/landing/nexa-demo-section";
 import PricingSection from "@/components/landing/pricing-section";
 import ProductProofSection from "@/components/landing/product-proof-section";
 import TestimonialsSection from "@/components/landing/testimonials-section";
+import { NiceJobsLanding } from "@/components/nicejobs/nicejobs-landing";
+import { isNiceJobsRequest } from "@/lib/nicejobs/domain";
 
 export default async function Home() {
   const session = await auth();
+  const isNiceJobs = isNiceJobsRequest();
 
   if (session?.user) {
+    if (isNiceJobs) {
+      redirect("/nicejobs");
+    }
+
     redirect(getRoleRedirect(session.user.role as string));
+  }
+
+  if (isNiceJobs) {
+    return <NiceJobsLanding />;
   }
 
   return (

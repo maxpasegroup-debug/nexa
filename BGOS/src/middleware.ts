@@ -11,6 +11,8 @@ const PUBLIC_ROUTES = [
   "/register",
   "/forgot-password",
   "/reset-password",
+  "/nicejobs",
+  "/nicejobs/(.*)",
   "/accept-invite",
   "/workspace-preview",
   "/activate-trial",
