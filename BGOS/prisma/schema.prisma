@@ -78,6 +78,11 @@ model User {
   career7CreditLedger Career7CreditLedger[]
   bgosPaymentIntents BgosPaymentIntent[]
   bgosPaymentTransactions BgosPaymentTransaction[]
+  niceJobsApplications NiceJobsApplication[] @relation("NiceJobsApplications")
+  niceJobsTrainingProgress NiceJobsTrainingProgress[] @relation("NiceJobsTrainingProgress")
+  niceJobsReferrals NiceJobsReferral[] @relation("NiceJobsReferrals")
+  niceJobsPayouts NiceJobsPayout[]
+  niceJobsAuditLogs NiceJobsAuditLog[] @relation("NiceJobsAuditActor")
   blizzwayOnboardingProfiles BlizzwayOnboardingProfile[]
   blizzwayBdpProfiles BlizzwayBdpProfile[]
   blizzwayPublicBdpProfiles BlizzwayPublicBdpProfile[]
@@ -2237,4 +2242,178 @@ model UniverseProgress {
   completedAt DateTime     @default(now())
 
   @@unique([userId, stepNumber])
+}
+
+model NiceJobsFranchise {
+  id                   String                 @id @default(cuid())
+  slug                 String                 @unique
+  name                 String
+  category             String                 @default("Micro-franchise")
+  description          String                 @db.Text
+  potentialEarnings    String?
+  commissionPercent    Decimal                @db.Decimal(5, 2)
+  trainingDurationDays Int                    @default(7)
+  partnerWebhookKey    String?
+  partnerWebhookUrl    String?
+  status               String                 @default("ACTIVE")
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  applications         NiceJobsApplication[]
+  trainingResources    NiceJobsTrainingResource[]
+  referrals            NiceJobsReferral[]
+
+  @@index([status])
+  @@index([category])
+}
+
+model NiceJobsApplication {
+  id             String                     @id @default(cuid())
+  userId         String
+  user           User                       @relation("NiceJobsApplications", fields: [userId], references: [id], onDelete: Cascade)
+  franchiseId    String
+  franchise      NiceJobsFranchise          @relation(fields: [franchiseId], references: [id], onDelete: Cascade)
+  status         String                     @default("PENDING_MOU")
+  referralCode   String                     @unique @default(cuid())
+  appliedAt      DateTime                   @default(now())
+  approvedAt     DateTime?
+  activatedAt    DateTime?
+  rejectedAt     DateTime?
+  adminNotes     String?                    @db.Text
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+  agreements     NiceJobsAgreement[]
+  trainingProgress NiceJobsTrainingProgress[]
+  referrals      NiceJobsReferral[]
+
+  @@unique([userId, franchiseId])
+  @@index([status])
+  @@index([franchiseId])
+}
+
+model NiceJobsAgreement {
+  id              String              @id @default(cuid())
+  applicationId   String
+  application     NiceJobsApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  mouDocument     String              @db.Text
+  signerName      String
+  signerEmail     String
+  signatureText   String
+  commissionPercent Decimal           @db.Decimal(5, 2)
+  paymentSchedule String              @default("Monthly payouts between the 1st and 10th")
+  signedAt        DateTime            @default(now())
+  createdAt       DateTime            @default(now())
+
+  @@index([applicationId])
+}
+
+model NiceJobsTrainingResource {
+  id           String                     @id @default(cuid())
+  franchiseId  String
+  franchise    NiceJobsFranchise          @relation(fields: [franchiseId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?                    @db.Text
+  resourceType String
+  resourceUrl  String
+  sortOrder    Int                        @default(0)
+  isRequired   Boolean                    @default(true)
+  status       String                     @default("ACTIVE")
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
+  progress     NiceJobsTrainingProgress[]
+
+  @@index([franchiseId])
+  @@index([resourceType])
+}
+
+model NiceJobsTrainingProgress {
+  id            String                   @id @default(cuid())
+  userId        String
+  user          User                     @relation("NiceJobsTrainingProgress", fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String
+  application   NiceJobsApplication      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  resourceId    String
+  resource      NiceJobsTrainingResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  status        String                   @default("NOT_STARTED")
+  completedAt   DateTime?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  @@unique([applicationId, resourceId])
+  @@index([userId])
+}
+
+model NiceJobsReferral {
+  id                  String              @id @default(cuid())
+  userId              String
+  user                User                @relation("NiceJobsReferrals", fields: [userId], references: [id], onDelete: Cascade)
+  franchiseId         String
+  franchise           NiceJobsFranchise   @relation(fields: [franchiseId], references: [id], onDelete: Cascade)
+  applicationId       String?
+  application         NiceJobsApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  externalEventId     String?             @unique
+  externalCustomerRef String?
+  saleAmount          Decimal             @db.Decimal(12, 2)
+  currency            String              @default("GBP")
+  commissionPercent   Decimal             @db.Decimal(5, 2)
+  earningsOwed        Decimal             @db.Decimal(12, 2)
+  status              String              @default("PENDING")
+  webhookTimestamp    DateTime?
+  validatedAt         DateTime?
+  rawPayload          Json                @default("{}")
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([franchiseId])
+  @@index([status])
+}
+
+model NiceJobsPayout {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month         Int
+  year          Int
+  currency      String   @default("GBP")
+  totalAmount   Decimal  @db.Decimal(12, 2)
+  status        String   @default("PENDING")
+  provider      String   @default("MANUAL")
+  providerRef   String?
+  notes         String?  @db.Text
+  scheduledDate DateTime?
+  paidDate      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, month, year, currency])
+  @@index([status])
+}
+
+model NiceJobsWebhookEvent {
+  id          String   @id @default(cuid())
+  source      String
+  eventId     String   @unique
+  signatureOk Boolean  @default(false)
+  status      String   @default("RECEIVED")
+  payload     Json     @default("{}")
+  error       String?  @db.Text
+  receivedAt  DateTime @default(now())
+  processedAt DateTime?
+
+  @@index([source])
+  @@index([status])
+}
+
+model NiceJobsAuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation("NiceJobsAuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entity, entityId])
 }
