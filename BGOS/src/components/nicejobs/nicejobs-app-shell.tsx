@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { BriefcaseBusiness, ChartNoAxesCombined, GraduationCap, WalletCards } from "lucide-react";
+import { BriefcaseBusiness, ChartNoAxesCombined, FileSignature, GraduationCap, WalletCards } from "lucide-react";
 
 const navItems = [
   { href: "/nicejobs/dashboard", label: "Dashboard", icon: ChartNoAxesCombined },
   { href: "/nicejobs/opportunities", label: "Opportunities", icon: BriefcaseBusiness },
+  { href: "/nicejobs/applications", label: "Applications", icon: FileSignature },
   { href: "/nicejobs/training", label: "Training", icon: GraduationCap },
   { href: "/nicejobs/earnings", label: "Earnings", icon: WalletCards },
 ];

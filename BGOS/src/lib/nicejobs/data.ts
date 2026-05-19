@@ -12,7 +12,7 @@ export type NiceJobsOpportunity = {
   status: string;
 };
 
-const fallbackOpportunities: NiceJobsOpportunity[] = [
+export const fallbackOpportunities: NiceJobsOpportunity[] = [
   {
     id: "bgos-micro-franchise",
     slug: "bgos-micro-franchise",
@@ -77,6 +77,27 @@ export async function getNiceJobsOpportunities() {
 export async function getNiceJobsOpportunity(slug: string) {
   const opportunities = await getNiceJobsOpportunities();
   return opportunities.find((opportunity) => opportunity.slug === slug) || null;
+}
+
+export async function ensureNiceJobsFranchise(slug: string) {
+  const existing = await prisma.niceJobsFranchise.findUnique({ where: { slug } });
+  if (existing) return existing;
+
+  const fallback = fallbackOpportunities.find((opportunity) => opportunity.slug === slug);
+  if (!fallback) return null;
+
+  return prisma.niceJobsFranchise.create({
+    data: {
+      slug: fallback.slug,
+      name: fallback.name,
+      category: fallback.category,
+      description: fallback.description,
+      potentialEarnings: fallback.potentialEarnings,
+      commissionPercent: fallback.commissionPercent,
+      trainingDurationDays: fallback.trainingDurationDays,
+      status: fallback.status,
+    },
+  });
 }
 
 export async function getNiceJobsUserSummary(userId: string) {
