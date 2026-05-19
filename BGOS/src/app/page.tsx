@@ -21,7 +21,7 @@ export default async function Home() {
 
   if (session?.user) {
     if (isNiceJobs) {
-      redirect("/nicejobs");
+      redirect("/nicejobs/dashboard");
     }
 
     redirect(getRoleRedirect(session.user.role as string));

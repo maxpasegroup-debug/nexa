@@ -12,7 +12,6 @@ const PUBLIC_ROUTES = [
   "/forgot-password",
   "/reset-password",
   "/nicejobs",
-  "/nicejobs/(.*)",
   "/accept-invite",
   "/workspace-preview",
   "/activate-trial",
@@ -69,6 +68,13 @@ export default auth((req) => {
       return NextResponse.redirect(loginUrl);
     }
 
+    if (pathname.startsWith("/nicejobs")) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("businessModel", "nicejobs");
+      loginUrl.searchParams.set("callbackUrl", `${pathname}${req.nextUrl.search}`);
+      return NextResponse.redirect(loginUrl);
+    }
+
     if (isProd) {
       return NextResponse.redirect(new URL("/login", `https://${BOSS_DOMAIN}`));
     }
@@ -82,6 +88,10 @@ export default auth((req) => {
 
   // Legacy Blizzway compatibility route: accessible to all authenticated users.
   if (pathname.startsWith("/career7")) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith("/nicejobs")) {
     return NextResponse.next();
   }
 
