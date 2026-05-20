@@ -14,6 +14,18 @@ export type NiceJobsOpportunity = {
 
 export const fallbackOpportunities: NiceJobsOpportunity[] = [
   {
+    id: "career7-in",
+    slug: "career7-in",
+    name: "Career7.in Career Intelligence",
+    category: "Career micro-franchise",
+    description:
+      "Help students, parents, and job seekers use Career7 assessments, CareerX intelligence tests, C7DP digital biodata, and AI career tools.",
+    potentialEarnings: "Up to 50% commission",
+    commissionPercent: 50,
+    trainingDurationDays: 100,
+    status: "ACTIVE",
+  },
+  {
     id: "bgos-micro-franchise",
     slug: "bgos-micro-franchise",
     name: "BGOS Micro-Franchise",
@@ -57,7 +69,7 @@ export async function getNiceJobsOpportunities() {
 
     if (!rows.length) return fallbackOpportunities;
 
-    return rows.map((row) => ({
+    const dbOpportunities = rows.map((row) => ({
       id: row.id,
       slug: row.slug,
       name: row.name,
@@ -68,6 +80,12 @@ export async function getNiceJobsOpportunities() {
       trainingDurationDays: row.trainingDurationDays,
       status: row.status,
     }));
+    const dbSlugs = new Set(dbOpportunities.map((opportunity) => opportunity.slug));
+
+    return [
+      ...fallbackOpportunities.filter((opportunity) => !dbSlugs.has(opportunity.slug)),
+      ...dbOpportunities,
+    ];
   } catch (error) {
     console.error("[nicejobs:opportunities]", error);
     return fallbackOpportunities;

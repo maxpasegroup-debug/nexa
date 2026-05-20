@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import auth from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getCareer7ReferralCode } from "@/lib/nicejobs/career7";
 import { ensureNiceJobsFranchise } from "@/lib/nicejobs/data";
 
 function buildMouDocument(input: {
@@ -49,6 +50,10 @@ export async function applyToNiceJobsOpportunity(formData: FormData) {
 
   const userName = session.user.name || signatureText;
   const commissionPercent = Number(franchise.commissionPercent);
+  const isCareer7 = franchise.slug === "career7-in";
+  const referralCode = isCareer7
+    ? getCareer7ReferralCode(session.user.id || session.user.email)
+    : undefined;
   const mouDocument = buildMouDocument({
     userName,
     userEmail: session.user.email,
@@ -92,7 +97,8 @@ export async function applyToNiceJobsOpportunity(formData: FormData) {
     data: {
       userId: session.user.id,
       franchiseId: franchise.id,
-      status: "SIGNED",
+      status: isCareer7 ? "ACTIVE" : "SIGNED",
+      referralCode,
       agreements: {
         create: {
           mouDocument,

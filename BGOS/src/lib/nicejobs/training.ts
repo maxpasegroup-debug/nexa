@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import auth from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { career7Lessons } from "@/lib/nicejobs/career7";
 
 const defaultResources = [
   {
@@ -38,12 +39,36 @@ const defaultResources = [
 ];
 
 async function ensureDefaultResources(franchiseId: string) {
+  const franchise = await prisma.niceJobsFranchise.findUnique({
+    where: { id: franchiseId },
+    select: { slug: true },
+  });
   const existing = await prisma.niceJobsTrainingResource.findMany({
     where: { franchiseId, status: "ACTIVE" },
     orderBy: { sortOrder: "asc" },
   });
 
   if (existing.length) return existing;
+
+  if (franchise?.slug === "career7-in") {
+    await prisma.niceJobsTrainingResource.createMany({
+      data: career7Lessons.map((lesson) => ({
+        franchiseId,
+        title: lesson.titles.en,
+        description: lesson.intro.en,
+        resourceType: "lesson",
+        resourceUrl: `/nicejobs/training/career7/${lesson.key}`,
+        sortOrder: lesson.day,
+        isRequired: true,
+        status: "ACTIVE",
+      })),
+    });
+
+    return prisma.niceJobsTrainingResource.findMany({
+      where: { franchiseId, status: "ACTIVE" },
+      orderBy: { sortOrder: "asc" },
+    });
+  }
 
   await prisma.niceJobsTrainingResource.createMany({
     data: defaultResources.map((resource) => ({
@@ -91,6 +116,9 @@ export async function getNiceJobsTrainingHub(userId: string) {
       totalCount: resources.length,
       progressByResource,
       complete: resources.length > 0 && completedCount === resources.length,
+      nextUnlockedSortOrder:
+        resources.find((resource) => progressByResource.get(resource.id)?.status !== "COMPLETED")
+          ?.sortOrder ?? resources[resources.length - 1]?.sortOrder ?? 1,
     });
   }
 
@@ -166,4 +194,42 @@ export async function completeNiceJobsResource(formData: FormData) {
   }
 
   revalidatePath("/nicejobs/training");
+}
+
+export async function getNiceJobsTrainingLesson(userId: string, lessonKey: string) {
+  const resourceUrl = `/nicejobs/training/career7/${lessonKey}`;
+  const application = await prisma.niceJobsApplication.findFirst({
+    where: {
+      userId,
+      franchise: { slug: "career7-in" },
+      status: { in: ["SIGNED", "TRAINING", "PENDING_APPROVAL", "APPROVED", "ACTIVE"] },
+    },
+    include: {
+      franchise: true,
+      trainingProgress: true,
+    },
+  });
+
+  if (!application) return null;
+
+  const resources = await ensureDefaultResources(application.franchiseId);
+  const resource = resources.find((item) => item.resourceUrl === resourceUrl);
+
+  if (!resource) return null;
+
+  const progressByResource = new Map(
+    application.trainingProgress.map((progress) => [progress.resourceId, progress]),
+  );
+  const firstIncomplete =
+    resources.find((item) => progressByResource.get(item.id)?.status !== "COMPLETED") ??
+    resources[resources.length - 1];
+  const locked = resource.sortOrder > (firstIncomplete?.sortOrder ?? 1);
+
+  return {
+    application,
+    resource,
+    resources,
+    completed: progressByResource.get(resource.id)?.status === "COMPLETED",
+    locked,
+  };
 }

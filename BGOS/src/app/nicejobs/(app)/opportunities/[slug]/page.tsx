@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, BadgePoundSterling, BookOpenCheck, Clock, ShieldCheck } from "lucide-react";
 
+import { career7CommissionNotes, career7Products } from "@/lib/nicejobs/career7";
 import { getNiceJobsOpportunity } from "@/lib/nicejobs/data";
 
 export default async function NiceJobsOpportunityDetailPage({
@@ -12,6 +13,7 @@ export default async function NiceJobsOpportunityDetailPage({
   const opportunity = await getNiceJobsOpportunity(params.slug);
 
   if (!opportunity) notFound();
+  const isCareer7 = opportunity.slug === "career7-in";
 
   return (
     <div className="grid gap-6">
@@ -57,12 +59,48 @@ export default async function NiceJobsOpportunityDetailPage({
           <div>
             <h3 className="text-xl font-black">What happens next</h3>
             <p className="mt-2 text-sm leading-6 text-[#555]">
-              Phase 4 activates application and digital MOU signing. Phase 5 connects this detail page to the training
-              hub, resources, and completion tracking.
+              Apply, sign the digital MOU, receive your referral code, and start the locked level-by-level training.
             </p>
           </div>
         </div>
       </section>
+
+      {isCareer7 ? (
+        <>
+          <section className="rounded-lg border border-[#151515]/10 bg-white p-6">
+            <p className="text-sm font-black uppercase text-[#1c7c54]">Career7 product ladder</p>
+            <h3 className="mt-2 text-2xl font-black tracking-normal">Start with free tests, grow into paid career intelligence.</h3>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {career7Products.map((product) => (
+                <article key={product.title} className="rounded-lg border border-[#151515]/10 bg-[#f7f7f2] p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h4 className="font-black">{product.title}</h4>
+                      <p className="mt-1 text-xs font-black uppercase text-[#1c7c54]">{product.audience}</p>
+                    </div>
+                    <span className="rounded-md bg-white px-2.5 py-1 text-xs font-black text-[#151515]">
+                      {product.commission}
+                    </span>
+                  </div>
+                  <p className="mt-4 text-sm leading-6 text-[#555]">{product.description}</p>
+                  <p className="mt-4 text-sm font-black text-[#333]">{product.price}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-[#151515]/10 bg-[#151515] p-6 text-white">
+            <h3 className="text-xl font-black">Commission rules</h3>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {career7CommissionNotes.map((note) => (
+                <p key={note} className="rounded-lg bg-white/10 p-4 text-sm font-semibold leading-6 text-white/80">
+                  {note}
+                </p>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : null}
     </div>
   );
 }

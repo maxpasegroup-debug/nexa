@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
 
-  const eventId = payload.eventId || randomUUID();
+  const eventId = payload.eventId || payload.event_id || randomUUID();
   const signatureOk = verifyNiceJobsWebhookSignature(rawBody, signature);
 
   const event = await prisma.niceJobsWebhookEvent.upsert({
