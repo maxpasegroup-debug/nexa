@@ -7,6 +7,7 @@ const navItems = [
   { href: "/nicejobs/applications", label: "Applications", icon: FileSignature },
   { href: "/nicejobs/training", label: "Training", icon: GraduationCap },
   { href: "/nicejobs/earnings", label: "Earnings", icon: WalletCards },
+  { href: "/nicejobs/payouts", label: "Payouts", icon: WalletCards },
 ];
 
 export function NiceJobsAppShell({

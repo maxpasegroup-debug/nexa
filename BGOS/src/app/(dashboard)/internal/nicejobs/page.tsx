@@ -14,6 +14,10 @@ import {
   updateNiceJobsApplicationStatus,
   updateNiceJobsReferralStatus,
 } from "@/lib/nicejobs/admin";
+import {
+  generateNiceJobsMonthlyPayouts,
+  updateNiceJobsPayoutStatus,
+} from "@/lib/nicejobs/payouts";
 
 function decimalToNumber(value: unknown) {
   if (typeof value === "number") return value;
@@ -147,7 +151,31 @@ export default async function InternalNiceJobsPage() {
 
         <section className="grid gap-6 xl:grid-cols-2">
           <div className="rounded-lg border border-[#151515]/10 bg-white p-6">
-            <h2 className="text-xl font-black">Payout queue</h2>
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+              <div>
+                <h2 className="text-xl font-black">Payout queue</h2>
+                <p className="mt-1 text-sm font-semibold text-[#555]">Generate current month batches from approved referrals.</p>
+              </div>
+              <form action={generateNiceJobsMonthlyPayouts} className="flex gap-2">
+                <input
+                  name="month"
+                  type="number"
+                  min="1"
+                  max="12"
+                  placeholder="Month"
+                  className="w-24 rounded-md border border-[#151515]/15 px-3 py-2 text-sm font-semibold"
+                />
+                <input
+                  name="year"
+                  type="number"
+                  placeholder="Year"
+                  className="w-28 rounded-md border border-[#151515]/15 px-3 py-2 text-sm font-semibold"
+                />
+                <button className="rounded-md bg-[#151515] px-3 py-2 text-xs font-black text-white">
+                  Generate
+                </button>
+              </form>
+            </div>
             <div className="mt-5 grid gap-3">
               {payouts.map((payout) => (
                 <div key={payout.id} className="rounded-lg border border-[#151515]/10 bg-[#f7f7f2] p-4">
@@ -155,6 +183,14 @@ export default async function InternalNiceJobsPage() {
                   <p className="mt-1 text-sm font-semibold text-[#555]">
                     {payout.month}/{payout.year} · {decimalToNumber(payout.totalAmount)} {payout.currency} · {payout.status}
                   </p>
+                  <form action={updateNiceJobsPayoutStatus} className="mt-3 flex flex-wrap gap-2">
+                    <input type="hidden" name="payoutId" value={payout.id} />
+                    {["SCHEDULED", "PROCESSING", "PAID", "FAILED"].map((status) => (
+                      <button key={status} name="status" value={status} className="rounded-md bg-white px-3 py-2 text-xs font-black text-[#151515]">
+                        {status}
+                      </button>
+                    ))}
+                  </form>
                 </div>
               ))}
               {!payouts.length ? <p className="text-sm leading-6 text-[#555]">No payout batches yet.</p> : null}
