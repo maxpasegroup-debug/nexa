@@ -6,7 +6,12 @@ import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export default function ForgotPasswordPage() {
+export default function ForgotPasswordPage({
+  searchParams,
+}: {
+  searchParams?: { businessModel?: string };
+}) {
+  const isNiceJobs = searchParams?.businessModel === "nicejobs";
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -43,17 +48,26 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#070709] px-4 py-10 font-sans">
-      <section className="w-full max-w-md rounded-2xl border border-white/10 bg-[#13131c] p-8 shadow-2xl shadow-black/30">
+    <main className={`flex min-h-screen items-center justify-center px-4 py-10 font-sans ${isNiceJobs ? "bg-[#f7f7f2]" : "bg-[#070709]"}`}>
+      <section className={`w-full max-w-md rounded-lg border p-8 shadow-2xl ${isNiceJobs ? "border-[#151515]/10 bg-white shadow-slate-200/60" : "border-white/10 bg-[#13131c] shadow-black/30"}`}>
         <div className="text-center font-heading text-4xl font-bold tracking-normal">
-          <span className="text-white">B</span>
-          <span className="text-[#7C6FFF]">GOS</span>
+          {isNiceJobs ? (
+            <>
+              <span className="text-[#151515]">NICE</span>
+              <span className="text-[#1c7c54]">JOBS</span>
+            </>
+          ) : (
+            <>
+              <span className="text-white">B</span>
+              <span className="text-[#7C6FFF]">GOS</span>
+            </>
+          )}
         </div>
         <div className="mt-8 space-y-2 text-center">
-          <h1 className="font-heading text-2xl font-bold tracking-normal text-white">
+          <h1 className={`font-heading text-2xl font-bold tracking-normal ${isNiceJobs ? "text-[#151515]" : "text-white"}`}>
             Reset your password
           </h1>
-          <p className="text-sm text-zinc-400">
+          <p className={isNiceJobs ? "text-sm text-[#555]" : "text-sm text-zinc-400"}>
             Enter your email and we will send reset instructions.
           </p>
         </div>
@@ -74,16 +88,16 @@ export default function ForgotPasswordPage() {
             onChange={(event) => setEmail(event.target.value)}
             error={error}
           />
-          <Button type="submit" fullWidth loading={loading}>
+          <Button type="submit" fullWidth loading={loading} className={isNiceJobs ? "bg-[#1c7c54] hover:bg-[#166843]" : undefined}>
             Send reset link
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-zinc-400">
+        <p className={isNiceJobs ? "mt-6 text-center text-sm text-[#555]" : "mt-6 text-center text-sm text-zinc-400"}>
           Remember your password?{" "}
           <Link
-            href="/login"
-            className="font-medium text-[#7C6FFF] hover:text-[#9a91ff]"
+            href={isNiceJobs ? "/login?businessModel=nicejobs" : "/login"}
+            className={isNiceJobs ? "font-bold text-[#1c7c54]" : "font-medium text-[#7C6FFF] hover:text-[#9a91ff]"}
           >
             Back to login
           </Link>

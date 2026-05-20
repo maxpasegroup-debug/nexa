@@ -51,6 +51,7 @@ function validateForm(
 export function RegisterClient({ businessModel }: { businessModel: AuthBusinessModel }) {
   const router = useRouter();
   const isCareer7 = businessModel === "career7";
+  const isNiceJobs = businessModel === "nicejobs";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -93,15 +94,20 @@ export function RegisterClient({ businessModel }: { businessModel: AuthBusinessM
       return;
     }
 
-    router.push(isCareer7 ? "/career7/dashboard" : "/onboarding");
+    router.push(isNiceJobs ? "/nicejobs/dashboard" : isCareer7 ? "/career7/dashboard" : "/onboarding");
     router.refresh();
   }
 
   return (
-    <main className={`flex min-h-screen items-center justify-center px-4 py-10 font-sans ${isCareer7 ? "bg-[#f8f9fd]" : "bg-[#070709]"}`}>
-      <section className={`w-full max-w-md rounded-2xl border p-8 shadow-2xl ${isCareer7 ? "border-indigo-100 bg-white shadow-slate-200/60" : "border-white/10 bg-[#13131c] shadow-black/30"}`}>
+    <main className={`flex min-h-screen items-center justify-center px-4 py-10 font-sans ${isNiceJobs ? "bg-[#f7f7f2]" : isCareer7 ? "bg-[#f8f9fd]" : "bg-[#070709]"}`}>
+      <section className={`w-full max-w-md rounded-lg border p-8 shadow-2xl ${isNiceJobs ? "border-[#151515]/10 bg-white shadow-slate-200/60" : isCareer7 ? "border-indigo-100 bg-white shadow-slate-200/60" : "border-white/10 bg-[#13131c] shadow-black/30"}`}>
         <div className="text-center font-heading text-4xl font-bold tracking-normal">
-          {isCareer7 ? (
+          {isNiceJobs ? (
+            <>
+              <span className="text-[#151515]">NICE</span>
+              <span className="text-[#1c7c54]">JOBS</span>
+            </>
+          ) : isCareer7 ? (
             <>
               <span className="text-[#101633]">Blizz</span>
               <span className="text-indigo-600">way</span>
@@ -114,11 +120,15 @@ export function RegisterClient({ businessModel }: { businessModel: AuthBusinessM
           )}
         </div>
         <div className="mt-8 space-y-2 text-center">
-          <h1 className={`font-heading text-2xl font-bold tracking-normal ${isCareer7 ? "text-[#101633]" : "text-white"}`}>
+          <h1 className={`font-heading text-2xl font-bold tracking-normal ${isNiceJobs ? "text-[#151515]" : isCareer7 ? "text-[#101633]" : "text-white"}`}>
             Create your account
           </h1>
-          <p className={isCareer7 ? "text-sm text-slate-500" : "text-sm text-zinc-400"}>
-            {isCareer7 ? "Start your Blizzway growth workspace with BGOS auth." : "Start with a boss account for your business."}
+          <p className={isNiceJobs ? "text-sm text-[#555]" : isCareer7 ? "text-sm text-slate-500" : "text-sm text-zinc-400"}>
+            {isNiceJobs
+              ? "Start your micro-franchise workspace on NICEJOBS."
+              : isCareer7
+                ? "Start your Blizzway growth workspace with BGOS auth."
+                : "Start with a boss account for your business."}
           </p>
         </div>
 
@@ -133,14 +143,14 @@ export function RegisterClient({ businessModel }: { businessModel: AuthBusinessM
           <Input label="Email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} error={errors.email} />
           <Input label="Password" name="password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} error={errors.password} />
           <Input label="Confirm password" name="confirmPassword" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} error={errors.confirmPassword} />
-          <Button type="submit" fullWidth loading={loading}>
+          <Button type="submit" fullWidth loading={loading} className={isNiceJobs ? "bg-[#1c7c54] hover:bg-[#166843]" : undefined}>
             Create account
           </Button>
         </form>
 
-        <p className={isCareer7 ? "mt-6 text-center text-sm text-slate-500" : "mt-6 text-center text-sm text-zinc-400"}>
+        <p className={isNiceJobs ? "mt-6 text-center text-sm text-[#555]" : isCareer7 ? "mt-6 text-center text-sm text-slate-500" : "mt-6 text-center text-sm text-zinc-400"}>
           Already have an account?{" "}
-          <Link href={isCareer7 ? "/login?businessModel=career7" : "/login"} className={isCareer7 ? "font-medium text-indigo-600 hover:text-indigo-500" : "font-medium text-[#7C6FFF] hover:text-[#9a91ff]"}>
+          <Link href={isNiceJobs ? "/login?businessModel=nicejobs" : isCareer7 ? "/login?businessModel=career7" : "/login"} className={isNiceJobs ? "font-bold text-[#1c7c54]" : isCareer7 ? "font-medium text-indigo-600 hover:text-indigo-500" : "font-medium text-[#7C6FFF] hover:text-[#9a91ff]"}>
             Sign in
           </Link>
         </p>

@@ -7,9 +7,14 @@ import {
 export const BLIZZWAY_AUTH_MODEL = BLIZZWAY_BUSINESS_MODEL;
 export const CAREER7_AUTH_MODEL = CAREER7_BUSINESS_MODEL;
 
-export type AuthBusinessModel = typeof BLIZZWAY_AUTH_MODEL | typeof CAREER7_AUTH_MODEL | "bgos";
+export type AuthBusinessModel =
+  | typeof BLIZZWAY_AUTH_MODEL
+  | typeof CAREER7_AUTH_MODEL
+  | "nicejobs"
+  | "bgos";
 
 export function getAuthBusinessModel(value: unknown): AuthBusinessModel {
+  if (value === "nicejobs") return "nicejobs";
   return normalizeBlizzwayBusinessModel(value) ?? "bgos";
 }
 
@@ -33,6 +38,10 @@ export function getAuthRedirect({
 
   if (businessModel === BLIZZWAY_AUTH_MODEL || businessModel === CAREER7_AUTH_MODEL) {
     return "/career7/dashboard";
+  }
+
+  if (businessModel === "nicejobs") {
+    return "/nicejobs/dashboard";
   }
 
   return roleRedirect;

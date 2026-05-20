@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { BLIZZWAY_AUTH_MODEL, getAuthBusinessModel, isCareer7Auth } from "@/lib/auth-business-model";
 import { BLIZZWAY_WELCOME_CREDITS } from "@/lib/blizzway-pricing";
+import { notifyBlizzwayUser } from "@/lib/blizzway-notifications";
 import { BLIZZWAY_BUSINESS_MODEL, CAREER7_BUSINESS_MODEL } from "@/lib/career7-wallet";
 import { generateClientId } from "@/lib/client-id";
 import { prisma } from "@/lib/prisma";
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
     const userName = String(name ?? "").trim();
     const businessModel = getAuthBusinessModel(rawBusinessModel);
     const isCareer7 = isCareer7Auth(businessModel);
+    const isNiceJobs = businessModel === "nicejobs";
     const ventureBusinessModel =
       businessModel === BLIZZWAY_AUTH_MODEL ? BLIZZWAY_BUSINESS_MODEL : CAREER7_BUSINESS_MODEL;
 
@@ -49,10 +51,14 @@ export async function POST(request: Request) {
       const business = await tx.business.create({
         data: {
           clientId,
-          name: isCareer7 ? `${userName}'s Blizzway Workspace` : `${userName}'s Business`,
-          type: isCareer7 ? ventureBusinessModel : "Not set",
-          teamSize: isCareer7 ? "1" : "Not set",
-          goal: isCareer7 ? "Career growth" : "Not set",
+          name: isNiceJobs
+            ? `${userName}'s NICEJOBS Workspace`
+            : isCareer7
+              ? `${userName}'s Blizzway Workspace`
+              : `${userName}'s Business`,
+          type: isNiceJobs ? "NICEJOBS" : isCareer7 ? ventureBusinessModel : "Not set",
+          teamSize: isNiceJobs || isCareer7 ? "1" : "Not set",
+          goal: isNiceJobs ? "Micro-franchise income" : isCareer7 ? "Career growth" : "Not set",
           healthScore: 50,
           plan: isCareer7
             ? ventureBusinessModel === BLIZZWAY_BUSINESS_MODEL
@@ -134,6 +140,31 @@ export async function POST(request: Request) {
 
       return createdUser;
     });
+
+    if (isCareer7 && user.businessId && ventureBusinessModel === BLIZZWAY_BUSINESS_MODEL) {
+      await notifyBlizzwayUser(
+        { userId: user.id, businessId: user.businessId, businessModel: BLIZZWAY_BUSINESS_MODEL },
+        {
+          type: "welcome",
+          title: "Welcome to Blizzway",
+          message: `Welcome ${user.name}. NEXA is ready to help you build your magical career pathway.`,
+          actionUrl: "/onboarding",
+          email: true,
+          transactional: true,
+          metadata: { credits: BLIZZWAY_WELCOME_CREDITS },
+        },
+      ).catch((error) => console.error("[register:blizzway:notification]", error));
+      await notifyBlizzwayUser(
+        { userId: user.id, businessId: user.businessId, businessModel: BLIZZWAY_BUSINESS_MODEL },
+        {
+          type: "credits_earned",
+          title: "Welcome credits added",
+          message: `${BLIZZWAY_WELCOME_CREDITS} Blizzway credits were added to your wallet.`,
+          actionUrl: "/wallet",
+          metadata: { credits: BLIZZWAY_WELCOME_CREDITS, source: "signup_welcome" },
+        },
+      ).catch((error) => console.error("[register:blizzway:credits-notification]", error));
+    }
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {

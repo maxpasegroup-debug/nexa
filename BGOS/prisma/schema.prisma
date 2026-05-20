@@ -83,6 +83,7 @@ model User {
   niceJobsReferrals NiceJobsReferral[] @relation("NiceJobsReferrals")
   niceJobsPayouts NiceJobsPayout[]
   niceJobsAuditLogs NiceJobsAuditLog[] @relation("NiceJobsAuditActor")
+  niceJobsProfile NiceJobsProfile?
   blizzwayOnboardingProfiles BlizzwayOnboardingProfile[]
   blizzwayBdpProfiles BlizzwayBdpProfile[]
   blizzwayPublicBdpProfiles BlizzwayPublicBdpProfile[]
@@ -2416,4 +2417,22 @@ model NiceJobsAuditLog {
 
   @@index([actorId])
   @@index([entity, entityId])
+}
+
+model NiceJobsProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone             String?
+  city              String?
+  country           String?
+  payoutName        String?
+  payoutMethod      String   @default("BANK")
+  payoutAccountLast4 String?
+  payoutDetails     Json     @default("{}")
+  profileStatus     String   @default("INCOMPLETE")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([profileStatus])
 }
